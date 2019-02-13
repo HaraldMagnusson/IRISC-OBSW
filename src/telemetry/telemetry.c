@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Telemetry
  * Author(s): 
- * Purpose: 
- *
+ * Purpose: Provide a queue for telemetry messages to be sent to ground and
+ *          send them when possible.
  * -----------------------------------------------------------------------------
  */

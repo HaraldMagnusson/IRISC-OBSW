@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Init
  * Author(s): 
- * Purpose: 
+ * Purpose: Called by OS. Initialise the entire system and start threads.
  *
  * -----------------------------------------------------------------------------
  */

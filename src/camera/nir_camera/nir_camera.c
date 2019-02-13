@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: NIR Camera
+ * Parent Component: Camera
  * Author(s): 
- * Purpose: 
- *
+ * Purpose: Provide an interface to the NIR camera to enable the capturing
+ *          of images.
  * -----------------------------------------------------------------------------
  */

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Global Utils
  * Author(s): 
- * Purpose: 
+ * Purpose: Define utilities and constants available to all components.
  *
  * -----------------------------------------------------------------------------
  */

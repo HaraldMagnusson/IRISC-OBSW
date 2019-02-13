@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Data Storage
  * Author(s): 
- * Purpose: 
+ * Purpose: Provide initialisation and an interface for the data storage.
  *
  * -----------------------------------------------------------------------------
  */

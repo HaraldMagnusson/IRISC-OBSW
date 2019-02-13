@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Watchdog
  * Author(s): 
- * Purpose: 
+ * Purpose: Initialise and regularly reset the watchdog.
  *
  * -----------------------------------------------------------------------------
  */

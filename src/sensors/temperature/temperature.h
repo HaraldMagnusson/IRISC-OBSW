@@ -1,9 +1,21 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Temperature
+ * Parent Component: Sensors
  * Author(s): 
- * Purpose: 
+ * Purpose: Store and protect the most recent temperature readings.
  *
  * -----------------------------------------------------------------------------
  */
 
 #pragma once
+
+/* initialise the temperature component */
+void init_temperature( void );
+
+/* return protected temperature measurements 
+ * provided to external components
+ */
+void get_temperature_local( void );
+
+/* update protected temperature measurements */
+void set_temperature( void );

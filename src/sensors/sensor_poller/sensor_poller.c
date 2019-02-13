@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Sensor Poller
+ * Parent Component: Sensors
  * Author(s): 
- * Purpose: 
+ * Purpose: Poll sensors and update storage components.
  *
  * -----------------------------------------------------------------------------
  */

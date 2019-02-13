@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Camera Control
+ * Parent Component: Camera
  * Author(s): 
- * Purpose: 
+ * Purpose: Selecting targets, camera settings, and capturing images.
  *
  * -----------------------------------------------------------------------------
  */

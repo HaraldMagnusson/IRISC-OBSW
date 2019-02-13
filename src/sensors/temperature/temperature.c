@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Temperature
+ * Parent Component: Sensors
  * Author(s): 
- * Purpose: 
+ * Purpose: Store and protect the most recent temperature readings.
  *
  * -----------------------------------------------------------------------------
  */

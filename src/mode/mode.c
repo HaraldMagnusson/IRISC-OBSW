@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Mode
  * Author(s): 
- * Purpose: 
+ * Purpose: Store the current state of the software.
  *
  * -----------------------------------------------------------------------------
  */

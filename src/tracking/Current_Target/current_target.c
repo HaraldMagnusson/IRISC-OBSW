@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Current Target
+ * Parent Component: Tracking
  * Author(s): 
- * Purpose: 
+ * Purpose: Store the currently highest priority target.
  *
  * -----------------------------------------------------------------------------
  */

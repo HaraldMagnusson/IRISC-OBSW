@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Thermal
  * Author(s): 
- * Purpose: 
- *
+ * Purpose: Monitor the temperatures of the experiment and keep them within
+ *          specifications using the heating and cooling systems.
  * -----------------------------------------------------------------------------
  */

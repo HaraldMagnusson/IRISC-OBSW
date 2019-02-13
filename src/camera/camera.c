@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Camera
  * Author(s): 
- * Purpose: 
- *
+ * Purpose: Selecting targets, camera settings, capturing images, and providing
+ *          an interface to each camera.
  * -----------------------------------------------------------------------------
  */

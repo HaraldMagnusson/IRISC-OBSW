@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: Command
  * Author(s): 
- * Purpose: 
+ * Purpose: Accept and handle all commands coming from the ground station.
  *
  * -----------------------------------------------------------------------------
  */

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name:
+ * Component Name: SPI
  * Author(s): 
- * Purpose: 
- *
+ * Purpose: Provide initialisation and an interface for the communications
+ *          over the SPI bus.
  * -----------------------------------------------------------------------------
  */
