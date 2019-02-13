@@ -7,3 +7,7 @@
  */
 
 #pragma once
+
+/* int function return values */
+#define SUCCESS 0
+#define FAILURE 1

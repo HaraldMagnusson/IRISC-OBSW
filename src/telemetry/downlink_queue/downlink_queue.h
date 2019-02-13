@@ -17,5 +17,5 @@ void init_downlink_queue( void );
  */
 void send_telemetry_local( void );
 
-/* read the oldest message in the queue (FILO) */
+/* read the oldest message in the queue (FIFO) */
 void read_queue( void );
