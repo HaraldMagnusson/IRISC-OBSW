@@ -6,3 +6,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_controller( void ){
+    return SUCCESS;
+}

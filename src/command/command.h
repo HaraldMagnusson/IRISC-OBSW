@@ -9,4 +9,4 @@
 #pragma once
 
 /* initialise the command component */
-void init_command( void );
+int init_command( void );

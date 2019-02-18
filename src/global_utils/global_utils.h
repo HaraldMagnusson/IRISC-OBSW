@@ -11,3 +11,6 @@
 /* int function return values */
 #define SUCCESS 0
 #define FAILURE 1
+
+/* initialise the global utils component */
+int init_global_utils( void );

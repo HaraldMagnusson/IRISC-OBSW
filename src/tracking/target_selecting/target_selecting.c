@@ -7,3 +7,9 @@
  *          update target priority list.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_target_selecting( void ){
+    return SUCCESS;
+}

@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the data storage component */
-void init_data_storage( void );
+int init_data_storage( void );
 
 /* save data to external data storage */
 void save_data( void );

@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the telemetry component */
-void init_telemetry( void );
+int init_telemetry( void );
 
 /* queue up a message to be sent to ground */
 void send_telemetry( void );

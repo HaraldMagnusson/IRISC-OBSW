@@ -6,3 +6,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_downlink_queue( void ){
+    return SUCCESS;
+}

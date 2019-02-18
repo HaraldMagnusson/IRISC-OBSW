@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the temperature component */
-void init_temperature( void );
+int init_temperature( void );
 
 /* return protected temperature measurements 
  * provided to external components

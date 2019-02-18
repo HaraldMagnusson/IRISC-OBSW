@@ -6,3 +6,9 @@
  *          sending it to ground.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_image_handler( void ){
+    return SUCCESS;
+}

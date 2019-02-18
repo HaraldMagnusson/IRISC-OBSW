@@ -5,3 +5,9 @@
  *          the E-link to the ground station.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_elink( void ){
+    return SUCCESS;
+}

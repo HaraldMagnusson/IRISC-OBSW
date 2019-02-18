@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the camera component */
-void init_camera( void );
+int init_camera( void );
 
 /* take a picture using the sanity camera */
 void sanity_image( void );

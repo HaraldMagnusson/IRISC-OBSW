@@ -6,3 +6,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_data_queue( void ){
+    return SUCCESS;
+}

@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the orientation component */
-void init_orientation( void );
+int init_orientation( void );
 
 /* return protected position and orientation measurements 
  * provided to external components

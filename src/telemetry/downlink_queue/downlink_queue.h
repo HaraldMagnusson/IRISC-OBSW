@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the downlink queue component */
-void init_downlink_queue( void );
+int init_downlink_queue( void );
 
 /* queue up a message to be sent to ground 
  * provided to external components

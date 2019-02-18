@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the i2c component */
-void init_i2c( void );
+int init_i2c( void );
 
 /* listen for a message on the i2c bus */
 void read_i2c( void );

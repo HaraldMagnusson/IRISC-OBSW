@@ -6,3 +6,9 @@
  *          of images.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_guiding_camera( void ){
+    return SUCCESS;
+}

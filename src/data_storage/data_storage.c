@@ -5,3 +5,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_data_storage( void ){
+    return SUCCESS;
+}

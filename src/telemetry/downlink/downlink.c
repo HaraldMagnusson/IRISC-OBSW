@@ -6,3 +6,9 @@
  *          downlink whenever possible.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_downlink( void ){
+    return SUCCESS;
+}

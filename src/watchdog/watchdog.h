@@ -9,4 +9,4 @@
 #pragma once
 
 /* initialise the watchdog component */
-void init_watchdog( void );
+int init_watchdog( void );

@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the guiding camera component */
-void init_guiding_camera( void );
+int init_guiding_camera( void );
 
 /* take a picture using the guiding camera 
  * provided to external components

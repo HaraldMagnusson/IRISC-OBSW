@@ -6,3 +6,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_gimbal( void ){
+    return SUCCESS;
+}

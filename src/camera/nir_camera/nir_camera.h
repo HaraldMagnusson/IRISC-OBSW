@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the nir camera component */
-void init_nir_camera( void );
+int init_nir_camera( void );
 
 /* take a picture using the nir camera 
  * 

@@ -6,3 +6,9 @@
  *          telescope.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_orientation( void ){
+    return SUCCESS;
+}

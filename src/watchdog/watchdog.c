@@ -5,3 +5,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_watchdog( void ){
+    return SUCCESS;
+}

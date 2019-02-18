@@ -5,3 +5,9 @@
  *          over the SPI bus.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_spi( void ){
+    return SUCCESS;
+}

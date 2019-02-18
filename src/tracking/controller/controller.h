@@ -10,4 +10,4 @@
 #pragma once
 
 /* initialise the controller component */
-void init_controller( void );
+int init_controller( void );

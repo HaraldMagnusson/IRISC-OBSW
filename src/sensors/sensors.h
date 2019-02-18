@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the sensors component */
-void init_sensors( void );
+int init_sensors( void );
 
 /* return temperature measurements */
 void get_temperature( void );

@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the mode component */
-void init_mode( void );
+int init_mode( void );
 
 /* get the current software state */
 void get_mode( void );

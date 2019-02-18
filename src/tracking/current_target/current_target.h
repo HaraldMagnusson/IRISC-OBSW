@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the current target component */
-void init_current_target( void );
+int init_current_target( void );
 
 /* update protected target to be tracked */
 void set_target( void );

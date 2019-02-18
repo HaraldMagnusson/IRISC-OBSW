@@ -5,3 +5,9 @@
  *          specifications using the heating and cooling systems.
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_thermal( void ){
+    return SUCCESS;
+}

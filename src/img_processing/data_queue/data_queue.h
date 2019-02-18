@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the data queue component */
-void init_data_queue( void );
+int init_data_queue( void );
 
 /* enqueue an image with meta data in the queue to be processed 
  * provided to external components

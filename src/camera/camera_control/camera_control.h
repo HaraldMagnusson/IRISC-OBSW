@@ -10,4 +10,4 @@
 #pragma once
 
 /* initialise the camera control component */
-void init_camera_control( void );
+int init_camera_control( void );

@@ -6,3 +6,9 @@
  *
  * -----------------------------------------------------------------------------
  */
+
+#include "global_utils.h"
+
+int init_sensor_poller( void ){
+    return SUCCESS;
+}

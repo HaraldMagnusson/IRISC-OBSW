@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the sun component */
-void init_sun( void );
+int init_sun( void );
 
 /* return the current sun position 
  * provided to external components

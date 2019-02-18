@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the elink component */
-void init_elink( void );
+int init_elink( void );
 
 /* provide uplink from ground */
 void read_elink( void );
