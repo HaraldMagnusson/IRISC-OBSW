@@ -58,30 +58,29 @@ static const char module_arr[MODULE_COUNT][15] =   {"camera",
 
 int main(int argc, char const *argv[]){
 
-    if(argc > 1){
-        printf("argument received\n");
-        printf("argument: %s\n", argv[1]);
-    }
+    /* redirect stderr to a log file */
+    /* freopen("../test.log", "w", stderr); */
 
-    static int res[MODULE_COUNT];
 
-    res[GLOBAL_UTILS] = init_global_utils();
+    int res[MODULE_COUNT];
+
+    /* ordered init list */
     res[WATCHDOG] = init_watchdog();
-    res[DATA_STORAGE] = init_data_storage();
-    res[MODE] = init_mode();
 
-    res[I2C] = init_i2c();
-    res[SPI] = init_spi();
-    res[SENSORS] = init_sensors();
-    res[THERMAL] = init_thermal();
-
-    res[E_LINK] = init_elink();
-    res[TELEMETRY] = init_telemetry();
-    res[COMMAND] = init_command();
-
+    /* unordered init list */
     res[CAMERA] = init_camera();
-    res[TRACKING] = init_tracking();
+    res[COMMAND] = init_command();
+    res[DATA_STORAGE] = init_data_storage();
+    res[E_LINK] = init_elink();
+    res[GLOBAL_UTILS] = init_global_utils();
+    res[I2C] = init_i2c();
     res[IMG_PROCESSING] = init_img_processing();
+    res[MODE] = init_mode();
+    res[SENSORS] = init_sensors();
+    res[SPI] = init_spi();
+    res[TELEMETRY] = init_telemetry();
+    res[THERMAL] = init_thermal();
+    res[TRACKING] = init_tracking();
 
     int count = 0;
     for(int i=0; i<MODULE_COUNT; i++){
