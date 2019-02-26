@@ -8,7 +8,7 @@
 
 #pragma once
 
-enum mode_t{normal = '0', sleep = '1'};
+enum mode_t{NORMAL = '0', SLEEP = '1'};
 
 /* initialise the mode component */
 int init_mode( void );
