@@ -96,5 +96,11 @@ int main(int argc, char const *argv[]){
         "\nA total of %d modules initialised successfully and %d failed.\n\n",
         MODULE_COUNT-count, count);
 
+    if(count != 0){
+        return FAILURE;
+    }
+
+    while(1){}
+
     return SUCCESS;
 }
