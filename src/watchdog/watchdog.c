@@ -25,7 +25,7 @@ static void* thread_func( void*);
 
 int init_watchdog( void ){
 
-    fp_watchdog = fopen("filepath here", "w");
+    fp_watchdog = fopen("/home/pi/Desktop/watchdogstatus_check.txt", "w");
     fprintf(fp_watchdog, "v");
 
     res = mlockall(MCL_CURRENT|MCL_FUTURE);
