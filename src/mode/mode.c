@@ -22,7 +22,7 @@ int init_mode( void ){
     int res = pthread_mutex_init( &mutex_mode, NULL );
     if( res ){
         fprintf(stderr,
-            "The initialisation of the mutex failed with code %d.\n",
+            "The initialisation of the mode mutex failed with code %d.\n",
             res);
         return FAILURE;
     }
