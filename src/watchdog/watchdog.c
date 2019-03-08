@@ -110,6 +110,8 @@ static void* thread_func( void* param){
         wake_time.tv_sec += WATCHDOG_WAIT;
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
     }
+
+    return NULL;
 } 
 
 int stop_watchdog( void ){
