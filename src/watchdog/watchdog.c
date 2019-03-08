@@ -6,7 +6,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "global_utils.h"
 #include <stdio.h>
 #include <pthread.h>
 #include <time.h>
@@ -15,6 +14,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
+
+#include "global_utils.h"
 
 /* Filepath for watchdog */
 #ifdef __arm__
@@ -117,7 +119,7 @@ static void* thread_func( void* param){
 int stop_watchdog( void ){
     /* Stops thread_watchdog and disables the watchdog */
 
-    pthread_cancel(thread_watchdog);
+    pthread_kill(thread_watchdog, SIGTERM);
 
     /* Writing V prepares the watchdog for closing */
     write(fd_watchdog, "V", 1);

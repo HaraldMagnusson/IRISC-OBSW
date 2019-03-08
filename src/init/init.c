@@ -7,6 +7,9 @@
  */
 
 #include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "camera.h"
 #include "command.h"
@@ -56,11 +59,21 @@ static const char module_arr[MODULE_COUNT][15] =   {"camera",
                                                     "tracking",
                                                     "watchdog"};
 
+static struct sigaction sa;
+
+static void sigint_handler(int signum){
+    write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
+    stop_watchdog();
+    _exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char const *argv[]){
+
+    sa.sa_handler = sigint_handler;
+    sigaction(SIGINT, &sa, NULL);
 
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */
-
 
     int res[MODULE_COUNT];
 
