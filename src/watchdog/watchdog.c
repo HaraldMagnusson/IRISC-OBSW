@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 #include "global_utils.h"
 
@@ -45,7 +46,7 @@ int init_watchdog( void ){
     if( res != 0 ){
         fprintf(stderr,
             "Failed mlockall for watchdog component. "
-            "Return value: %d\n", errno);
+            "Return value: %d: %s\n", errno, strerror(errno));
         return FAILURE;
     }
 
