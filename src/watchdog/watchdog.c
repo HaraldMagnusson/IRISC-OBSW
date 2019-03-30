@@ -8,10 +8,8 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include <time.h>
 #include <errno.h>
 #include <limits.h>
-#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
@@ -34,69 +32,67 @@ static pthread_t thread_watchdog;
 static pthread_attr_t thread_attr;
 static struct timespec wake_time;
 static struct sched_param param;
-static int res;
+static int ret;
 
 static void* thread_func( void*);
 
 int init_watchdog( void ){
 
     fd_watchdog = open(WATCHDOG_DIR, O_WRONLY);
-
-    res = mlockall(MCL_CURRENT|MCL_FUTURE);
-    if( res != 0 ){
+    if( fd_watchdog == -1 ){
         fprintf(stderr,
-            "Failed mlockall for watchdog component. "
-            "Return value: %d: %s\n", errno, strerror(errno));
-        return FAILURE;
+            "Failed open for watchdog component. "
+            "Return value: %d, %s\n", errno, strerror(errno));
+        return errno;
     }
 
-    res = pthread_attr_init( &thread_attr );
-    if( res != 0 ){
+    ret = pthread_attr_init( &thread_attr );
+    if( ret != 0 ){
         fprintf(stderr,
             "Failed pthread_attr_init for watchdog component. "
-            "Return value: %d\n", res);
-        return FAILURE;
+            "Return value: %d\n", ret);
+        return ret;
     }
 
-    res = pthread_attr_setstacksize(&thread_attr, PTHREAD_STACK_MIN);
-    if( res != 0 ){
+    ret = pthread_attr_setstacksize(&thread_attr, PTHREAD_STACK_MIN);
+    if( ret != 0 ){
         fprintf(stderr,
             "Failed pthread_attr_setstacksize of watchdog component. "
-            "Return value: %d\n", res);
-        return FAILURE;
+            "Return value: %d\n", ret);
+        return ret;
     }
 
-    res = pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
-    if( res != 0 ){
+    ret = pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
+    if( ret != 0 ){
         fprintf(stderr,
             "Failed pthread_attr_setschedpolicy of watchdog component. "
-            "Return value: %d\n", res);
-        return FAILURE;
+            "Return value: %d\n", ret);
+        return ret;
     }
 
     param.sched_priority = 50;
-    res = pthread_attr_setschedparam(&thread_attr, &param);
-    if( res != 0 ){
+    ret = pthread_attr_setschedparam(&thread_attr, &param);
+    if( ret != 0 ){
         fprintf(stderr,
             "Failed pthread_attr_setschedparam of watchdog component. "
-            "Return value: %d\n", res);
-        return FAILURE;
+            "Return value: %d\n", ret);
+        return ret;
     }
 
-    res = pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED);
-    if( res != 0 ){
+    ret = pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED);
+    if( ret != 0 ){
         fprintf(stderr,
             "Failed pthread_attr_setinheritsched of watchdog component. "
-            "Return value: %d\n", res);
-        return FAILURE;
+            "Return value: %d\n", ret);
+        return ret;
     }
 
-    res = pthread_create(&thread_watchdog, &thread_attr, thread_func, NULL);
-    if( res != 0 ){
+    ret = pthread_create(&thread_watchdog, &thread_attr, thread_func, NULL);
+    if( ret != 0 ){
         fprintf(stderr,
             "Failed pthread_create of watchdog component. "
-            "Return value: %d\n", res);
-        return FAILURE;
+            "Return value: %d\n", ret);
+        return ret;
     }
 
     return SUCCESS;

@@ -10,6 +10,9 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/mman.h>
 
 #include "camera.h"
 #include "command.h"
@@ -29,37 +32,33 @@
 /* not including init */
 #define MODULE_COUNT 14
 
-#define CAMERA 0
-#define COMMAND 1
-#define DATA_STORAGE 2
-#define E_LINK 3
-#define GLOBAL_UTILS 4
-#define I2C 5
-#define IMG_PROCESSING 6
-#define MODE 7
-#define SENSORS 8
-#define SPI 9
-#define TELEMETRY 10
-#define THERMAL 11
-#define TRACKING 12
-#define WATCHDOG 13
+typedef int (*init_function)(void);
 
-static const char module_arr[MODULE_COUNT][15] =   {"camera",
-                                                    "command",
-                                                    "data_storage",
-                                                    "e_link",
-                                                    "global_utils",
-                                                    "i2c",
-                                                    "img_processing",
-                                                    "mode",
-                                                    "sensors",
-                                                    "spi",
-                                                    "telemetry",
-                                                    "thermal",
-                                                    "tracking",
-                                                    "watchdog"};
-
+static int ret;
 static struct sigaction sa;
+
+typedef struct {
+    const char*   name;
+    init_function init;
+} module_init_t;
+
+/* This list controls the order of initialisation */
+static const module_init_t init_sequence[MODULE_COUNT] = {
+    {"watchdog", &init_watchdog},
+    {"camera", &init_camera},
+    {"command", &init_command},
+    {"data_storage", &init_data_storage},
+    {"e_link", &init_elink},
+    {"global_utils", &init_global_utils},
+    {"i2c", &init_i2c},
+    {"img_processing", &init_img_processing},
+    {"mode", &init_mode},
+    {"sensors", &init_sensors},
+    {"spi", &init_spi},
+    {"telemetry", &init_telemetry},
+    {"thermal", &init_thermal},
+    {"tracking", &init_tracking}
+};
 
 static void sigint_handler(int signum){
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
@@ -72,36 +71,30 @@ int main(int argc, char const *argv[]){
     sa.sa_handler = sigint_handler;
     sigaction(SIGINT, &sa, NULL);
 
+    ret = mlockall(MCL_CURRENT|MCL_FUTURE);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed mlockall. Return value: %d, %s\n", errno, strerror(errno));
+        return FAILURE;
+    }
+
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */
 
-    int res[MODULE_COUNT];
-
-    /* ordered init list */
-    res[WATCHDOG] = init_watchdog();
-
-    /* unordered init list */
-    res[CAMERA] = init_camera();
-    res[COMMAND] = init_command();
-    res[DATA_STORAGE] = init_data_storage();
-    res[E_LINK] = init_elink();
-    res[GLOBAL_UTILS] = init_global_utils();
-    res[I2C] = init_i2c();
-    res[IMG_PROCESSING] = init_img_processing();
-    res[MODE] = init_mode();
-    res[SENSORS] = init_sensors();
-    res[SPI] = init_spi();
-    res[TELEMETRY] = init_telemetry();
-    res[THERMAL] = init_thermal();
-    res[TRACKING] = init_tracking();
-
     int count = 0;
-    for(int i=0; i<MODULE_COUNT; i++){
-        if( res[i] != SUCCESS ){
-            fprintf(stderr,
-                "The component %s failed to initialise.\n",
-                module_arr[i]);
-            count++;
+    for(int i=0; i<MODULE_COUNT; ++i){
+        ret = init_sequence[i].init();
+        if( ret == SUCCESS ){
+            fprintf(stderr, "%s initialised successfully.\n",
+                init_sequence[i].name);
+        } else if( ret == FAILURE ) {
+            fprintf(stderr, "%s FAILED TO INITIALISE, return value: %d\n\n",
+                init_sequence[i].name, ret);
+            ++count;
+        } else {
+            fprintf(stderr, "%s FAILED TO INITIALISE, return value: %d, %s\n\n",
+                init_sequence[i].name, ret, strerror(ret));
+            ++count;
         }
     }
 
@@ -113,7 +106,9 @@ int main(int argc, char const *argv[]){
         return FAILURE;
     }
 
-    while(1){}
+    while(1){
+        sleep(1000);
+    }
 
     return SUCCESS;
 }
