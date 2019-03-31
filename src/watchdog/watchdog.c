@@ -38,7 +38,7 @@ static void* thread_func( void*);
 
 int init_watchdog( void ){
 
-    fd_watchdog = open(WATCHDOG_DIR, O_WRONLY);
+    fd_watchdog = open(WATCHDOG_DIR, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU);
     if( fd_watchdog == -1 ){
         fprintf(stderr,
             "Failed open for watchdog component. "

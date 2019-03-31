@@ -75,7 +75,7 @@ int main(int argc, char const *argv[]){
     if( ret != 0 ){
         fprintf(stderr,
             "Failed mlockall. Return value: %d, %s\n", errno, strerror(errno));
-        return FAILURE;
+//        return FAILURE;
     }
 
     /* redirect stderr to a log file */
