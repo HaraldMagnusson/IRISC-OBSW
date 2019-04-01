@@ -18,7 +18,7 @@
 #include "global_utils.h"
 
 /* Filepath for watchdog */
-#ifdef __arm__
+#ifdef __aarch64__
     #define WATCHDOG_DIR "/dev/watchdog"
 #else
     #define WATCHDOG_DIR "/tmp/watchdog"
@@ -38,7 +38,7 @@ static void* thread_func( void*);
 
 int init_watchdog( void ){
 
-    fd_watchdog = open(WATCHDOG_DIR, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU);
+    fd_watchdog = open(WATCHDOG_DIR, O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU);
     if( fd_watchdog == -1 ){
         fprintf(stderr,
             "Failed open for watchdog component. "
@@ -114,9 +114,7 @@ static void* thread_func( void* param){
 } 
 
 int stop_watchdog( void ){
-    /* Stops thread_watchdog and disables the watchdog */
-
-    pthread_kill(thread_watchdog, SIGTERM);
+    /* Disables the watchdog */
 
     /* Writing V prepares the watchdog for closing */
     write(fd_watchdog, "V", 1);
