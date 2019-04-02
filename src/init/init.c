@@ -32,15 +32,8 @@
 /* not including init */
 #define MODULE_COUNT 14
 
-typedef int (*init_function)(void);
-
 static int ret;
 static struct sigaction sa;
-
-typedef struct {
-    const char*   name;
-    init_function init;
-} module_init_t;
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
@@ -71,28 +64,28 @@ int main(int argc, char const *argv[]){
     sa.sa_handler = sigint_handler;
     sigaction(SIGINT, &sa, NULL);
 
+    /* redirect stderr to a log file */
+    /* freopen("../test.log", "w", stderr); */
+
     ret = mlockall(MCL_CURRENT|MCL_FUTURE);
     if( ret != 0 ){
         fprintf(stderr,
-            "Failed mlockall. Return value: %d, %s\n", errno, strerror(errno));
-//        return FAILURE;
+            "\ninit: Failed mlockall. Return value: %d, %s\n\n", errno, strerror(errno));
+        //return FAILURE;
     }
-
-    /* redirect stderr to a log file */
-    /* freopen("../test.log", "w", stderr); */
 
     int count = 0;
     for(int i=0; i<MODULE_COUNT; ++i){
         ret = init_sequence[i].init();
         if( ret == SUCCESS ){
-            fprintf(stderr, "%s initialised successfully.\n",
+            fprintf(stderr, "Module \"%s\" initialised successfully.\n\n",
                 init_sequence[i].name);
-        } else if( ret == FAILURE ) {
-            fprintf(stderr, "%s FAILED TO INITIALISE, return value: %d\n\n",
+        } else if( ret == FAILURE ){
+            fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d\n\n",
                 init_sequence[i].name, ret);
             ++count;
         } else {
-            fprintf(stderr, "%s FAILED TO INITIALISE, return value: %d, %s\n\n",
+            fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n\n",
                 init_sequence[i].name, ret, strerror(ret));
             ++count;
         }

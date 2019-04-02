@@ -12,5 +12,12 @@
 #define SUCCESS 0
 #define FAILURE -1
 
+/* struct used for initialisation of modules */
+typedef int (*init_function)(void);
+typedef struct {
+    const char*   name;
+    init_function init;
+} module_init_t;
+
 /* initialise the global utils component */
 int init_global_utils( void );

@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "global_utils.h"
 #include "orientation.h"
@@ -14,23 +15,37 @@
 #include "sun.h"
 #include "temperature.h"
 
+#define MODULE_COUNT 4
+
+/* This list controls the order of initialisation */
+static const module_init_t init_sequence[MODULE_COUNT] = {
+    {"orientation", &init_orientation},
+    {"sensor_poller", &init_sensor_poller},
+    {"sun", &init_sun},
+    {"temperature", &init_temperature}
+};
+
 int init_sensors( void ){
 
     /* init whatever in this module */
 
-    int res[4];
+    int ret;
 
-    res[0] = init_orientation();
-    res[1] = init_sensor_poller();
-    res[2] = init_sun();
-    res[3] = init_temperature();
-
-    if( res[0] != SUCCESS ||
-        res[1] != SUCCESS ||
-        res[2] != SUCCESS ||
-        res[3] != SUCCESS
-        ){
-        return FAILURE;
+    for(int i=0; i<MODULE_COUNT; ++i){
+        ret = init_sequence[i].init();
+        if( ret == SUCCESS ){
+            fprintf(stderr, "\tSub module \"%s\" initialised successfully.\n",
+                init_sequence[i].name);
+        } else if( ret == FAILURE ){
+            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d\n",
+                init_sequence[i].name, ret);
+            return ret;
+        } else {
+            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n",
+                init_sequence[i].name, ret, strerror(ret));
+            return ret;
+        }
     }
+
     return SUCCESS;
 }

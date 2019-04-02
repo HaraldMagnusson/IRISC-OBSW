@@ -5,30 +5,47 @@
  *          an interface to each camera.
  * -----------------------------------------------------------------------------
  */
+#include <stdio.h>
+#include <string.h>
 
 #include "global_utils.h"
+
 #include "camera_control.h"
 #include "sanity_camera.h"
 #include "guiding_camera.h"
 #include "nir_camera.h"
 
+#define MODULE_COUNT 4
+
+/* This list controls the order of initialisation */
+static const module_init_t init_sequence[MODULE_COUNT] = {
+    {"camera_control", &init_camera_control},
+    {"sanity_camera", &init_sanity_camera},
+    {"guiding_camera", &init_guiding_camera},
+    {"nir_camera", &init_nir_camera}
+};
+
 int init_camera( void ){
 
     /* init whatever in this module */
 
-    int res[4];
+    int ret;
 
-    res[0] = init_camera_control();
-    res[1] = init_sanity_camera();
-    res[2] = init_guiding_camera();
-    res[3] = init_nir_camera();
-
-    if( res[0] != SUCCESS ||
-        res[1] != SUCCESS ||
-        res[2] != SUCCESS ||
-        res[3] != SUCCESS
-        ){
-        return FAILURE;
+    for(int i=0; i<MODULE_COUNT; ++i){
+        ret = init_sequence[i].init();
+        if( ret == SUCCESS ){
+            fprintf(stderr, "\tSub module \"%s\" initialised successfully.\n",
+                init_sequence[i].name);
+        } else if( ret == FAILURE ){
+            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d\n",
+                init_sequence[i].name, ret);
+            return ret;
+        } else {
+            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n",
+                init_sequence[i].name, ret, strerror(ret));
+            return ret;
+        }
     }
+
     return SUCCESS;
 }
