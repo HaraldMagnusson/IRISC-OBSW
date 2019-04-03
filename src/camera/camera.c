@@ -28,7 +28,10 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 int init_camera( void ){
 
     /* init whatever in this module */
-    init_submodules(init_sequence, MODULE_COUNT);
+    int ret = init_submodules(init_sequence, MODULE_COUNT);
+    if( ret != SUCCESS ){
+        return ret;
+    }
 
     return SUCCESS;
 }
