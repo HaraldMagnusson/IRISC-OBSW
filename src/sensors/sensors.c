@@ -28,24 +28,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 int init_sensors( void ){
 
     /* init whatever in this module */
-
-    int ret;
-
-    for(int i=0; i<MODULE_COUNT; ++i){
-        ret = init_sequence[i].init();
-        if( ret == SUCCESS ){
-            fprintf(stderr, "\tSub module \"%s\" initialised successfully.\n",
-                init_sequence[i].name);
-        } else if( ret == FAILURE ){
-            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d\n",
-                init_sequence[i].name, ret);
-            return ret;
-        } else {
-            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n",
-                init_sequence[i].name, ret, strerror(ret));
-            return ret;
-        }
-    }
+    init_submodules(init_sequence, MODULE_COUNT);
 
     return SUCCESS;
 }

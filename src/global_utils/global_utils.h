@@ -21,3 +21,5 @@ typedef struct {
 
 /* initialise the global utils component */
 int init_global_utils( void );
+
+int init_submodules( const module_init_t init_sequence[], int module_count);
