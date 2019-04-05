@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Downlink Queue
  * Parent Component: Telemetry
- * Author(s): 
+ * Author(s): Adam Smialek
  * Purpose: Provide a queue for telemetry messages to be sent to ground.
  *
  * -----------------------------------------------------------------------------
