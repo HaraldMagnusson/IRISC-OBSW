@@ -11,3 +11,6 @@
 
 /* initialise the downlink component */
 int init_downlink( void );
+
+/* queue up a message to be sent to ground */
+void send_data_packet( char buffer[] );

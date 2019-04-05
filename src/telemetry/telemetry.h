@@ -10,6 +10,3 @@
 
 /* initialise the telemetry component */
 int init_telemetry( void );
-
-/* queue up a message to be sent to ground */
-void send_telemetry( void );
