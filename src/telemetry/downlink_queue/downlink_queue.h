@@ -15,7 +15,9 @@ int init_downlink_queue( void );
 /* queue up a message to be sent to ground 
  * provided to external components
  */
-void send_telemetry_local( void );
+int send_telemetry_local(int d, int p);
 
 /* read the oldest message in the queue (FIFO) */
-void read_queue( void );
+int read_downlink_queue( void );
+
+int is_empty( void );

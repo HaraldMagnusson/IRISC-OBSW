@@ -103,11 +103,11 @@ int main(int argc, char const *argv[]){
     }
 
     while(1){
-//        sleep(1000);
+        sleep(1000);
 
-        //todo: delet this!
-        send_data_packet("Hello there!");
-        sleep(1);
+//        //todo: delet this!
+//        send_data_packet("Hello there!");
+//        sleep(1);
     }
 
     return SUCCESS;
