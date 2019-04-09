@@ -33,7 +33,7 @@ int init_downlink( void ){
     return SUCCESS;
 }
 
-/*!
+/**
  * Sets up the socket on `SERVER_PORT` to work with UDP protocol.
  *
  * I have decided not to put this in `init_downlink()` for the function name to stay
@@ -69,7 +69,7 @@ int init_upd_socket( void )
     return SUCCESS;
 }
 
-/*!
+/**
  * Sends data via UDP protocol through the `socket_`.
  *   \param buffer
  *   \return

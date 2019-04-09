@@ -7,12 +7,7 @@
  * -----------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "global_utils.h"
-
-/*!
+/**
  * This module provides a priority queue for the telemetry module. It uses
  * linked list to solve the priority sorting, where the head of the list is
  * of a highest priority.
@@ -26,33 +21,37 @@
  * /todo: Define priority values for the possible telemetry types.
  */
 
-typedef struct node downlink_node;
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
 
-static downlink_node* downlink_queue = NULL;
+#include "downlink_queue.h"
+#include "global_utils.h"
 
-int init_downlink_queue( void ){
+pthread_mutex_t downlink_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int init_downlink_queue(void) {
     return SUCCESS;
 }
 
-/*!
+/**
  * Node structure declaration.
  */
 typedef struct node {
     int data;           // Data to be send as a telemetry.
     int priority;       // Lower values indicate higher priority
-    struct node* next;  // Pointer to the node next on the list.
+    struct node *next;  // Pointer to the node next on the list.
 
 } downlink_node;
 
-/*!
+/**
  * Function to create a new node
  *
  * @param d     Data to be sent.
  * @param p     Priority of the data.
  */
-downlink_node* new_node(int d, int p)
-{
-    downlink_node* temp = (downlink_node*)malloc(sizeof(downlink_node));
+downlink_node *new_node(int d, int p) {
+    downlink_node *temp = (downlink_node *) malloc(sizeof(downlink_node));
     temp->data = d;
     temp->priority = p;
     temp->next = NULL;
@@ -60,44 +59,43 @@ downlink_node* new_node(int d, int p)
     return temp;
 }
 
-/*!
+/**
  * Function to check if the list is empty
  *
  * @param head  Pointer to the first node of the linked list.
  * @return      1 if the list is empty, 0 if not.
  */
- int is_empty( void ) {
-    return (downlink_queue) == NULL;
- }
+int is_empty(downlink_node **head) {
+    return (*head) == NULL;
+}
 //int is_empty(downlink_node **head)
 //{
 //    return (*head) == NULL;
 //}
 
-/*!
+/**
  * Return the value at head of the list.
  *
  * @param head  Pointer to the first node of the linked list.
  * @return      Data from the head node.
  */
-int peek(downlink_node** head) {
-    if(!is_empty()) {
+int peek(downlink_node **head) {
+    if (!is_empty(head)) {
         return (*head)->data;
     } else {
         return FAILURE;
     }
 }
 
-/*!
+/**
  * Removes the element with the highest priority form the list and
  * return it's data value.
  *
  * @param head  Pointer to the first node of the linked list.
  * @return      Data from the popped node.
  */
-int pop(downlink_node** head)
-{
-    if(!is_empty()) {
+int pop(downlink_node **head) {
+    if (!is_empty(head)) {
         downlink_node *temp = *head;
         int data = (*head)->data;
         (*head) = (*head)->next;
@@ -108,19 +106,18 @@ int pop(downlink_node** head)
     }
 }
 
-/*!
- * Function to push node to the list according to priority.
+/**
+ * Function to push node to the list according to its priority.
  *
  * @param head  Pointer to the first node of the linked list.
  * @param d     Data to be sent.
  * @param p     Priority of the data.
  */
-void push(downlink_node** head, int d, int p)
-{
-    downlink_node* start = (*head);
+void push(downlink_node **head, int d, int p) {
+    downlink_node *start = (*head);
 
     // Create new node
-    downlink_node* temp = new_node(d, p);
+    downlink_node *temp = new_node(d, p);
 
     // Special Case: The head of list has lesser
     // priority than new node. So insert new
@@ -133,7 +130,7 @@ void push(downlink_node** head, int d, int p)
         // Traverse the list and find a
         // position to insert new node
         while (start->next != NULL &&
-               start->next->priority < p) {
+               start->next->priority <= p) {
             start = start->next;
         }
         // Either at the ends of the list
@@ -143,23 +140,42 @@ void push(downlink_node** head, int d, int p)
     }
 }
 
-/*!
- * Function used to put data into the queue.
+/**
+ * Put data into the queue.
  *
+ * @param head  Pointer to the first node of the linked list.
  * @param d     Data to be sent.
  * @param p     Priority of the data.
  * @return      0
  */
-int send_telemetry_local(int d, int p){
-    if(!is_empty()){
-        push(&downlink_queue, d, p);
+int send_telemetry_local(downlink_node **head, int d, int p) {
+
+    pthread_mutex_lock(&downlink_mutex);
+
+    if (!is_empty(head)) {
+        push(head, d, p);
     } else {
-        downlink_queue = new_node(d, p);
+        *head = new_node(d, p);
     }
+
+    pthread_mutex_unlock(&downlink_mutex);
 
     return SUCCESS;
 }
 
-int read_downlink_queue( void ) {
-    return pop(&downlink_queue);
+/**
+ * Return the data of the oldest message of the highest priority.
+ *
+ * @param head  Pointer to the first node of the linked list.
+ * @return      Data from the first node of the linked list.
+ */
+int read_downlink_queue(downlink_node **head) {
+
+    pthread_mutex_lock(&downlink_mutex);
+
+    int data = pop(head);
+
+    pthread_mutex_unlock(&downlink_mutex);
+
+    return data;
 }

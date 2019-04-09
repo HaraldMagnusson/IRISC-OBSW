@@ -6,8 +6,16 @@
  * -----------------------------------------------------------------------------
  */
 
+/**
+ * Module which has a responsibility of initialising downlink stream and
+ * adding checksum to the
+ *
+ *
+ */
+
 // todo: delet this
 #include <unistd.h>
+#include <time.h>
 
 #include <stdio.h>
 #include <pthread.h>
@@ -19,37 +27,52 @@
 
 #define MODULE_COUNT 2
 
+static downlink_node* downlink_queue = NULL;
+
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"downlink", &init_downlink},
     {"downlink_queue", &init_downlink_queue}
 };
 
-// todo: For test purposes only:
-void *test_telemetry_generator() {
+// todo: For test purposes only!
+void* test_telemetry_generator() {
     for (int i = 0; i < 100; ++i) {
-        fprintf(stderr, "Queueing data packet nr. %d...", i);
-        send_telemetry_local(i, 0);
-        fprintf(stderr, " Queued!\n!");
+        send_telemetry_local( &downlink_queue, i, 0 );
         sleep(1);
     }
+
+    return NULL;
 }
 
-void *telemetry_sender() {
+/**
+ * Infinite loop for sending telemetry via UDP.
+ *
+ * @return
+ *
+ * @todo Move it to `init_telemetry`?
+ * @todo Redo it all!!!
+ */
+void* telemetry_sender() {
     while(1) {
-        while(!is_empty()) {
-            fprintf(stderr, "Sending data packet...");
+        while(!is_empty(&downlink_queue)) {
             char msg[64];
-            int num = read_downlink_queue();
+            int num = read_downlink_queue(&downlink_queue);
             sprintf(msg, "Message nr.%d", num);
             send_data_packet(msg);
-            fprintf(stderr, " Sent!\n!");
         }
-        fprintf(stderr, "Queue is empty, waiting.\n");
         sleep(3);
     }
+    return NULL;
 }
 
+
+/**
+ *
+ * @return
+ *
+ * @todo Add threads parameters and all that security stuff.
+ */
 int init_telemetry( void ){
 
     /* init whatever in this module */
@@ -58,8 +81,9 @@ int init_telemetry( void ){
         return ret;
     }
 
-    pthread_t generator, sender;
-    fprintf(stderr, "> Starting threading.\n");
+    pthread_t generator;
+    pthread_t sender;
+
     pthread_create(&generator, NULL, test_telemetry_generator, NULL);
     pthread_create(&sender, NULL, telemetry_sender, NULL);
 
