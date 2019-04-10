@@ -15,11 +15,8 @@ typedef struct node downlink_node;
 int init_downlink_queue(void);
 
 /* queue up a message to be sent to ground 
- * provided to external components
- */
+   provided to external components */
 int send_telemetry_local(downlink_node **head, int d, int p);
 
 /* Return the data of the oldest message of the highest priority. */
 int read_downlink_queue(downlink_node **head);
-
-int is_empty(downlink_node **head);

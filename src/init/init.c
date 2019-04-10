@@ -29,9 +29,6 @@
 #include "tracking.h"
 #include "watchdog.h"
 
-//todo: delet this!
-#include "downlink.h"
-
 /* not including init */
 #define MODULE_COUNT 14
 
@@ -40,29 +37,29 @@ static struct sigaction sa;
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"watchdog", &init_watchdog},
-    {"camera", &init_camera},
-    {"command", &init_command},
-    {"data_storage", &init_data_storage},
-    {"e_link", &init_elink},
-    {"global_utils", &init_global_utils},
-    {"i2c", &init_i2c},
-    {"img_processing", &init_img_processing},
-    {"mode", &init_mode},
-    {"sensors", &init_sensors},
-    {"spi", &init_spi},
-    {"telemetry", &init_telemetry},
-    {"thermal", &init_thermal},
-    {"tracking", &init_tracking}
+        {"watchdog",       &init_watchdog},
+        {"camera",         &init_camera},
+        {"command",        &init_command},
+        {"data_storage",   &init_data_storage},
+        {"e_link",         &init_elink},
+        {"global_utils",   &init_global_utils},
+        {"i2c",            &init_i2c},
+        {"img_processing", &init_img_processing},
+        {"mode",           &init_mode},
+        {"sensors",        &init_sensors},
+        {"spi",            &init_spi},
+        {"telemetry",      &init_telemetry},
+        {"thermal",        &init_thermal},
+        {"tracking",       &init_tracking}
 };
 
-static void sigint_handler(int signum){
+static void sigint_handler(int signum) {
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
     stop_watchdog();
     _exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char const *argv[]){
+int main(int argc, char const *argv[]) {
 
     sa.sa_handler = sigint_handler;
     sigaction(SIGINT, &sa, NULL);
@@ -70,44 +67,40 @@ int main(int argc, char const *argv[]){
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */
 
-    ret = mlockall(MCL_CURRENT|MCL_FUTURE);
-    if( ret != 0 ){
+    ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+    if (ret != 0) {
         fprintf(stderr,
-            "\ninit: Failed mlockall. Return value: %d, %s\n\n", errno, strerror(errno));
+                "\ninit: Failed mlockall. Return value: %d, %s\n\n", errno, strerror(errno));
         //return FAILURE;
     }
 
     int count = 0;
-    for(int i=0; i<MODULE_COUNT; ++i){
+    for (int i = 0; i < MODULE_COUNT; ++i) {
         ret = init_sequence[i].init();
-        if( ret == SUCCESS ){
+        if (ret == SUCCESS) {
             fprintf(stderr, "Module \"%s\" initialised successfully.\n\n",
-                init_sequence[i].name);
-        } else if( ret == FAILURE ){
+                    init_sequence[i].name);
+        } else if (ret == FAILURE) {
             fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d\n\n",
-                init_sequence[i].name, ret);
+                    init_sequence[i].name, ret);
             ++count;
         } else {
             fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n\n",
-                init_sequence[i].name, ret, strerror(ret));
+                    init_sequence[i].name, ret, strerror(ret));
             ++count;
         }
     }
 
     fprintf(stdout,
-        "\nA total of %d modules initialised successfully and %d failed.\n\n",
-        MODULE_COUNT-count, count);
+            "\nA total of %d modules initialised successfully and %d failed.\n\n",
+            MODULE_COUNT - count, count);
 
-    if(count != 0){
+    if (count != 0) {
         return FAILURE;
     }
 
-    while(1){
+    while (1) {
         sleep(1000);
-
-//        //todo: delet this!
-//        send_data_packet("Hello there!");
-//        sleep(1);
     }
 
     return SUCCESS;

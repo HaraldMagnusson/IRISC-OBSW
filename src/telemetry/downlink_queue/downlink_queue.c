@@ -12,23 +12,23 @@
  * linked list to solve the priority sorting, where the head of the list is
  * of a highest priority.
  *
- * /todo: Question - In header file, do we define every prototype that we need
- *        to use, or just the ones that are used outside, and the rest in the
- *        file locally?
- * /todo: Question - Do we define MAX_LENGTH for the queue? If so, is it max
- *        size of the data in it, or max number of nodes?
- * /todo: Define the data types for the telemetry.
- * /todo: Define priority values for the possible telemetry types.
+ * @TODO Question - In header file, do we define every prototype that we need
+ *       to use, or just the ones that are used outside, and the rest in the
+ *       file locally?
+ * @TODO Question - Do we define MAX_LENGTH for the queue? If so, is it max
+ *       size of the data in it, or max number of nodes?
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "downlink_queue.h"
 #include "global_utils.h"
 
+#include "downlink_queue.h"
+
 pthread_mutex_t downlink_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t queue_non_empty_cond = PTHREAD_COND_INITIALIZER;
 
 int init_downlink_queue(void) {
     return SUCCESS;
@@ -68,17 +68,7 @@ downlink_node *new_node(int d, int p) {
 int is_empty(downlink_node **head) {
     return (*head) == NULL;
 }
-//int is_empty(downlink_node **head)
-//{
-//    return (*head) == NULL;
-//}
 
-/**
- * Return the value at head of the list.
- *
- * @param head  Pointer to the first node of the linked list.
- * @return      Data from the head node.
- */
 int peek(downlink_node **head) {
     if (!is_empty(head)) {
         return (*head)->data;
@@ -95,15 +85,19 @@ int peek(downlink_node **head) {
  * @return      Data from the popped node.
  */
 int pop(downlink_node **head) {
-    if (!is_empty(head)) {
-        downlink_node *temp = *head;
-        int data = (*head)->data;
-        (*head) = (*head)->next;
-        free(temp);
-        return data;
-    } else {
-        return FAILURE;
+    pthread_mutex_lock(&downlink_mutex);
+
+    while (is_empty(head)) {
+        pthread_cond_wait(&queue_non_empty_cond, &downlink_mutex);
     }
+
+    downlink_node *temp = *head;
+    int data = (*head)->data;
+    (*head) = (*head)->next;
+    free(temp);
+
+    pthread_mutex_unlock(&downlink_mutex);
+    return data;
 }
 
 /**
@@ -114,34 +108,44 @@ int pop(downlink_node **head) {
  * @param p     Priority of the data.
  */
 void push(downlink_node **head, int d, int p) {
+    pthread_mutex_lock(&downlink_mutex);
     downlink_node *start = (*head);
 
-    // Create new node
-    downlink_node *temp = new_node(d, p);
-
-    // Special Case: The head of list has lesser
-    // priority than new node. So insert new
-    // node before head node and change head node.
-    if ((*head)->priority > p) {
-        // Insert New Node before head
-        temp->next = *head;
-        (*head) = temp;
-    } else {
-        // Traverse the list and find a
-        // position to insert new node
-        while (start->next != NULL &&
-               start->next->priority <= p) {
-            start = start->next;
+    if (!is_empty(head)) {
+        // Create new node
+        downlink_node *temp = new_node(d, p);
+        // Special Case: The head of list has lesser
+        // priority than new node. So insert new
+        // node before head node and change head node.
+        if ((*head)->priority > p) {
+            // Insert New Node before head
+            temp->next = *head;
+            (*head) = temp;
+        } else {
+            // Traverse the list and find a
+            // position to insert new node
+            while (start->next != NULL &&
+                   start->next->priority <= p) {
+                start = start->next;
+            }
+            // Either at the ends of the list
+            // or at required position
+            temp->next = start->next;
+            start->next = temp;
         }
-        // Either at the ends of the list
-        // or at required position
-        temp->next = start->next;
-        start->next = temp;
+    } else {
+        *head = new_node(d, p);
     }
+
+    pthread_mutex_unlock(&downlink_mutex);
+    pthread_cond_signal(&queue_non_empty_cond);
 }
 
 /**
  * Put data into the queue.
+ * (This function exists solely for readability purposes, so some-
+ * thing like `pop()` or `push()` won't appear somewhere without
+ * context.)
  *
  * @param head  Pointer to the first node of the linked list.
  * @param d     Data to be sent.
@@ -149,33 +153,20 @@ void push(downlink_node **head, int d, int p) {
  * @return      0
  */
 int send_telemetry_local(downlink_node **head, int d, int p) {
-
-    pthread_mutex_lock(&downlink_mutex);
-
-    if (!is_empty(head)) {
-        push(head, d, p);
-    } else {
-        *head = new_node(d, p);
-    }
-
-    pthread_mutex_unlock(&downlink_mutex);
-
+    push(head, d, p);
     return SUCCESS;
 }
 
 /**
  * Return the data of the oldest message of the highest priority.
+ * (This function exists solely for readability purposes, so some-
+ * thing like `pop()` or `push()` won't appear somewhere without
+ * context.)
  *
  * @param head  Pointer to the first node of the linked list.
  * @return      Data from the first node of the linked list.
  */
 int read_downlink_queue(downlink_node **head) {
-
-    pthread_mutex_lock(&downlink_mutex);
-
     int data = pop(head);
-
-    pthread_mutex_unlock(&downlink_mutex);
-
     return data;
 }

@@ -9,4 +9,4 @@
 #pragma once
 
 /* initialise the telemetry component */
-int init_telemetry( void );
+int init_telemetry(void);
