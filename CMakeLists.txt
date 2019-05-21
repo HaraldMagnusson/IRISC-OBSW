@@ -47,9 +47,17 @@ set(SOURCES
 	${SCR_DIR}/watchdog/watchdog.c
 )
 
+# list of libraries
+set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
+set(LIBS
+    ${LIB_DIR}/libASICamera2.so
+)
+
 #remove filenames from source files to add include directories
 set(DIRS ${SOURCES})
 string(REGEX REPLACE "\\/[^\\/]*\\.c" "" DIRS "${DIRS}")
 include_directories(${DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
 add_executable(irisc-obsw ${SOURCES})
+target_link_libraries(irisc-obsw ${LIBS})

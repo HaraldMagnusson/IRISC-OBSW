@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	cd build && $(MAKE)
+	clear && cd build && $(MAKE)
 
 gen:
 	cd build && cmake .. --graphviz=deps.gv
