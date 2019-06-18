@@ -12,11 +12,8 @@
  * linked list to solve the priority sorting, where the head of the list is
  * of a highest priority.
  *
- * @TODO Question - In header file, do we define every prototype that we need
- *       to use, or just the ones that are used outside, and the rest in the
- *       file locally?
- * @TODO Question - Do we define MAX_LENGTH for the queue? If so, is it max
- *       size of the data in it, or max number of nodes?
+ * @TODO Define MAX_LENGTH for the queue. If so, is it max size of the data
+ *       in it, or max number of nodes?
  */
 
 #include <stdio.h>
@@ -29,6 +26,8 @@
 
 pthread_mutex_t downlink_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t queue_non_empty_cond = PTHREAD_COND_INITIALIZER;
+
+static downlink_node *downlink_queue = NULL;
 
 int init_downlink_queue(void) {
     return SUCCESS;
@@ -147,13 +146,13 @@ void push(downlink_node **head, int d, int p) {
  * thing like `pop()` or `push()` won't appear somewhere without
  * context.)
  *
- * @param head  Pointer to the first node of the linked list.
  * @param d     Data to be sent.
- * @param p     Priority of the data.
+ * @param p     Priority of the data (lower `p` indicates higher
+ *              priority).
  * @return      0
  */
-int send_telemetry_local(downlink_node **head, int d, int p) {
-    push(head, d, p);
+int send_telemetry_local(int d, int p) {
+    push(&downlink_queue, d, p);
     return SUCCESS;
 }
 
@@ -163,10 +162,9 @@ int send_telemetry_local(downlink_node **head, int d, int p) {
  * thing like `pop()` or `push()` won't appear somewhere without
  * context.)
  *
- * @param head  Pointer to the first node of the linked list.
  * @return      Data from the first node of the linked list.
  */
-int read_downlink_queue(downlink_node **head) {
-    int data = pop(head);
+int read_downlink_queue() {
+    int data = pop(&downlink_queue);
     return data;
 }

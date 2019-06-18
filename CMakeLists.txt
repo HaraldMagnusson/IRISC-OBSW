@@ -4,7 +4,7 @@ project(irisc_obsw)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # compiler flags
-set(CFLAGS "-O2 -std=gnu17 -Wall")
+set(CFLAGS "-O2 -std=gnu11 -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
 
 # linker flags

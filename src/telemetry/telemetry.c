@@ -25,7 +25,6 @@
 
 #define MODULE_COUNT 2
 
-static downlink_node *downlink_queue = NULL;
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
@@ -36,7 +35,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 // TODO: For test purposes only!
 void *test_telemetry_generator() {
     for (int i = 0; i < 100; ++i) {
-        send_telemetry_local(&downlink_queue, i, 0);
+        send_telemetry_local(i, 0);
     }
     return NULL;
 }
@@ -52,7 +51,7 @@ void *test_telemetry_generator() {
 void *telemetry_sender() {
     while (1) {
         char msg[64];
-        int num = read_downlink_queue(&downlink_queue);
+        int num = read_downlink_queue();
         sprintf(msg, "Message nr.%d", num);
         send_data_packet(msg);
     }
@@ -80,4 +79,17 @@ int init_telemetry(void) {
     pthread_create(&generator, NULL, test_telemetry_generator, NULL);
 
     return SUCCESS;
+}
+
+/**
+ * Put data into the downlink queue.
+ *
+ * @param d     Data to be sent.
+ * @param p     Priority of the data (lower `p` indicates higher
+ *              priority).
+ *
+ * @return      0
+ */
+int send_telemetry(int d, int p) {
+    return send_telemetry_local(d, p);
 }

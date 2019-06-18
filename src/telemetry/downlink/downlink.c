@@ -19,10 +19,10 @@ static int udp_socket_;
 static struct sockaddr_in UDP_SERVER;
 
 /* prototypes declaration */
-int init_upd_socket(void);
+int init_udp_socket(void);
 
 int init_downlink(void) {
-    int ret = init_upd_socket();
+    int ret = init_udp_socket();
     if (ret != SUCCESS) {
         return ret;
     }
@@ -39,7 +39,7 @@ int init_downlink(void) {
  *
  * @return
  */
-int init_upd_socket(void) {
+int init_udp_socket(void) {
     int ret;
 
     UDP_SERVER.sin_family = AF_INET;
