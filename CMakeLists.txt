@@ -8,7 +8,7 @@ set(CFLAGS "-O2 -std=gnu11 -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
 
 # linker flags
-set(LDFLAGS "-lrt -pthread")
+set(LDFLAGS "-lrt -lm -pthread")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
@@ -60,14 +60,14 @@ set(SIMULINK
     ${SIM_DIR}/R2019a/simulink/include
 )
 
-file(GLOB_RECURSE SOURCES_2 RELATIVE ${CMAKE_SOURCE_DIR} "${SIM_DIR}/R2019a/*.c/${SIM_DIR}/R2019a/*.c")
+file(GLOB_RECURSE SOURCES_2 RELATIVE ${CMAKE_SOURCE_DIR} "${SIM_DIR}/R2019a/*.c")
 file(GLOB_RECURSE SOURCES_1 RELATIVE ${CMAKE_SOURCE_DIR} "${SIM_DIR}/simple_sim_grt_rtw/*.c")
 file(GLOB_RECURSE INCLUDES RELATIVE ${CMAKE_SOURCE_DIR} "${SIM_DIR}/R2019a/*.h")
 
 #set(SRC ${SOURCES_1} ${SOURCES_2})
 set(SOURCES_X ${SOURCES_1} ${SOURCES_2})
 set(SRC ${SOURCES_X} ${INCLUDES})
-list(REMOVE_ITEM SRC "R2019a/rtw/c/src/common/rt_main.c")
+list(REMOVE_ITEM SRC "src/tracking/controller/R2019a/rtw/c/src/common/rt_main.c")
 list(TRANSFORM SRC PREPEND "${CMAKE_SOURCE_DIR}/")
 
 #remove filenames from source files to add include directories
