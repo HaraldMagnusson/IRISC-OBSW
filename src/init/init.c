@@ -30,7 +30,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 14
+#define MODULE_COUNT 2
 
 static int ret;
 static struct sigaction sa;
@@ -39,18 +39,18 @@ static struct sigaction sa;
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"watchdog", &init_watchdog},
     {"camera", &init_camera},
-    {"command", &init_command},
-    {"data_storage", &init_data_storage},
-    {"e_link", &init_elink},
-    {"global_utils", &init_global_utils},
-    {"i2c", &init_i2c},
-    {"img_processing", &init_img_processing},
-    {"mode", &init_mode},
-    {"sensors", &init_sensors},
-    {"spi", &init_spi},
-    {"telemetry", &init_telemetry},
-    {"thermal", &init_thermal},
-    {"tracking", &init_tracking}
+//    {"command", &init_command},
+//    {"data_storage", &init_data_storage},
+//    {"e_link", &init_elink},
+//    {"global_utils", &init_global_utils},
+//    {"i2c", &init_i2c},
+//    {"img_processing", &init_img_processing},
+//    {"mode", &init_mode},
+//    {"sensors", &init_sensors},
+//    {"spi", &init_spi},
+//    {"telemetry", &init_telemetry},
+//    {"thermal", &init_thermal},
+//    {"tracking", &init_tracking}
 };
 
 static void sigint_handler(int signum){
@@ -78,8 +78,8 @@ int main(int argc, char const *argv[]){
     for(int i=0; i<MODULE_COUNT; ++i){
         ret = init_sequence[i].init();
         if( ret == SUCCESS ){
-            fprintf(stderr, "Module \"%s\" initialised successfully.\n\n",
-                init_sequence[i].name);
+            //fprintf(stderr, "Module \"%s\" initialised successfully.\n\n",
+            //    init_sequence[i].name);
         } else if( ret == FAILURE ){
             fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d\n\n",
                 init_sequence[i].name, ret);
@@ -91,13 +91,21 @@ int main(int argc, char const *argv[]){
         }
     }
 
-    fprintf(stdout,
-        "\nA total of %d modules initialised successfully and %d failed.\n\n",
-        MODULE_COUNT-count, count);
+    //fprintf(stdout,
+    //    "\nA total of %d modules initialised successfully and %d failed.\n\n",
+    //    MODULE_COUNT-count, count);
 
     if(count != 0){
         return FAILURE;
     }
+
+    expose_nir(50, 1);
+    sleep(1);
+    save_img_nir();
+
+    expose_guiding(50, 1);
+    sleep(1);
+    save_img_guiding();
 
     while(1){
         sleep(1000);
