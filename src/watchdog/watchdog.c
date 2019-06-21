@@ -20,6 +20,8 @@
 /* Filepath for watchdog */
 #ifdef __aarch64__
     #define WATCHDOG_DIR "/dev/watchdog"
+#elif defined(__arm__)
+    #define WATCHDOG_DIR "/dev/watchdog"
 #else
     #define WATCHDOG_DIR "/tmp/watchdog"
 #endif
