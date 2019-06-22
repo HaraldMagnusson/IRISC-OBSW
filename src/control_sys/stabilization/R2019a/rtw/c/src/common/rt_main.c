@@ -10,7 +10,7 @@
  *   or multitask step function is employed.
  *
  *   This file is a useful starting point for creating a custom main when 
- *   targeting a custom floating point processor or integer micro-controller.
+ *   targeting a custom floating point processor or integer micro-stabilization.
  *
  *   Alternatively for ERT targets, you can generate a sample ert_main.c file 
  *   with the generated code by selecting the "Generate an example main program"

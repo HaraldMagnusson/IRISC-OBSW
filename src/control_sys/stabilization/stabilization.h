@@ -9,5 +9,5 @@
 
 #pragma once
 
-/* initialise the controller component */
-int init_controller( void );
+/* initialise the stabilization component */
+int init_stabilization(void);

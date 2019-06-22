@@ -12,22 +12,22 @@
 
 #include "global_utils.h"
 
-#include "controller.h"
+#include "stabilization.h"
 #include "current_target.h"
 #include "gimbal.h"
-#include "target_selecting.h"
+#include "target_selection.h"
 
 #define MODULE_COUNT 4
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"controller", &init_controller},
+    {"stabilization", &init_stabilization},
     {"current_target", &init_current_target},
     {"gimbal", &init_gimbal},
-    {"target_selecting", &init_target_selecting}
+    {"target_selection", &init_target_selection}
 };
 
-int init_tracking( void ){
+int init_control_sys(void){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

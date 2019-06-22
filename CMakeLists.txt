@@ -39,16 +39,16 @@ set(SOURCES
     ${SCR_DIR}/telemetry/downlink/downlink.c
     ${SCR_DIR}/telemetry/downlink_queue/downlink_queue.c
     ${SCR_DIR}/thermal/thermal.c
-    ${SCR_DIR}/tracking/tracking.c
-    ${SCR_DIR}/tracking/controller/controller.c
-    ${SCR_DIR}/tracking/current_target/current_target.c
-    ${SCR_DIR}/tracking/gimbal/gimbal.c
-    ${SCR_DIR}/tracking/target_selecting/target_selecting.c
+    ${SCR_DIR}/control_sys/control_sys.c
+    ${SCR_DIR}/control_sys/stabilization/stabilization.c
+    ${SCR_DIR}/control_sys/current_target/current_target.c
+    ${SCR_DIR}/control_sys/gimbal/gimbal.c
+    ${SCR_DIR}/control_sys/target_selection/target_selection.c
     ${SCR_DIR}/watchdog/watchdog.c
 )
 
 #list of sources for exported simulink model
-set(SIM_DIR ${CMAKE_SOURCE_DIR}/src/tracking/controller)
+set(SIM_DIR ${CMAKE_SOURCE_DIR}/src/control_sys/stabilization)
 message(${SIM_DIR})
 set(SIMULINK
     ${SIM_DIR}/R2019a
@@ -67,7 +67,7 @@ file(GLOB_RECURSE INCLUDES RELATIVE ${CMAKE_SOURCE_DIR} "${SIM_DIR}/R2019a/*.h")
 #set(SRC ${SOURCES_1} ${SOURCES_2})
 set(SOURCES_X ${SOURCES_1} ${SOURCES_2})
 set(SRC ${SOURCES_X} ${INCLUDES})
-list(REMOVE_ITEM SRC "src/tracking/controller/R2019a/rtw/c/src/common/rt_main.c")
+list(REMOVE_ITEM SRC "src/control_sys/stabilization/R2019a/rtw/c/src/common/rt_main.c")
 list(TRANSFORM SRC PREPEND "${CMAKE_SOURCE_DIR}/")
 
 #remove filenames from source files to add include directories

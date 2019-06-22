@@ -26,7 +26,7 @@
 #include "spi.h"
 #include "telemetry.h"
 #include "thermal.h"
-#include "tracking.h"
+#include "control_sys.h"
 #include "watchdog.h"
 
 /* not including init */
@@ -50,7 +50,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"spi", &init_spi},
     {"telemetry", &init_telemetry},
     {"thermal", &init_thermal},
-    {"tracking", &init_tracking}
+    {"control_sys", &init_control_sys}
 };
 
 static void sigint_handler(int signum){

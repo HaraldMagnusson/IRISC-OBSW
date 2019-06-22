@@ -9,8 +9,8 @@
 
 #pragma once
 
-/* initialise the tracking component */
-int init_tracking( void );
+/* initialise the control_sys component */
+int init_control_sys(void);
 
 /* return the current target to be tracked */
 void get_target( void );

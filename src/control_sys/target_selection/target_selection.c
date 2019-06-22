@@ -8,7 +8,8 @@
  * -----------------------------------------------------------------------------
  */
 
-#pragma once
+#include "global_utils.h"
 
-/* initialise the target selecting component */
-int init_target_selecting( void );
+int init_target_selection(void){
+    return SUCCESS;
+}

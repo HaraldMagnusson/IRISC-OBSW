@@ -16,7 +16,7 @@ ExtU_simple_sim_T simple_sim_U;
 ExtY_simple_sim_T simple_sim_Y;
 
 
-int init_controller( void ){
+int init_stabilization(void){
     return SUCCESS;
 }
 
