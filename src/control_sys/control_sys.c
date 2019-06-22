@@ -21,10 +21,10 @@
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"stabilization", &init_stabilization},
+    {"target_selection", &init_target_selection},
     {"current_target", &init_current_target},
-    {"gimbal", &init_gimbal},
-    {"target_selection", &init_target_selection}
+    {"stabilization", &init_stabilization},
+    {"gimbal", &init_gimbal}
 };
 
 int init_control_sys(void){

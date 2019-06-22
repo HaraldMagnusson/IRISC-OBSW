@@ -9,6 +9,19 @@
 
 #pragma once
 
+// values for the PID controller
+#define Kp  1
+#define Ki  0
+#define Kd  1
+
+// threshold value for motor angular rate in deg/s
+#define MOTOR_ANG_RATE_THRS 0.05
+
+// values shared by the control system, have to be mutexed
+float filter_current_position;    // taken from the star tracker / gyroscope filter
+float tracking_output_angle;      // taken from the tracking algorithm
+float stabilization_output_angle; // taken from the stabilization algorithm
+
 /* initialise the control_sys component */
 int init_control_sys(void);
 
