@@ -12,6 +12,9 @@
 #define SUCCESS 0
 #define FAILURE -1
 
+#define EXP_NOT_READY 1
+#define EXP_FAILED 3
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void);
 typedef struct {

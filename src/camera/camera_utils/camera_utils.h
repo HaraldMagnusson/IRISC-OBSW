@@ -20,7 +20,7 @@
 /* cam_setup:
  * Set up and initialize a given ZWO ASI camera.
  *
- * input: 
+ * input:
  *      cam_name specifies which camera to initialize:
  *          'n' for nir camera
  *          'g' for guiding camera
@@ -54,14 +54,14 @@ int expose(int id, int exp, int gain);
  * return if that is the case. Otherwise the image will be fetched from the
  * camera and saved.
  * 
- * input: 
+ * input:
  *      cam_info for relevant camera
  *
  * return:
  *      SUCCESS:       operation is successful
  *      EXP_NOT_READY: exposure still ongoing, wait a bit and call again
  *      EXP_FAILED:    exposure failed and must be retried
- *      FAILURE:       storing the image failed, log written to stderr 
+ *      FAILURE:       saving the image failed, log written to stderr
  *
  * TODO:
  *      1. fix system for filenames

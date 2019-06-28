@@ -8,12 +8,12 @@ set(CFLAGS "-O2 -std=gnu17 -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
 
 # linker flags
-set(LDFLAGS "-lrt -pthread")
+set(LDFLAGS "-lrt -pthread -lcfitsio")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
 set(SCR_DIR ${CMAKE_SOURCE_DIR}/src)
-set(SOURCES 
+set(SOURCES
 	${SCR_DIR}/camera/camera.c
 	${SCR_DIR}/camera/camera_control/camera_control.c
 	${SCR_DIR}/camera/camera_utils/camera_utils.c

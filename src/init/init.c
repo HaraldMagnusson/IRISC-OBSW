@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <time.h>
 
 #include "camera.h"
 #include "command.h"
@@ -99,17 +100,24 @@ int main(int argc, char const *argv[]){
         return FAILURE;
     }
 
-    expose_nir(50, 1);
-    sleep(1);
-    save_img_nir();
+    printf("\n\n   CAMERA\n");
+    printf("exposing\n");
+    expose_nir(1000, 100);
+    printf("saving\n");
 
-    expose_guiding(50, 1);
-    sleep(1);
-    save_img_guiding();
-
-    while(1){
-        sleep(1000);
+    struct timespec polling_time = {0, 1000000};
+    ret = save_img_nir();
+    while(ret == EXP_NOT_READY){
+        nanosleep(&polling_time, NULL);
+        ret = save_img_nir();
     }
+
+    if(ret != SUCCESS){
+        printf("%d\n", ret);
+        return FAILURE;
+    }
+
+    printf("done\n");
 
     return SUCCESS;
 }
