@@ -23,14 +23,14 @@ int init_submodules(const module_init_t *init_sequence, int module_count) {
     for(int i=0; i<module_count; ++i){
         ret = init_sequence[i].init();
         if( ret == SUCCESS ){
-            fprintf(stderr, "\tSub module \"%s\" initialised successfully.\n",
+            logging(INFO, "INIT", " - Sub module \"%s\" initialised successfully.",
                     init_sequence[i].name);
         } else if( ret == FAILURE ){
-            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d\n",
+            logging(ERROR, "INIT", " - Sub module \"%s\" FAILED TO INITIALISE, return value: %d",
                     init_sequence[i].name, ret);
             return ret;
         } else {
-            fprintf(stderr, "\tSub module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n",
+            logging(ERROR, "INIT", " - Sub module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
                     init_sequence[i].name, ret, strerror(ret));
             return ret;
         }

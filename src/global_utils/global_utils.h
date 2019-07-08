@@ -15,7 +15,7 @@
 #define DEBUG   0
 #define INFO    1
 #define WARN    2
-#define EREOR   3
+#define ERROR   3
 #define CRIT    4
 
 /* struct used for initialisation of modules */
