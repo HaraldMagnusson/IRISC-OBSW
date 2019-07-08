@@ -12,6 +12,12 @@
 #define SUCCESS 0
 #define FAILURE -1
 
+#define DEBUG   0
+#define INFO    1
+#define WARN    2
+#define EREOR   3
+#define CRIT    4
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void);
 typedef struct {
@@ -23,3 +29,6 @@ typedef struct {
 int init_global_utils( void );
 
 int init_submodules( const module_init_t init_sequence[], int module_count);
+
+int logging(int level, char module_name[12],
+            const char * format, ... );

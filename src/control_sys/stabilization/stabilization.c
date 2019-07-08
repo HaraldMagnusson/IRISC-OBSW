@@ -24,7 +24,7 @@
 void *stabilization_main_loop();
 float saturate_output(float given_output);
 
-float stabilization_timestep = 0.01;
+float stabilization_timestep = 0.5;
 
 float target_position = 0;
 float current_position = 0;
@@ -52,26 +52,28 @@ void *stabilization_main_loop() {
         integral = integral + position_error;
         derivative = position_error - last_position_error;
 
-        fprintf(stderr, "| STABILIZATION | current pos: %f\n", current_position);
-        fprintf(stderr, "| STABILIZATION | target pos: %f\n", target_position);
-        fprintf(stderr, "| STABILIZATION | integral: %f\n", integral);
-        fprintf(stderr, "| STABILIZATION | derivative: %f\n", derivative);
+        logging(DEBUG, "STABILIZATION", "current pos: %f", current_position);
+
+//        fprintf(stderr, "| STABILIZATION | current pos: %f\n", current_position);
+//        fprintf(stderr, "| STABILIZATION | target pos: %f\n", target_position);
+//        fprintf(stderr, "| STABILIZATION | integral: %f\n", integral);
+//        fprintf(stderr, "| STABILIZATION | derivative: %f\n", derivative);
 
         output = (Kp * position_error) + (Ki * integral) + (Kd * derivative);
-        fprintf(stderr, "| STABILIZATION | before saturation: %f\n", output);
+//        fprintf(stderr, "| STABILIZATION | before saturation: %f\n", output);
         output = saturate_output(output);
-        fprintf(stderr, "| STABILIZATION | after saturation: %f\n", output);
+//        fprintf(stderr, "| STABILIZATION | after saturation: %f\n", output);
 
+        stabilization_output_angle = output;
         filter_current_position = current_position + output*stabilization_timestep;
 
-        fprintf(stderr, "----------------------\033[22D\033[7A");
+//        fprintf(stderr, "----------------------\033[22D\033[7A");
         usleep(stabilization_timestep*1000000);
     }
     return NULL;
 }
 
 float saturate_output(float given_output){
-    fprintf(stderr, "| STABILIZATION | before saturation: %f\n", given_output);
     if (given_output >= MOTOR_ANG_RATE_THRS) return MOTOR_ANG_RATE_THRS;
     else if (given_output <= -MOTOR_ANG_RATE_THRS) return -MOTOR_ANG_RATE_THRS;
     else return given_output;

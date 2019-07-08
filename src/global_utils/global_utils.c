@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <time.h>
 
 #include "global_utils.h"
 
@@ -35,4 +37,49 @@ int init_submodules(const module_init_t *init_sequence, int module_count) {
     }
 
     return SUCCESS;
+}
+
+char logging_levels[5][7] =
+        { "DEBUG",
+          "INFO",
+          "WARN",
+          "ERROR",
+          "CRIT"
+        };
+
+int logging(int level, char module_name[12],
+            const char * format, ... ) {
+    time_t now;
+    time(&now);
+    struct tm *local = localtime(&now);
+    int hours = local->tm_hour;
+    int minutes = local->tm_min;
+    int seconds = local->tm_sec;
+
+    switch (level) {
+        case 0 :
+        case 1 :
+            fprintf(stderr, "\033[0m");
+            break;
+        case 2 :
+            fprintf(stderr, "\033[0;93m");
+            break;
+        case 3 :
+            fprintf(stderr, "\033[0;91m");
+            break;
+        case 4 :
+            fprintf(stderr, "\033[1;37;101m");
+            break;
+    }
+
+    char buffer[256];
+    va_list args;
+    va_start (args, format);
+    vsprintf (buffer, format, args);
+    // perror (buffer);
+    va_end (args);
+
+    fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
+            hours, minutes, seconds,
+            logging_levels[level], module_name, buffer);
 }
