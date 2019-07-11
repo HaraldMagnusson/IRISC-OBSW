@@ -23,19 +23,19 @@
 //ExtY_simple_sim_T simple_sim_Y;
 
 void *stabilization_main_loop();
-float saturate_output(float given_output);
+double saturate_output(double given_output);
 
-float stabilization_timestep = 0.01;
-float sim_time = 0;
+double stabilization_timestep = 0.01;
+double sim_time = 0;
 
-float target_position = 0;
-float current_position = 0;
-float position_error = 0;
-float last_position_error = 0;
-float output = 0;
+double target_position = 0;
+double current_position = 0;
+double position_error = 0;
+double last_position_error = 0;
+double output = 0;
 
-float integral = 0;
-float derivative = 0;
+double integral = 0;
+double derivative = 0;
 
 FILE *simdata;
 
@@ -52,33 +52,38 @@ int init_stabilization(void){
 
 void *stabilization_main_loop() {
     sleep(1);
+    last_position_error = tracking_output_angle - filter_current_position;
     while(sim_time <= 20){
         sim_time = sim_time + stabilization_timestep;
 
-        target_position = tracking_output_angle;
+//        target_position = tracking_output_angle;
+        target_position = tracking_output_angle + sim_time/20;
+
         current_position = filter_current_position;
         position_error = target_position - current_position;
 
         integral = integral + position_error*stabilization_timestep;
-//        derivative = (position_error - last_position_error)/stabilization_timestep;
-        derivative = (position_error - last_position_error);
+        derivative = (position_error - last_position_error)/stabilization_timestep;
+//        derivative = (position_error - last_position_error);
 
-        logging(DEBUG, "STABILIZATION", "current time: %f", sim_time);
-        logging(DEBUG, "STABILIZATION", "current pos: %f", current_position);
+        last_position_error = position_error;
 
-        logging(DEBUG, "STABILIZATION", "target pos: %f", target_position);
-        logging(DEBUG, "STABILIZATION", "integral: %f", integral);
-        logging(DEBUG, "STABILIZATION", "derivative: %f", derivative);
+        logging(DEBUG, "STABILIZATION", "current time: %.10f", sim_time);
+        logging(DEBUG, "STABILIZATION", "current pos: %.10f", current_position);
+
+        logging(DEBUG, "STABILIZATION", "target pos: %.10f", target_position);
+        logging(DEBUG, "STABILIZATION", "integral: %.10f", integral);
+        logging(DEBUG, "STABILIZATION", "derivative: %.10f", derivative);
 
         output = (Kp * position_error) + (Ki * integral) + (Kd * derivative);
-        logging(DEBUG, "STABILIZATION", "before saturation: %f", output);
-        output = saturate_output(output);
-        logging(DEBUG, "STABILIZATION", "after saturation: %f", output);
+        logging(DEBUG, "STABILIZATION", "before saturation: %.10f", output);
+//        output = saturate_output(output);
+        logging(DEBUG, "STABILIZATION", "after saturation: %.10f", output);
 
         stabilization_output_angle = output;
         filter_current_position = current_position + output*stabilization_timestep;
-//        fprintf(simdata, "%f,%f\n", sim_time, current_position);
-        fprintf(simdata, "%f,%f,%f,%f,%f,%f,%f\n",
+//        fprintf(simdata, "%.10f,%.10f\n", sim_time, current_position);
+        fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
                 sim_time, current_position, position_error, target_position, Ki*integral, Kd*derivative,Kp*position_error);
         fflush(simdata);
         fprintf(stderr, "\033[22D\033[7A");
@@ -88,7 +93,7 @@ void *stabilization_main_loop() {
     return NULL;
 }
 
-float saturate_output(float given_output){
+double saturate_output(double given_output){
     if (given_output >= MOTOR_ANG_RATE_THRS) return MOTOR_ANG_RATE_THRS;
     else if (given_output <= -MOTOR_ANG_RATE_THRS) return -MOTOR_ANG_RATE_THRS;
     else return given_output;
