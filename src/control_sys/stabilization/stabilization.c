@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <control_sys.h>
+#include <stdlib.h>
 
 #include <unistd.h>
 
@@ -24,7 +25,8 @@
 void *stabilization_main_loop();
 float saturate_output(float given_output);
 
-float stabilization_timestep = 0.5;
+float stabilization_timestep = 0.01;
+float sim_time = 0;
 
 float target_position = 0;
 float current_position = 0;
@@ -35,40 +37,53 @@ float output = 0;
 float integral = 0;
 float derivative = 0;
 
+FILE *simdata;
+
 int init_stabilization(void){
     stabilization_output_angle = 0;
+    simdata = fopen("./src/control_sys/"
+                    "stabilization/simdata.txt","w+");
     pthread_t main_loop;
-    pthread_create(&main_loop, NULL, stabilization_main_loop, NULL);
+    pthread_create(&main_loop, NULL,
+                   stabilization_main_loop, NULL);
+//    fclose(simdata);
     return SUCCESS;
 }
 
 void *stabilization_main_loop() {
     sleep(1);
-    while(1){
+    while(sim_time <= 20){
+        sim_time = sim_time + stabilization_timestep;
+
         target_position = tracking_output_angle;
         current_position = filter_current_position;
         position_error = target_position - current_position;
 
-        integral = integral + position_error;
-        derivative = position_error - last_position_error;
+        integral = integral + position_error*stabilization_timestep;
+//        derivative = (position_error - last_position_error)/stabilization_timestep;
+        derivative = (position_error - last_position_error);
 
+        logging(DEBUG, "STABILIZATION", "current time: %f", sim_time);
         logging(DEBUG, "STABILIZATION", "current pos: %f", current_position);
 
-//        fprintf(stderr, "| STABILIZATION | current pos: %f\n", current_position);
-//        fprintf(stderr, "| STABILIZATION | target pos: %f\n", target_position);
-//        fprintf(stderr, "| STABILIZATION | integral: %f\n", integral);
-//        fprintf(stderr, "| STABILIZATION | derivative: %f\n", derivative);
+        logging(DEBUG, "STABILIZATION", "target pos: %f", target_position);
+        logging(DEBUG, "STABILIZATION", "integral: %f", integral);
+        logging(DEBUG, "STABILIZATION", "derivative: %f", derivative);
 
         output = (Kp * position_error) + (Ki * integral) + (Kd * derivative);
-//        fprintf(stderr, "| STABILIZATION | before saturation: %f\n", output);
+        logging(DEBUG, "STABILIZATION", "before saturation: %f", output);
         output = saturate_output(output);
-//        fprintf(stderr, "| STABILIZATION | after saturation: %f\n", output);
+        logging(DEBUG, "STABILIZATION", "after saturation: %f", output);
 
         stabilization_output_angle = output;
         filter_current_position = current_position + output*stabilization_timestep;
-
-//        fprintf(stderr, "----------------------\033[22D\033[7A");
-        usleep(stabilization_timestep*1000000);
+//        fprintf(simdata, "%f,%f\n", sim_time, current_position);
+        fprintf(simdata, "%f,%f,%f,%f,%f,%f,%f\n",
+                sim_time, current_position, position_error, target_position, Ki*integral, Kd*derivative,Kp*position_error);
+        fflush(simdata);
+        fprintf(stderr, "\033[22D\033[7A");
+//        usleep(stabilization_timestep*1000000);
+        usleep(stabilization_timestep*10000);
     }
     return NULL;
 }

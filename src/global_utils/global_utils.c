@@ -13,6 +13,10 @@
 
 #include "global_utils.h"
 
+
+int debug_mode = 1;
+
+
 int init_global_utils( void ){
     return SUCCESS;
 }
@@ -49,6 +53,8 @@ char logging_levels[5][7] =
 
 int logging(int level, char module_name[12],
             const char * format, ... ) {
+    if (debug_mode == 0 && level == 0) return 0;
+
     time_t now;
     time(&now);
     struct tm *local = localtime(&now);
