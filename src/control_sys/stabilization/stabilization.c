@@ -57,14 +57,13 @@ void *stabilization_main_loop() {
         sim_time = sim_time + stabilization_timestep;
 
 //        target_position = tracking_output_angle;
-        target_position = tracking_output_angle + sim_time/20;
+        target_position = tracking_output_angle + sim_time/10;
 
         current_position = filter_current_position;
         position_error = target_position - current_position;
 
         integral = integral + position_error*stabilization_timestep;
         derivative = (position_error - last_position_error)/stabilization_timestep;
-//        derivative = (position_error - last_position_error);
 
         last_position_error = position_error;
 
@@ -84,11 +83,12 @@ void *stabilization_main_loop() {
         filter_current_position = current_position + output*stabilization_timestep;
 //        fprintf(simdata, "%.10f,%.10f\n", sim_time, current_position);
         fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
-                sim_time, current_position, position_error, target_position, Ki*integral, Kd*derivative,Kp*position_error);
+                sim_time, current_position, position_error, target_position,
+                Ki*integral, Kd*derivative,Kp*position_error);
         fflush(simdata);
         fprintf(stderr, "\033[22D\033[7A");
 //        usleep(stabilization_timestep*1000000);
-        usleep(stabilization_timestep*10000);
+//        usleep(stabilization_timestep*10000);
     }
     return NULL;
 }
