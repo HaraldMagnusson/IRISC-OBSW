@@ -10,15 +10,17 @@
 #include <string.h>
 
 #include "global_utils.h"
+#include "gps.h"
 #include "orientation.h"
 #include "sensor_poller.h"
 #include "sun.h"
 #include "temperature.h"
 
-#define MODULE_COUNT 4
+#define MODULE_COUNT 5
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
+    {"gps", &init_gps},
     {"orientation", &init_orientation},
     {"sensor_poller", &init_sensor_poller},
     {"sun", &init_sun},
