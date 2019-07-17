@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: GPS Poller
  * Parent Component: Sensors
- * Author(s): 
+ * Author(s): Harald Magnusson
  * Purpose: Poll the current gps position of the gondola.
  * -----------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@ set(CFLAGS "-O2 -std=gnu17 -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
 
 # linker flags
-set(LDFLAGS "-lrt -pthread")
+set(LDFLAGS "-lrt -pthread -lwiringPi")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
