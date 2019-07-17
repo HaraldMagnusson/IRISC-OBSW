@@ -43,7 +43,7 @@ int expose_guiding(int exp, int gain);
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img_guiding(void);
+int save_img_guiding(char* fn);
 
 /* expose_nir:
  * Start an exposure of the nir camera. Call save_img to store store
@@ -74,4 +74,4 @@ int expose_nir(int exp, int gain);
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img_nir(void);
+int save_img_nir(char* fn);

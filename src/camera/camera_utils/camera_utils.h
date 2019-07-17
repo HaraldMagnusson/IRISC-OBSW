@@ -67,4 +67,4 @@ int expose(int id, int exp, int gain);
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img(ASI_CAMERA_INFO* cam_info);
+int save_img(ASI_CAMERA_INFO* cam_info, char* fn);

@@ -47,4 +47,4 @@ int expose_nir_local(int exp, int gain);
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img_nir_local(void);
+int save_img_nir_local(char* fn);

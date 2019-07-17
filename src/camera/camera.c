@@ -67,8 +67,8 @@ int expose_guiding(int exp, int gain){
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img_guiding(void){
-    return save_img_guiding_local();
+int save_img_guiding(char* fn){
+    return save_img_guiding_local(fn);
 }
 
 /* expose_nir:
@@ -102,6 +102,6 @@ int expose_nir(int exp, int gain){
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img_nir(void){
-    return save_img_nir_local();
+int save_img_nir(char* fn){
+    return save_img_nir_local(fn);
 }

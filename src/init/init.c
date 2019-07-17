@@ -99,22 +99,22 @@ int main(int argc, char const *argv[]){
     if(count != 0){
         return FAILURE;
     }
-
-    printf("\n\n   CAMERA\n");
-    printf("exposing\n");
-    expose_nir(1000, 100);
-    printf("saving\n");
-
+    char fn[] = "images/ .fit";
+    char num[] = "0123456789";
     struct timespec polling_time = {0, 1000000};
-    ret = save_img_nir();
-    while(ret == EXP_NOT_READY){
-        nanosleep(&polling_time, NULL);
-        ret = save_img_nir();
-    }
 
-    if(ret != SUCCESS){
-        printf("%d\n", ret);
-        return FAILURE;
+    for(int ii=0; ii<10; ++ii){
+        printf("exposing image num: %d\n", ii);
+        expose_nir(1000, 125);
+
+        fn[7] = num[ii];
+
+        ret = save_img_nir(fn);
+        while(ret == EXP_NOT_READY){
+            nanosleep(&polling_time, NULL);
+            ret = save_img_nir(fn);
+        }
+        printf("saved image num: %d\n\n", ii);
     }
 
     printf("done\n");

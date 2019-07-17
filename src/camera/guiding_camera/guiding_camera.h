@@ -47,4 +47,4 @@ int expose_guiding_local(int exp, int gain);
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img_guiding_local(void);
+int save_img_guiding_local(char* fn);

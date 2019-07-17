@@ -17,7 +17,7 @@
 #include "global_utils.h"
 #include "camera_utils.h"
 
-int write_img(unsigned short*, ASI_CAMERA_INFO* cam_info);
+int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn);
 void yflip(unsigned short* buffer, int width, int height);
 
 /* cam_setup:
@@ -34,6 +34,7 @@ void yflip(unsigned short* buffer, int width, int height);
  * return:
  *      SUCCESS: operation is successful
  *      FAILURE: failure to set up camera, log written to stderr
+ *      ENODEV: incorrect camera name or camera disconnected
  */
 int cam_setup(ASI_CAMERA_INFO* cam_info, char cam_name){
 
@@ -50,7 +51,7 @@ int cam_setup(ASI_CAMERA_INFO* cam_info, char cam_name){
             break;
         default:
             fprintf(stderr, "Incorrect camera name: %c\n", cam_name);
-            return FAILURE;
+            return ENODEV;
     }
 
     /* seems like this one has to be called */
@@ -63,6 +64,7 @@ int cam_setup(ASI_CAMERA_INFO* cam_info, char cam_name){
         if(ret == ASI_ERROR_INVALID_INDEX){
             fprintf(stderr, "Error: Camera not connected: %c\n", cam_name);
             return SUCCESS;
+            // return ENODEV;
         }
         else if(ret != ASI_SUCCESS){
             fprintf(stderr, "Failed to fetch camera properties "
@@ -166,18 +168,21 @@ int expose(int id, int exp, int gain){
  *      1. fix system for filenames
  *      2. fix .fit header
  */
-int save_img(ASI_CAMERA_INFO* cam_info){
+int save_img(ASI_CAMERA_INFO* cam_info, char* fn){
 
-    int id = cam_info->CameraID;
+    int id = cam_info->CameraID, ret;
 
     /* check current exposure status */
     ASI_EXPOSURE_STATUS exp_stat;
     ASIGetExpStatus(id, &exp_stat);
     switch(exp_stat){
-        case EXP_NOT_READY:
+        case ASI_EXP_WORKING:
             return EXP_NOT_READY;
-        case EXP_FAILED:
+        case ASI_EXP_FAILED:
             return EXP_FAILED;
+        case ASI_EXP_IDLE:
+            fprintf(stderr, "save_img called before starting exposure\n");
+            return FAILURE;
         default:
             break;
     }
@@ -189,12 +194,16 @@ int save_img(ASI_CAMERA_INFO* cam_info){
     unsigned char* buffer = (unsigned char*) malloc(buffer_size);
 
     if(buffer == NULL){
-        fprintf(stderr, "cannot allocate memory for image buffer");
+        fprintf(stderr, "cannot allocate memory for image buffer\n");
         return FAILURE;
     }
 
     /* fetch data */
-    ASIGetDataAfterExp(id, buffer, buffer_size);
+    ret = ASIGetDataAfterExp(id, buffer, buffer_size);
+    if(ret != ASI_SUCCESS){
+        fprintf(stderr, "failed to fetch data from camera: %s\n", cam_info->Name);
+        return FAILURE;
+    }
 
     unsigned short* buff = (unsigned short*)buffer;
 
@@ -204,7 +213,7 @@ int save_img(ASI_CAMERA_INFO* cam_info){
 
     yflip(buff, width, height);
     printf("writing_img\n");
-    int ret = write_img(buff, cam_info);
+    ret = write_img(buff, cam_info, fn);
     if(ret != SUCCESS){
         return ret;
     }
@@ -247,7 +256,7 @@ int save_img(ASI_CAMERA_INFO* cam_info){
  *      buffer: a bitmap of size [height*width]
  *      cam_info: camera info object for camera capturing the image
  */
-int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info){
+int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn){
     fitsfile* fptr;
     int ret = 0;
 
@@ -255,8 +264,18 @@ int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info){
     long naxes[2] = {cam_info->MaxWidth, cam_info->MaxHeight};
     nelements = naxes[0] * naxes[1];
 
+    int fn_len = strlen(fn);
+    char fn_f[fn_len+2];
+    fn_f[0] = '!';
+    for(int ii=0; ii<fn_len+1; ++ii){
+        fn_f[ii+1] = fn[ii];
+    }
+
+    printf("\n%s \n", fn);
+    printf(" filename: %s\n\n", fn_f);
+
     printf("creating file\n");
-    fits_create_file(&fptr, "!tmp.fit", &ret);
+    fits_create_file(&fptr, fn_f, &ret);
     if(ret != 0){
         fits_report_error(stderr, ret);
         return FAILURE;
@@ -273,16 +292,16 @@ int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info){
     long exposure, gain;
     ASI_BOOL nein = ASI_FALSE;
     ASIGetControlValue(cam_info->CameraID, ASI_EXPOSURE, &exposure, &nein);
-    fits_update_key(fptr, TLONG, "EXPOSURE", &exposure,
-            "TOTAL EXPOSURE TIME", &ret);
+    fits_update_key(fptr, TLONG, "EXPOINUS", &exposure,
+            "Exposure time in us", &ret);
     if(ret != 0){
         fits_report_error(stderr, ret);
         return FAILURE;
     }
 
     ASIGetControlValue(cam_info->CameraID, ASI_GAIN, &gain, &nein);
-    fits_update_key(fptr, TLONG, "EXPOSURE", &gain,
-            "TOTAL EXPOSURE TIME", &ret);
+    fits_update_key(fptr, TLONG, "GAIN", &gain,
+            "The ratio of output / input", &ret);
     if(ret != 0){
         fits_report_error(stderr, ret);
         return FAILURE;
@@ -290,6 +309,31 @@ int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info){
 
     printf("writing img\n");
     fits_write_img(fptr, TSHORT, fpixel, nelements, buffer, &ret);
+    if(ret != 0){
+        fits_report_error(stderr, ret);
+        return FAILURE;
+    }
+
+    printf("writing date\n");
+    fits_write_date(fptr, &ret);
+    if(ret != 0){
+        fits_report_error(stderr, ret);
+        return FAILURE;
+    }
+
+    printf("writing checksum\n");
+    fits_write_chksum(fptr, &ret);
+    if(ret != 0){
+        fits_report_error(stderr, ret);
+        return FAILURE;
+    }
+
+    int data_ok, hdu_ok;
+    fits_verify_chksum(fptr, &data_ok, &hdu_ok, &ret);
+    printf("checksums check:\n"
+            "\tdata: %d\n"
+            "\thdu: %d\n",
+            data_ok, hdu_ok);
     if(ret != 0){
         fits_report_error(stderr, ret);
         return FAILURE;
