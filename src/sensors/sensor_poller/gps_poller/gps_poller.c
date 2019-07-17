@@ -70,7 +70,7 @@ static void* gps_thread_func(){
                     buffer[4] == 'G' &&
                     buffer[5] == 'A'){
 
-                for(int jj=0; jj<6; ++jj){
+                for(int jj=0; jj<1; ++jj){
                     fprintf(stderr, "\033[A\033[2K");
                 }
 
