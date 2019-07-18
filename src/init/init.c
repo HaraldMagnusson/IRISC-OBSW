@@ -70,8 +70,8 @@ int main(int argc, char const *argv[]){
 
     ret = mlockall(MCL_CURRENT|MCL_FUTURE);
     if( ret != 0 ){
-        fprintf(stderr,
-            "\ninit: Failed mlockall. Return value: %d, %s\n\n", errno, strerror(errno));
+        logging(ERROR, "INIT",
+            "init: Failed mlockall. Return value: %d, %s", errno, strerror(errno));
         //return FAILURE;
     }
 
@@ -79,22 +79,22 @@ int main(int argc, char const *argv[]){
     for(int i=0; i<MODULE_COUNT; ++i){
         ret = init_sequence[i].init();
         if( ret == SUCCESS ){
-            //fprintf(stderr, "Module \"%s\" initialised successfully.\n\n",
-            //    init_sequence[i].name);
+            logging(INFO, "INIT", "Module \"%s\" initialised successfully.",
+                init_sequence[i].name);
         } else if( ret == FAILURE ){
-            fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d\n\n",
+            logging(ERROR, "INIT", "Module \"%s\" FAILED TO INITIALISE, return value: %d",
                 init_sequence[i].name, ret);
             ++count;
         } else {
-            fprintf(stderr, "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s\n\n",
+            logging(ERROR, "INIT", "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
                 init_sequence[i].name, ret, strerror(ret));
             ++count;
         }
     }
 
-    //fprintf(stdout,
-    //    "\nA total of %d modules initialised successfully and %d failed.\n\n",
-    //    MODULE_COUNT-count, count);
+    logging(INFO, "INIT",
+        "A total of %d modules initialised successfully and %d failed.",
+        MODULE_COUNT-count, count);
 
     if(count != 0){
         return FAILURE;
