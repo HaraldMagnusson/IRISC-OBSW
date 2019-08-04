@@ -1,12 +1,11 @@
 /* -----------------------------------------------------------------------------
- * Component Name: GPS Poller
+ * Component Name: Encoder Poller
  * Parent Component: Sensor Poller
- * Author(s): Harald Magnusson
- * Purpose: Poll the current gps position of the gondola.
+ * Author(s):
+ * Purpose: Poll the encoders for the current attitude relative to the gondola.
  * -----------------------------------------------------------------------------
  */
 
 #pragma once
 
-/* initialise the orientation component */
-int init_gps_poller( void );
+int init_encoder_poller( void );

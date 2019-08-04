@@ -29,12 +29,17 @@ set(SOURCES
 	${SCR_DIR}/img_processing/image_handler/image_handler.c
 	${SCR_DIR}/init/init.c
 	${SCR_DIR}/mode/mode.c
+	${SCR_DIR}/sensors/encoder/encoder.c
 	${SCR_DIR}/sensors/gps/gps.c
 	${SCR_DIR}/sensors/sensors.c
-	${SCR_DIR}/sensors/orientation/orientation.c
+	${SCR_DIR}/sensors/gyroscope/gyroscope.c
+	${SCR_DIR}/sensors/sensor_poller/encoder_poller/encoder_poller.c
 	${SCR_DIR}/sensors/sensor_poller/gps_poller/gps_poller.c
+	${SCR_DIR}/sensors/sensor_poller/gyroscope_poller/gyroscope_poller.c
 	${SCR_DIR}/sensors/sensor_poller/sensor_poller.c
-	${SCR_DIR}/sensors/sun/sun.c
+	${SCR_DIR}/sensors/sensor_poller/star_tracker_poller/star_tracker_poller.c
+	${SCR_DIR}/sensors/sensor_poller/temperature_poller/temperature_poller.c
+	${SCR_DIR}/sensors/star_tracker/star_tracker.c
 	${SCR_DIR}/sensors/temperature/temperature.c
 	${SCR_DIR}/spi/spi.c
 	${SCR_DIR}/telemetry/telemetry.c

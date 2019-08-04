@@ -1,12 +1,11 @@
 /* -----------------------------------------------------------------------------
- * Component Name: GPS Poller
+ * Component Name: Gyroscope Poller
  * Parent Component: Sensor Poller
- * Author(s): Harald Magnusson
- * Purpose: Poll the current gps position of the gondola.
+ * Author(s):
+ * Purpose: Poll the gyroscopes for the current angular motion of the telescope.
  * -----------------------------------------------------------------------------
  */
 
 #pragma once
 
-/* initialise the orientation component */
-int init_gps_poller( void );
+int init_gyroscope_poller( void );

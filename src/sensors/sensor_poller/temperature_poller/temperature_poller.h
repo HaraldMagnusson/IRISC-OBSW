@@ -1,12 +1,11 @@
 /* -----------------------------------------------------------------------------
- * Component Name: GPS Poller
+ * Component Name: Temperature Poller
  * Parent Component: Sensor Poller
- * Author(s): Harald Magnusson
- * Purpose: Poll the current gps position of the gondola.
+ * Author(s):
+ * Purpose: Poll all thermometers for the current temperature status.
  * -----------------------------------------------------------------------------
  */
 
 #pragma once
 
-/* initialise the orientation component */
-int init_gps_poller( void );
+int init_temperature_poller( void );

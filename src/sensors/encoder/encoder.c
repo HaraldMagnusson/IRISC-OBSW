@@ -1,14 +1,14 @@
 /* -----------------------------------------------------------------------------
- * Component Name: Orientation
+ * Component Name: Encoder
  * Parent Component: Sensors
- * Author(s): 
- * Purpose: Store the current orientation and position of the gondola and
- *          telescope.
+ * Author(s):
+ * Purpose: Keeps track of the telescope attitude relative to the gondola.
+ *
  * -----------------------------------------------------------------------------
  */
 
 #include "global_utils.h"
 
-int init_orientation( void ){
+int init_encoder( void ){
     return SUCCESS;
 }

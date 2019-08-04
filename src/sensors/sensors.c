@@ -10,21 +10,23 @@
 #include <string.h>
 
 #include "global_utils.h"
+#include "encoder.h"
 #include "gps.h"
-#include "orientation.h"
+#include "gyroscope.h"
 #include "sensor_poller.h"
-#include "sun.h"
+#include "star_tracker.h"
 #include "temperature.h"
 
-#define MODULE_COUNT 5
+#define MODULE_COUNT 6
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
+    {"encoder", &init_encoder},
     {"gps", &init_gps},
-    {"orientation", &init_orientation},
+    {"gyroscope", &init_gyroscope},
+    {"star_tracker", &init_star_tracker},
+    {"temperature", &init_temperature},
     {"sensor_poller", &init_sensor_poller},
-    {"sun", &init_sun},
-    {"temperature", &init_temperature}
 };
 
 int init_sensors( void ){
