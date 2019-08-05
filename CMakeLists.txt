@@ -48,7 +48,14 @@ set(SOURCES
 )
 
 # list of libraries
-set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
+string(COMPARE EQUAL ${CMAKE_SYSTEM_PROCESSOR} "armv7l" strcmp)
+if(strcmp)
+	set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib_arm)
+else()
+        set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
+endif(strcmp)
+unset(strcmp CACHE)
+
 set(LIBS
     ${LIB_DIR}/libASICamera2.so
 )
