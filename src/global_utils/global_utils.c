@@ -82,4 +82,6 @@ int logging(int level, char module_name[12],
     fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds,
             logging_levels[level], module_name, buffer);
+
+    return SUCCESS;
 }
