@@ -31,7 +31,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 2
+#define MODULE_COUNT 14
 
 static int ret;
 static struct sigaction sa;
@@ -40,18 +40,18 @@ static struct sigaction sa;
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"watchdog", &init_watchdog},
     {"camera", &init_camera},
-//    {"command", &init_command},
-//    {"data_storage", &init_data_storage},
-//    {"e_link", &init_elink},
-//    {"global_utils", &init_global_utils},
-//    {"i2c", &init_i2c},
-//    {"img_processing", &init_img_processing},
-//    {"mode", &init_mode},
-//    {"sensors", &init_sensors},
-//    {"spi", &init_spi},
-//    {"telemetry", &init_telemetry},
-//    {"thermal", &init_thermal},
-//    {"tracking", &init_tracking}
+    {"command", &init_command},
+    {"data_storage", &init_data_storage},
+    {"e_link", &init_elink},
+    {"global_utils", &init_global_utils},
+    {"i2c", &init_i2c},
+    {"img_processing", &init_img_processing},
+    {"mode", &init_mode},
+    {"sensors", &init_sensors},
+    {"spi", &init_spi},
+    {"telemetry", &init_telemetry},
+    {"thermal", &init_thermal},
+    {"tracking", &init_tracking}
 };
 
 static void sigint_handler(int signum){
@@ -99,25 +99,10 @@ int main(int argc, char const *argv[]){
     if(count != 0){
         return FAILURE;
     }
-    char fn[] = "images/ .fit";
-    char num[] = "0123456789";
-    struct timespec polling_time = {0, 1000000};
 
-    for(int ii=0; ii<10; ++ii){
-        printf("exposing image num: %d\n", ii);
-        expose_nir(1000, 125);
-
-        fn[7] = num[ii];
-
-        ret = save_img_nir(fn);
-        while(ret == EXP_NOT_READY){
-            nanosleep(&polling_time, NULL);
-            ret = save_img_nir(fn);
-        }
-        printf("saved image num: %d\n\n", ii);
+    while(1){
+        sleep(1000);
     }
-
-    printf("done\n");
 
     return SUCCESS;
 }

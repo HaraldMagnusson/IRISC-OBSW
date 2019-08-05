@@ -15,7 +15,6 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 set(SCR_DIR ${CMAKE_SOURCE_DIR}/src)
 set(SOURCES
 	${SCR_DIR}/camera/camera.c
-	${SCR_DIR}/camera/camera_control/camera_control.c
 	${SCR_DIR}/camera/camera_utils/camera_utils.c
 	${SCR_DIR}/camera/guiding_camera/guiding_camera.c
 	${SCR_DIR}/camera/nir_camera/nir_camera.c

@@ -17,6 +17,8 @@
 #define GUIDE_WIDTH 1936
 #define GUIDE_HEIGHT 1096
 
+#define CAMERA_DEBUG
+
 /* cam_setup:
  * Set up and initialize a given ZWO ASI camera.
  *
@@ -31,6 +33,7 @@
  * return:
  *      SUCCESS: operation is successful
  *      FAILURE: failure to set up camera, log written to stderr
+ *      ENODEV: incorrect camera name or camera disconnected
  */
 int cam_setup(ASI_CAMERA_INFO* cam_info, char cam_name);
 
@@ -42,29 +45,35 @@ int cam_setup(ASI_CAMERA_INFO* cam_info, char cam_name);
  *      id: camera id found in ASI_CAMERA_INFO
  *      exp: the exposure time in microseconds
  *      gain: the sensor gain
+ *      cam_name: name of camera for logging
  *
  * return:
  *      SUCCESS: operation is successful
- *      FAILURE: starting exposure failed, log written to stderr
+ *      EREMOTEIO: starting exposure failed
+ *      EIO: setting camera control values failed
+ *      ENODEV: Camera not connected
  */
-int expose(int id, int exp, int gain);
+int expose(int id, int exp, int gain, char* cam_name);
 
-/* save_img
- * save_img will first check if exposure is still ongoing or has failed and 
+/* save_img:
+ * save_img will first check if exposure is still ongoing or has failed and
  * return if that is the case. Otherwise the image will be fetched from the
  * camera and saved.
- * 
+ *
  * input:
- *      cam_info for relevant camera
+ *      cam_info: info for relevant camera
+ *      fn: filename to save image as
  *
  * return:
- *      SUCCESS:       operation is successful
+ *      SUCCESS: operation is successful
  *      EXP_NOT_READY: exposure still ongoing, wait a bit and call again
- *      EXP_FAILED:    exposure failed and must be retried
- *      FAILURE:       saving the image failed, log written to stderr
+ *      EXP_FAILED: exposure failed and must be retried
+ *      FAILURE: saving the image failed, log written to stderr
+ *      EPERM: calling save_img beore starting exposure
+ *      ENOMEM: no memory available for image buffer
+ *      EIO: failed to fetch data from camera
+ *      ENODEV: camera disconnected
  *
- * TODO:
- *      1. fix system for filenames
- *      2. fix .fit header
+ * TODO: System for file names and queueing up image for processing.
  */
-int save_img(ASI_CAMERA_INFO* cam_info, char* fn);
+int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name);

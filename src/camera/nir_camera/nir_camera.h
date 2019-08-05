@@ -28,7 +28,9 @@ int init_nir_camera(void);
  *
  * return:
  *      SUCCESS: operation is successful
- *      FAILURE: starting exposure failed, log written to stderr
+ *      EREMOTEIO: starting exposure failed
+ *      EIO: setting camera control values failed
+ *      ENODEV: Camera not connected
  */
 int expose_nir_local(int exp, int gain);
 
@@ -37,14 +39,18 @@ int expose_nir_local(int exp, int gain);
  * and return if that is the case. Otherwise the image will be fetched from
  * the camera and saved.
  *
- * return:
- *      SUCCESS:       operation is successful
- *      EXP_NOT_READY: exposure still ongoing, wait a bit and call again
- *      EXP_FAILED:    exposure failed and must be retried
- *      FAILURE:       storing the image failed, log written to stderr
+ * input:
+ *      fn: filename to save image as
  *
- * TODO:
- *      1. fix system for filenames
- *      2. fix .fit header
+ * return:
+ *      SUCCESS: operation is successful
+ *      EXP_NOT_READY: exposure still ongoing, wait a bit and call again
+ *      EXP_FAILED: exposure failed and must be retried
+ *      FAILURE: saving the image failed, log written to stderr
+ *      EPERM: calling save_img beore starting exposure
+ *      ENOMEM: no memory available for image buffer
+ *      EIO: failed to fetch data from camera
+ *      ENODEV: camera disconnected
+ *
  */
 int save_img_nir_local(char* fn);
