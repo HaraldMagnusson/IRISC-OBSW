@@ -63,6 +63,7 @@ int expose(int id, int exp, int gain, char* cam_name);
  * input:
  *      cam_info: info for relevant camera
  *      fn: filename to save image as
+ *      cam_name: name of camera for logging
  *
  * return:
  *      SUCCESS: operation is successful
@@ -77,3 +78,22 @@ int expose(int id, int exp, int gain, char* cam_name);
  * TODO: System for file names and queueing up image for processing.
  */
 int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name);
+
+/* abort_exp:
+ * Abort an ongoing exposure and save the image.
+ *
+ * input:
+ *      cam_info: info for relevant camera
+ *      fn: filename to save image as
+ *      cam_name: name of camera for logging
+ *
+ * return:
+ *      SUCCESS: operation is successful
+ *      EXP_FAILED: exposure failed and must be retried
+ *      FAILURE: saving the image failed, log written to stderr
+ *      EPERM: calling save_img beore starting exposure
+ *      ENOMEM: no memory available for image buffer
+ *      EIO: failed to fetch data from camera
+ *      ENODEV: camera disconnected
+ */
+int abort_exp(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name);

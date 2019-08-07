@@ -31,6 +31,7 @@ void yflip(unsigned short* buffer, int width, int height);
  *
  * output:
  *      cam_info: info object for relevant camera
+ *      cam_name: name of camera for logging
  *
  * return:
  *      SUCCESS: operation is successful
@@ -157,6 +158,7 @@ int expose(int id, int exp, int gain, char* cam_name){
  * input:
  *      cam_info: info for relevant camera
  *      fn: filename to save image as
+ *      cam_name: name of camera for logging
  *
  * return:
  *      SUCCESS: operation is successful
@@ -181,6 +183,7 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name){
         case ASI_EXP_WORKING:
             return EXP_NOT_READY;
         case ASI_EXP_FAILED:
+            logging(ERROR, "Camera", "Exposure of %s camera failed", cam_name);
             return EXP_FAILED;
         case ASI_EXP_IDLE:
             logging(ERROR, "Camera", "save_img called before starting exposure");
@@ -217,7 +220,8 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name){
         buff[ii] = buff[ii]>>4;
     }
 
-    yflip(buff, width, height);
+    /* yflip(buff, width, height); */
+
     ret = write_img(buff, cam_info, fn);
     if(ret != SUCCESS){
         return ret;
@@ -353,6 +357,39 @@ void yflip(unsigned short* buffer, int width, int height){
             buff[height-1-ii][jj] = tmp;
         }
     }
+}
+
+/* abort_exp:
+ * Abort an ongoing exposure and save the image.
+ *
+ * input:
+ *      cam_info: info for relevant camera
+ *      fn: filename to save image as
+ *      cam_name: name of camera for logging
+ *
+ * return:
+ *      SUCCESS: operation is successful
+ *      EXP_FAILED: exposure failed and must be retried
+ *      FAILURE: saving the image failed, log written to stderr
+ *      EPERM: calling save_img beore starting exposure
+ *      ENOMEM: no memory available for image buffer
+ *      EIO: failed to fetch data from camera
+ *      ENODEV: camera disconnected
+ */
+int abort_exp(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name){
+
+    logging(WARN, "Camera", "Aborting exposure of %s camera", cam_name);
+
+    int ret = ASIStopExposure(cam_info->CameraID);
+    if(ret == ASI_ERROR_INVALID_ID){
+        logging(ERROR, "Camera",
+            "Camera disconnected when aborting exposure: %s", cam_name);
+    }
+    else if(ret != SUCCESS){
+        logging(ERROR, "Camera", "Failed to abort exposure of %s camera", cam_name);
+    }
+
+    return save_img(cam_info, fn, cam_name);
 }
 
 #if 0

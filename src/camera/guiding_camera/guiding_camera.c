@@ -72,3 +72,22 @@ int expose_guiding_local(int exp, int gain){
 int save_img_guiding_local(char* fn){
     return save_img(&cam_info, fn, "guiding");
 }
+
+/* abort_exp_guiding_local:
+ * Abort an ongoing exposure of the guiding camera and save the image.
+ *
+ * input:
+ *      fn: filename to save image as
+ *
+ * return:
+ *      SUCCESS: operation is successful
+ *      EXP_FAILED: exposure failed and must be retried
+ *      FAILURE: saving the image failed, log written to stderr
+ *      EPERM: calling save_img beore starting exposure
+ *      ENOMEM: no memory available for image buffer
+ *      EIO: failed to fetch data from camera
+ *      ENODEV: camera disconnected
+ */
+int abort_exp_guiding_local(char* fn){
+    return abort_exp(&cam_info, fn, "guiding");
+}
