@@ -29,7 +29,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 14
+#define MODULE_COUNT 13
 
 static int ret;
 static struct sigaction sa;
