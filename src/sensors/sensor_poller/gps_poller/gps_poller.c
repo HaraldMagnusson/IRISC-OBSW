@@ -18,7 +18,7 @@
 #include "gps.h"
 #include "gps_poller.h"
 
-#define GPS_SAMPLE_TIME 4
+#define GPS_SAMPLE_TIME 4 /* unit: seconds */
 #define BUFFER_S 100
 
 static int check_chksum(const unsigned char* str);
@@ -92,6 +92,18 @@ static void* gps_thread_func(){
     }
 }
 
+/* process_gps:
+ * Accepts a GGA message, validate that the checksum is correct, and updates the
+ * protected gps coordinates.
+ *
+ * input:
+ *      str: GGA message following the NMEA standard
+ *
+ * return:
+ *      SUCCESS: operation is successful
+ *      FAILURE: checksum is incorrect or GPS receiver has bad connection
+ *
+ */
 static int process_gps(const unsigned char str[BUFFER_S]){
     if( check_chksum(str) ){
         logging(WARN, "GPS", "Incorrect checksum in GPS data.");
@@ -123,6 +135,17 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     return SUCCESS;
 }
 
+/* coord_conv:
+ * Converts a string containing latitude ("ddmm.mmmmm") or longitude ("dddmm.mmmmm")
+ * to degrees as a float value.
+ *
+ * input:
+ *      str: string of the form listed above
+ *      lon: bool value, true if the input is longitude
+ *
+ * return:
+ *      converted value in degrees
+ */
 static float coord_conv(const unsigned char* str, int lon){
 
     unsigned char deg_str[4] = "\0\0\0\0";
@@ -146,11 +169,17 @@ static float coord_conv(const unsigned char* str, int lon){
     return deg;
 }
 
-
+/* check_chksum:
+ * Checks if a string stored in str that follows the NMEA standard has a correct checksum.
+ *
+ * input:
+ *      str: string following NMEA standard
+ *
+ * return:
+ *      SUCCESS: checksum is correct
+ *      FAILURE: checksum is incorrect
+ */
 static int check_chksum(const unsigned char* str){
-    /* check_chksum checks if a string stored in str that follows
-     * the NMEA standard has a correct checksum.
-     */
 
     unsigned char chksum_ascii[3];
     calc_chksum(str, chksum_ascii);
@@ -165,10 +194,20 @@ static int check_chksum(const unsigned char* str){
     return FAILURE;
 }
 
+/* calc_chksum:
+ * Calculates the checksum of a given string stored in str, between '$' and '*'
+ * (excluding those characters).
+ *
+ * input:
+ *      str: string beginning with '$' and containing a '*'
+ *
+ * output:
+ *      chksum_ascii: the checksum in hex as a 3 byte string ending with NULL
+ *
+ * return:
+ *      the byte value of the checksum
+ */
 static unsigned char calc_chksum(const unsigned char* str, unsigned char* chksum_ascii){
-    /* calc_chksum calculates the checksum of a given
-     * string stored in str, between '$' and '*'.
-     */
     unsigned char chksum = 0;
 
     /* skip '$' */
@@ -190,10 +229,17 @@ static unsigned char calc_chksum(const unsigned char* str, unsigned char* chksum
     return chksum;
 }
 
+/* nibble_to_ascii_hex:
+ * converts a nibble to the corresponding hex character.
+ *
+ * input:
+ *      nibble: nibble to convert
+ *
+ * return:
+ *      ascii value of hex character
+ *      '\0' is returned for characters outside of the interval [0-15]
+ */
 static unsigned char nibble_to_ascii_hex(const unsigned char nibble){
-    /* nibble_to_ascii_hex converts a nibble to the
-     * corresponding hex character.
-     */
 
     unsigned char ascii_hex;
 
@@ -210,10 +256,21 @@ static unsigned char nibble_to_ascii_hex(const unsigned char nibble){
     return ascii_hex;
 }
 
+/* divide_NMEA_str:
+ * separates a string following the NMEA standard into each argument and
+ * stores it in NMEA_str_arr.
+ *
+ * input:
+ *      str: NMEA input string
+ *
+ * output:
+ *      NMEA_str_arr: array to save arguments in
+ *
+ * return:
+ *      SUCCESS: successful operation
+ *
+ */
 static int divide_NMEA_str(const unsigned char* str, unsigned char NMEA_str_arr[30][20]){
-    /* divide_NMEA_str separates a string following the NMEA standard into
-     * each argument and stores it in NMEA_str_arr.
-     */
 
     ++str; /* skip '$' */
     int k;
