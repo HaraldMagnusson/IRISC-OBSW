@@ -8,6 +8,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 
 #include "global_utils.h"
 #include "camera_utils.h"
@@ -70,7 +71,7 @@ int expose_guiding_local(int exp, int gain){
  *
  */
 int save_img_guiding_local(char* fn){
-    return save_img(&cam_info, fn, "guiding");
+    return save_img(&cam_info, fn, "guiding", NULL);
 }
 
 /* abort_exp_guiding_local:

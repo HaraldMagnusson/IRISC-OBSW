@@ -8,6 +8,7 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 
 #include "global_utils.h"
 #include "camera_utils.h"
@@ -71,7 +72,7 @@ int expose_nir_local(int exp, int gain){
  *
  */
 int save_img_nir_local(char* fn){
-    return save_img(&cam_info, fn, "NIR");
+    return save_img(&cam_info, fn, "NIR", NULL);
 }
 
 /* abort_exp_nir_local:

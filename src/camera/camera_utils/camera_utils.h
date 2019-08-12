@@ -17,7 +17,8 @@
 #define GUIDE_WIDTH 1936
 #define GUIDE_HEIGHT 1096
 
-#define CAMERA_DEBUG
+/* camera debug messages */
+#define CAMERA_DEBUG 0
 
 /* cam_setup:
  * Set up and initialize a given ZWO ASI camera.
@@ -64,6 +65,8 @@ int expose(int id, int exp, int gain, char* cam_name);
  *      cam_info: info for relevant camera
  *      fn: filename to save image as
  *      cam_name: name of camera for logging
+ *      exp_time: calculated exposure time if the exposure was aborted,
+ *                NULL if not
  *
  * return:
  *      SUCCESS: operation is successful
@@ -77,7 +80,7 @@ int expose(int id, int exp, int gain, char* cam_name);
  *
  * TODO: System for file names and queueing up image for processing.
  */
-int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name);
+int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespec* exp_time);
 
 /* abort_exp:
  * Abort an ongoing exposure and save the image.
