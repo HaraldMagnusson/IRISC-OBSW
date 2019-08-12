@@ -28,7 +28,7 @@ int init_gps(void);
 void get_gps(gps_t* gps);
 
 /* update the gps data */
-void set_gps(gps_t gps);
+void set_gps(gps_t* gps);
 
 /* set the out of date flag on the gps data */
 void gps_out_of_date(void);

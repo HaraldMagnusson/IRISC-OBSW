@@ -125,7 +125,7 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     gps.lon = coord_conv(NMEA_str_arr[4], 1);
     gps.alt = strtof((char*)NMEA_str_arr[9], NULL);
 
-    set_gps(gps);
+    set_gps(&gps);
 
     #if GPS_DEBUG
         logging(DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",

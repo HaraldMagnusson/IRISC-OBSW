@@ -45,13 +45,13 @@ void get_gps(gps_t* gps){
     pthread_mutex_unlock(&mutex_gps);
 }
 
-void set_gps(gps_t gps){
+void set_gps(gps_t* gps){
 
     pthread_mutex_lock(&mutex_gps);
 
-    gps_local.lat = gps.lat;
-    gps_local.lon = gps.lon;
-    gps_local.alt = gps.alt;
+    gps_local.lat = gps->lat;
+    gps_local.lon = gps->lon;
+    gps_local.alt = gps->alt;
     gps_local.out_of_date = 0;
 
     pthread_mutex_unlock(&mutex_gps);
