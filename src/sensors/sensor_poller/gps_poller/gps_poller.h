@@ -8,5 +8,7 @@
 
 #pragma once
 
+#define GPS_DEBUG 1
+
 /* initialise the orientation component */
 int init_gps_poller( void );

@@ -16,6 +16,7 @@
 
 #include "global_utils.h"
 #include "gps.h"
+#include "gps_poller.h"
 
 #define GPS_SAMPLE_TIME 4
 #define BUFFER_S 100
@@ -70,11 +71,14 @@ static void* gps_thread_func(){
                     buffer[4] == 'G' &&
                     buffer[5] == 'A'){
 
-                for(int jj=0; jj<1; ++jj){
+                /* for(int jj=0; jj<1; ++jj){
                     fprintf(stderr, "\033[A\033[2K");
-                }
+                } */
 
-                logging(DEBUG, "GPS", "%s", buffer);
+                #if GPS_DEBUG
+                    logging(DEBUG, "GPS", "%s", buffer);
+                #endif
+
                 ret = process_gps(buffer);
 
                 if(ret != SUCCESS){
@@ -110,6 +114,11 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     gps.alt = strtof((char*)NMEA_str_arr[9], NULL);
 
     set_gps(gps);
+
+    #if GPS_DEBUG
+        logging(DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",
+                gps.lat, gps.lon, gps.alt);
+    #endif
 
     return SUCCESS;
 }
