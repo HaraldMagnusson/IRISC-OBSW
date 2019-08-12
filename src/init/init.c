@@ -19,11 +19,10 @@
 #include "data_storage.h"
 #include "e_link.h"
 #include "global_utils.h"
-#include "i2c.h"
+#include "gpio.h"
 #include "img_processing.h"
 #include "mode.h"
 #include "sensors.h"
-#include "spi.h"
 #include "telemetry.h"
 #include "thermal.h"
 #include "tracking.h"
@@ -38,16 +37,15 @@ static struct sigaction sa;
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"watchdog", &init_watchdog},
+    {"gpio", &init_gpio},
     {"camera", &init_camera},
     {"command", &init_command},
     {"data_storage", &init_data_storage},
     {"e_link", &init_elink},
     {"global_utils", &init_global_utils},
-    {"i2c", &init_i2c},
     {"img_processing", &init_img_processing},
     {"mode", &init_mode},
     {"sensors", &init_sensors},
-    {"spi", &init_spi},
     {"telemetry", &init_telemetry},
     {"thermal", &init_thermal},
     {"tracking", &init_tracking}

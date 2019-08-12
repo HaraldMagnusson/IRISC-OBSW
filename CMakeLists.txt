@@ -23,7 +23,7 @@ set(SOURCES
 	${SCR_DIR}/data_storage/data_storage.c
 	${SCR_DIR}/e_link/e_link.c
 	${SCR_DIR}/global_utils/global_utils.c
-	${SCR_DIR}/i2c/i2c.c
+	${SCR_DIR}/gpio/gpio.c
 	${SCR_DIR}/img_processing/img_processing.c
 	${SCR_DIR}/img_processing/data_queue/data_queue.c
 	${SCR_DIR}/img_processing/image_handler/image_handler.c
@@ -41,7 +41,6 @@ set(SOURCES
 	${SCR_DIR}/sensors/sensor_poller/temperature_poller/temperature_poller.c
 	${SCR_DIR}/sensors/star_tracker/star_tracker.c
 	${SCR_DIR}/sensors/temperature/temperature.c
-	${SCR_DIR}/spi/spi.c
 	${SCR_DIR}/telemetry/telemetry.c
 	${SCR_DIR}/telemetry/downlink/downlink.c
 	${SCR_DIR}/telemetry/downlink_queue/downlink_queue.c
