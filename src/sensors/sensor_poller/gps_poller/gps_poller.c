@@ -36,7 +36,7 @@ static pthread_t gps_thread;
 
 
 int init_gps_poller( void ){
-    wiringPiSetup();
+
     wiringPiSPISetup(0, 200000);
 
     buffer[0] = '$';

@@ -5,8 +5,13 @@
  * -----------------------------------------------------------------------------
  */
 
+#include <wiringPi.h>
+
 #include "global_utils.h"
 
 int init_gpio( void ){
+
+    wiringPiSetup();
+
     return SUCCESS;
 }
