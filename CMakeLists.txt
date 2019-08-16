@@ -5,7 +5,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # compiler flags
 set(CFLAGS "-O2 -std=gnu17 -Wall")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
+set(COMPILE_DEFINES "-DGPS_DEBUG -DENCODER_DEBUG")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
 set(LDFLAGS "-lrt -pthread -lwiringPi")
@@ -13,7 +14,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
 set(SCR_DIR ${CMAKE_SOURCE_DIR}/src)
-set(SOURCES 
+set(SOURCES
 	${SCR_DIR}/camera/camera.c
 	${SCR_DIR}/camera/camera_control/camera_control.c
 	${SCR_DIR}/camera/guiding_camera/guiding_camera.c

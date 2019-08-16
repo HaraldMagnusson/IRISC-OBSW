@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Encoder Poller
  * Parent Component: Sensor Poller
- * Author(s):
+ * Author(s): Harald Magnusson
  * Purpose: Poll the encoders for the current attitude relative to the gondola.
  * -----------------------------------------------------------------------------
  */

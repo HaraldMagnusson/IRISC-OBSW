@@ -8,6 +8,4 @@
 
 #pragma once
 
-#define GPS_DEBUG 1
-
 int init_gps_poller( void );

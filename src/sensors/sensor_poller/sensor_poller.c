@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Sensor Poller
  * Parent Component: Sensors
- * Author(s): 
+ * Author(s): Harald Magnusson
  * Purpose: Poll sensors and update storage components.
  *
  * -----------------------------------------------------------------------------
