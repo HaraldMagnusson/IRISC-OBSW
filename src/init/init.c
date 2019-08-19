@@ -100,7 +100,12 @@ int main(int argc, char const *argv[]){
         return FAILURE;
     }
 
-    while(1){
+    char* fn = "/home/boi/Desktop/ipr_test.fit";
+    expose_nir(4000, 200);
+
+    while( save_img_nir(fn) != SUCCESS){}
+    printf("done\n");
+    while(0){
         sleep(1000);
     }
 

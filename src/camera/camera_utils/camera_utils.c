@@ -228,7 +228,7 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespe
         buff[ii] = buff[ii]>>4;
     }
 
-    /* yflip(buff, width, height); */
+    yflip(buff, width, height);
 
     ret = write_img(buff, cam_info, fn, exp_time);
 
