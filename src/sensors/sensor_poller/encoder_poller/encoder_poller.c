@@ -55,6 +55,11 @@ static void* thread_func(){
         proc(data);
 
         wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
+        if(wake_time.tv_nsec >= 1000000000){
+            wake_time.tv_sec++;
+            wake_time.tv_nsec -= 1000000000;
+        }
+
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
     }
 }
