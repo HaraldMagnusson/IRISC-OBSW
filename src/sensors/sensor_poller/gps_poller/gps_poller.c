@@ -6,13 +6,16 @@
  * -----------------------------------------------------------------------------
  */
 
-#include <wiringPi.h>
-#include <wiringPiSPI.h>
+#include <sys/ioctl.h>
+#include <linux/spi/spidev.h>
+#include <linux/types.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <errno.h>
 
 #include "global_utils.h"
 #include "gps.h"
@@ -33,11 +36,21 @@ static unsigned char ch = 0xFF;
 static unsigned char buffer[BUFFER_S];
 static struct timespec wake_time;
 static pthread_t gps_thread;
+static int fd_spi12;
 
 
 int init_gps_poller( void ){
 
-    wiringPiSPISetup(0, 200000);
+    char* spi12 = "/dev/spidev1.2";
+
+    fd_spi12 = open(spi12, O_RDONLY);
+
+    if(fd_spi12 < 0){
+        logging(ERROR, "GPS", "Failed to open spi device: %s", strerror(errno));
+    }
+
+    __u32 speed = 200000;
+    ioctl(fd_spi12, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
 
     buffer[0] = '$';
 
@@ -55,14 +68,13 @@ static void* gps_thread_func(){
 
     while(1){
         ii = 1;
-        ch = 0xFF;
-        wiringPiSPIDataRW(0, &ch, 1);
+        read(fd_spi12, &ch, 1);
 
         if(ch == '$'){
 
             do{
                 buffer[ii] = 0xFF;
-                wiringPiSPIDataRW(0, &buffer[ii], 1);
+                read(fd_spi12, &buffer[ii], 1);
             } while(buffer[ii++] != '\r' && ii < BUFFER_S);
 
             buffer[ii-1] = '\0'; /* replace '\r' with '\0' */
@@ -70,10 +82,6 @@ static void* gps_thread_func(){
             if(     buffer[3] == 'G' &&
                     buffer[4] == 'G' &&
                     buffer[5] == 'A'){
-
-                /* for(int jj=0; jj<1; ++jj){
-                    fprintf(stderr, "\033[A\033[2K");
-                } */
 
                 #if GPS_DEBUG
                     logging(DEBUG, "GPS", "%s", buffer);
@@ -296,3 +304,4 @@ static int divide_NMEA_str(const unsigned char* str, unsigned char NMEA_str_arr[
     }
     return SUCCESS;
 }
+
