@@ -10,9 +10,9 @@
 #pragma once
 
 // values for the PID controller
-#define Kp  0
-#define Ki  0
-#define Kd  1
+//#define Kp  0
+//#define Ki  0
+//#define Kd  1
 
 // threshold value for motor angular rate in deg/s
 #define MOTOR_ANG_RATE_THRS 0.05

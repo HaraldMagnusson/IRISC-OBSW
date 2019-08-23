@@ -25,6 +25,11 @@
 void *stabilization_main_loop();
 double saturate_output(double given_output);
 
+double p_value = 0;
+double i_value = 0;
+double d_value = 0;
+pthread_mutex_t pid_values_mutex;
+
 double stabilization_timestep = 0.01;
 double sim_time = 0;
 
@@ -67,26 +72,31 @@ void *stabilization_main_loop() {
 
         last_position_error = position_error;
 
-        logging(DEBUG, "STABILIZATION", "current time: %.10f", sim_time);
-        logging(DEBUG, "STABILIZATION", "current pos: %.10f", current_position);
+            logging(DEBUG, "STABILIZATION", "current time: %.10f", sim_time);
+            logging(DEBUG, "STABILIZATION", "current pos: %.10f", current_position);
 
-        logging(DEBUG, "STABILIZATION", "target pos: %.10f", target_position);
-        logging(DEBUG, "STABILIZATION", "integral: %.10f", integral);
-        logging(DEBUG, "STABILIZATION", "derivative: %.10f", derivative);
+            logging(DEBUG, "STABILIZATION", "target pos: %.10f", target_position);
+            logging(DEBUG, "STABILIZATION", "integral: %.10f", integral);
+            logging(DEBUG, "STABILIZATION", "derivative: %.10f", derivative);
 
-        output = (Kp * position_error) + (Ki * integral) + (Kd * derivative);
-        logging(DEBUG, "STABILIZATION", "before saturation: %.10f", output);
-//        output = saturate_output(output);
-        logging(DEBUG, "STABILIZATION", "after saturation: %.10f", output);
+        pthread_mutex_lock(&pid_values_mutex);
+        output = (p_value * position_error) + (i_value * integral) + (d_value * derivative);
+        pthread_mutex_unlock(&pid_values_mutex);
+
+            logging(DEBUG, "STABILIZATION", "before saturation: %.10f", output);
+    //        output = saturate_output(output);
+            logging(DEBUG, "STABILIZATION", "after saturation: %.10f", output);
 
         stabilization_output_angle = output;
         filter_current_position = current_position + output*stabilization_timestep;
+
 //        fprintf(simdata, "%.10f,%.10f\n", sim_time, current_position);
-        fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
-                sim_time, current_position, position_error, target_position,
-                Ki*integral, Kd*derivative,Kp*position_error);
+            fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
+                    sim_time, current_position, position_error, target_position,
+                    i_value*integral, d_value*derivative, p_value*position_error);
         fflush(simdata);
         fprintf(stderr, "\033[22D\033[7A");
+
 //        usleep(stabilization_timestep*1000000);
 //        usleep(stabilization_timestep*10000);
     }
@@ -97,6 +107,15 @@ double saturate_output(double given_output){
     if (given_output >= MOTOR_ANG_RATE_THRS) return MOTOR_ANG_RATE_THRS;
     else if (given_output <= -MOTOR_ANG_RATE_THRS) return -MOTOR_ANG_RATE_THRS;
     else return given_output;
+}
+
+
+int change_pid_values(double new_p, double new_i, double new_d){
+    pthread_mutex_lock(&pid_values_mutex);
+    p_value = new_p;
+    i_value = new_i;
+    d_value = new_d;
+    pthread_mutex_unlock(&pid_values_mutex);
 }
 
 //int stabilization_loop_step(){
