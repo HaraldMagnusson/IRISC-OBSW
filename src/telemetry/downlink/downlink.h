@@ -13,4 +13,4 @@
 int init_downlink(void);
 
 /* queue up a message to be sent to ground */
-void send_data_packet(char buffer[]);
+void send_data_packet(char buffer[], unsigned short packets_sent);

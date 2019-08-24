@@ -56,6 +56,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 static void sigint_handler(int signum) {
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
     stop_watchdog();
+    close_socket();
     _exit(EXIT_SUCCESS);
 }
 
@@ -98,6 +99,13 @@ int main(int argc, char const *argv[]) {
     if (count != 0) {
         return FAILURE;
     }
+
+    send_telemetry("/home/zodox/Desktop/test1.txt", 10, 1, 0);
+    send_telemetry("/home/zodox/Desktop/test2.txt", 50, 1, 0);
+    send_telemetry("/home/zodox/Desktop/0.fit", 60, 1, 0);
+    //send_telemetry("The cake is a lie and you need to git gud.", 1, 0);
+    send_telemetry("/home/zodox/Desktop/test.png", 60, 1, 0);
+    send_telemetry("/home/zodox/Desktop/test4.txt", 70, 1, 0);
 
     while (1) {
         sleep(1000);

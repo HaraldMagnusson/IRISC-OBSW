@@ -28,10 +28,11 @@
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-        {"downlink",       &init_downlink},
-        {"downlink_queue", &init_downlink_queue}
+        {"downlink_queue",       &init_downlink_queue},
+        {"downlink_", &init_downlink}
 };
 
+/*
 // TODO: For test purposes only!
 void *test_telemetry_generator() {
     for (int i = 0; i < 100; ++i) {
@@ -39,6 +40,8 @@ void *test_telemetry_generator() {
     }
     return NULL;
 }
+
+*/
 
 /**
  * Infinite loop for sending telemetry via UDP.
@@ -48,6 +51,7 @@ void *test_telemetry_generator() {
  * @TODO Move it to `init_telemetry`?
  * @TODO Redo it all!!!
  */
+/*
 void *telemetry_sender() {
     while (1) {
         char msg[64];
@@ -58,12 +62,16 @@ void *telemetry_sender() {
     return NULL;
 }
 
+*/
+
 /**
  *
  * @return
  *
  * @TODO Add threads parameters and all that security stuff.
  */
+
+
 int init_telemetry(void) {
 
     /* init whatever in this module */
@@ -72,14 +80,35 @@ int init_telemetry(void) {
         return ret;
     }
 
-    pthread_t generator;
-    pthread_t sender;
+  //  pthread_t generator;
+  //  pthread_t sender;
 
-    pthread_create(&sender, NULL, telemetry_sender, NULL);
-    pthread_create(&generator, NULL, test_telemetry_generator, NULL);
+  //  pthread_create(&sender, NULL, telemetry_sender, NULL);
+  //  pthread_create(&generator, NULL, test_telemetry_generator, NULL);
+
+
+/*  Test for queue
+
+  send_telemetry("/tmp/test/ostkaka.csv", 5);
+  send_telemetry("/home/rooo/bulle", 3);
+  send_telemetry("/git/gud/404.cake", 7);
+
+  char *temp;
+
+  temp = read_downlink_queue();
+  printf("First item: %s\n",temp);
+  temp = read_downlink_queue();
+  printf("Second item: %s\n",temp);
+  temp = read_downlink_queue();
+  printf("Third item: %s\n",temp);
+
+
+  */
 
     return SUCCESS;
 }
+
+
 
 /**
  * Put data into the downlink queue.
@@ -87,9 +116,10 @@ int init_telemetry(void) {
  * @param d     Data to be sent.
  * @param p     Priority of the data (lower `p` indicates higher
  *              priority).
+ * @param flag  Indicate if data is a filepath(1) or string(0)
  *
  * @return      0
  */
-int send_telemetry(int d, int p) {
-    return send_telemetry_local(d, p);
+int send_telemetry(char *filepath, int p, int flag, unsigned short packets_sent) {
+    return send_telemetry_local(filepath, p, flag, packets_sent);
 }

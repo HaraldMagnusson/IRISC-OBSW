@@ -11,8 +11,7 @@
 /* initialise the elink component */
 int init_elink( void );
 
-/* provide uplink from ground */
-void read_elink( void );
-
 /* provide downlink to ground */
-void write_elink( void );
+int write_elink( char *buffer, int bytes);
+
+void close_socket( void );

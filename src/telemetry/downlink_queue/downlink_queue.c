@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Downlink Queue
  * Parent Component: Telemetry
- * Author(s): Adam Smialek
+ * Author(s): Adam Smialek, William Eriksson
  * Purpose: Provide a queue for telemetry messages to be sent to ground.
  *
  * -----------------------------------------------------------------------------
@@ -34,25 +34,17 @@ int init_downlink_queue(void) {
 }
 
 /**
- * Node structure declaration.
- */
-typedef struct node {
-    int data;           // Data to be send as a telemetry.
-    int priority;       // Lower values indicate higher priority
-    struct node *next;  // Pointer to the node next on the list.
-
-} downlink_node;
-
-/**
  * Function to create a new node
  *
- * @param d     Data to be sent.
+ * @param d     Filepath of data to be sent.
  * @param p     Priority of the data.
  */
-downlink_node *new_node(int d, int p) {
+downlink_node *new_node(char *f, int p, int flag, unsigned short packets_sent){
     downlink_node *temp = (downlink_node *) malloc(sizeof(downlink_node));
-    temp->data = d;
+    temp->filepath = f;
     temp->priority = p;
+    temp->flag = flag;
+    temp->packets_sent = packets_sent;
     temp->next = NULL;
 
     return temp;
@@ -68,9 +60,9 @@ int is_empty(downlink_node **head) {
     return (*head) == NULL;
 }
 
-int peek(downlink_node **head) {
+char *peek(downlink_node **head) {
     if (!is_empty(head)) {
-        return (*head)->data;
+        return (*head)->filepath;
     } else {
         return FAILURE;
     }
@@ -83,7 +75,7 @@ int peek(downlink_node **head) {
  * @param head  Pointer to the first node of the linked list.
  * @return      Data from the popped node.
  */
-int pop(downlink_node **head) {
+struct node pop(downlink_node **head) {
     pthread_mutex_lock(&downlink_mutex);
 
     while (is_empty(head)) {
@@ -91,28 +83,32 @@ int pop(downlink_node **head) {
     }
 
     downlink_node *temp = *head;
-    int data = (*head)->data;
     (*head) = (*head)->next;
+    struct node ret;
+    ret.filepath = temp->filepath;
+    ret.flag = temp->flag;
+    ret.packets_sent = temp->packets_sent;
+
     free(temp);
 
     pthread_mutex_unlock(&downlink_mutex);
-    return data;
+    return ret;
 }
 
 /**
  * Function to push node to the list according to its priority.
  *
  * @param head  Pointer to the first node of the linked list.
- * @param d     Data to be sent.
+ * @param f     Filepath of data to be sent.
  * @param p     Priority of the data.
  */
-void push(downlink_node **head, int d, int p) {
+void push(downlink_node **head, char *f, int p, int flag, unsigned short packets_sent) {
     pthread_mutex_lock(&downlink_mutex);
     downlink_node *start = (*head);
 
     if (!is_empty(head)) {
         // Create new node
-        downlink_node *temp = new_node(d, p);
+        downlink_node *temp = new_node(f, p, flag, packets_sent);
         // Special Case: The head of list has lesser
         // priority than new node. So insert new
         // node before head node and change head node.
@@ -133,7 +129,7 @@ void push(downlink_node **head, int d, int p) {
             start->next = temp;
         }
     } else {
-        *head = new_node(d, p);
+        *head = new_node(f, p, flag, packets_sent);
     }
 
     pthread_mutex_unlock(&downlink_mutex);
@@ -151,20 +147,20 @@ void push(downlink_node **head, int d, int p) {
  *              priority).
  * @return      0
  */
-int send_telemetry_local(int d, int p) {
-    push(&downlink_queue, d, p);
+int send_telemetry_local(char *f, int p, int flag, unsigned short packets_sent) {
+    push(&downlink_queue, f, p, flag, packets_sent);
     return SUCCESS;
 }
 
 /**
- * Return the data of the oldest message of the highest priority.
+ * Return the filepath of the oldest message of the highest priority.
  * (This function exists solely for readability purposes, so some-
  * thing like `pop()` or `push()` won't appear somewhere without
  * context.)
  *
- * @return      Data from the first node of the linked list.
+ * @return      filepath from the first node of the linked list.
  */
-int read_downlink_queue() {
-    int data = pop(&downlink_queue);
-    return data;
+struct node read_downlink_queue() {
+    struct node temp = pop(&downlink_queue);
+    return temp;
 }
