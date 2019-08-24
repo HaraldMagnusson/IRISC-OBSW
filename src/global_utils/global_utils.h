@@ -16,6 +16,12 @@
 #define DOWNLINK_SERVER_PORT 8888
 #define DOWNLINK_SERVER_IP   "127.0.0.1"
 
+#define DEBUG   0
+#define INFO    1
+#define WARN    2
+#define ERROR   3
+#define CRIT    4
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void);
 
@@ -28,3 +34,6 @@ typedef struct {
 int init_global_utils(void);
 
 int init_submodules(const module_init_t init_sequence[], int module_count);
+
+int logging(int level, char module_name[12],
+            const char * format, ... );
