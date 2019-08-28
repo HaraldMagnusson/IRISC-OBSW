@@ -77,7 +77,7 @@ int gpio_export(int pin){
 
     pthread_mutex_lock(&mutex_export);
 
-    int fd = open("sys/class/gpio/export", O_WRONLY);
+    int fd = open("/sys/class/gpio/export", O_WRONLY);
     if(fd == -1){
         logging(ERROR, "GPIO", "Failed to export pin: %d, (%s)",
                 pin, strerror(errno));
@@ -108,7 +108,7 @@ int gpio_unexport(int pin){
 
     pthread_mutex_lock(&mutex_unexport);
 
-    int fd = open("sys/class/gpio/unexport", O_WRONLY);
+    int fd = open("/sys/class/gpio/unexport", O_WRONLY);
     if(fd == -1){
         logging(ERROR, "GPIO", "Failed to unexport pin: %d, (%s)",
                 pin, strerror(errno));
