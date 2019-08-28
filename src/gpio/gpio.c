@@ -70,8 +70,6 @@ int init_gpio(void){
         return ret;
     }
 
-    wiringPiSetup();
-
     return SUCCESS;
 }
 
