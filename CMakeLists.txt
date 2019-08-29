@@ -8,14 +8,14 @@ set(CFLAGS "-O2 -std=gnu17 -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
 
 # linker flags
-set(LDFLAGS "-lrt -pthread")
+set(LDFLAGS "-lrt -pthread -lcfitsio")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
 set(SCR_DIR ${CMAKE_SOURCE_DIR}/src)
-set(SOURCES 
+set(SOURCES
 	${SCR_DIR}/camera/camera.c
-	${SCR_DIR}/camera/camera_control/camera_control.c
+	${SCR_DIR}/camera/camera_utils/camera_utils.c
 	${SCR_DIR}/camera/guiding_camera/guiding_camera.c
 	${SCR_DIR}/camera/nir_camera/nir_camera.c
 	${SCR_DIR}/camera/sanity_camera/sanity_camera.c
@@ -47,9 +47,24 @@ set(SOURCES
 	${SCR_DIR}/watchdog/watchdog.c
 )
 
+# list of libraries
+string(COMPARE EQUAL ${CMAKE_SYSTEM_PROCESSOR} "armv7l" strcmp)
+if(strcmp)
+	set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib_arm)
+else()
+        set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
+endif(strcmp)
+unset(strcmp CACHE)
+
+set(LIBS
+    ${LIB_DIR}/libASICamera2.so
+)
+
 #remove filenames from source files to add include directories
 set(DIRS ${SOURCES})
 string(REGEX REPLACE "\\/[^\\/]*\\.c" "" DIRS "${DIRS}")
 include_directories(${DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
 add_executable(irisc-obsw ${SOURCES})
+target_link_libraries(irisc-obsw ${LIBS})
