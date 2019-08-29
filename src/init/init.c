@@ -61,8 +61,8 @@ static void sigint_handler(int signum){
 int main(int argc, char const *argv[]){
 
     sa.sa_handler = sigint_handler;
+    sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
-    sigaction(SIGTERM, &sa, NULL);
 
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */

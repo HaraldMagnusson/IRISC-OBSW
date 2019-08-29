@@ -10,30 +10,23 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include "global_utils.h"
 #include "gyroscope.h"
 #include "gpio.h"
 
 #define SERIAL_NUM "FT2GZ6PG"
-#define DATAGRAM_IDENTIFIER 0xAF
-#define DATAGRAM_SIZE 65
-#define GYRO_SAMPLE_TIME 5000000 /* unit: nanoseconds */
+#define DATAGRAM_IDENTIFIER 0x94
+#define DATAGRAM_SIZE 27
 
 static void* thread_func(void* arg);
-
-struct sensor_value
-{
-    signed int value:24;
-} __attribute__ ((__packed__));
 
 static pthread_t gyro_thread;
 static FT_HANDLE fd;
 
 int init_gyroscope_poller( void ){
-
-    /* pin is left exported in case of crash */
-    //gpio_unexport(PIN);
 
     int ret = gpio_export(GYRO_TRIG_PIN);
     if(ret != SUCCESS){
@@ -88,20 +81,17 @@ int init_gyroscope_poller( void ){
 }
 
 static void* thread_func(void* arg){
-    sleep(1);
 
     FT_HANDLE fd = *(FT_HANDLE*)arg;
 
     gyro_t gyro;
     struct timespec wake;
-    struct sensor_value* sen;
 
     int ret;
     unsigned int bytes_read, bytes_available;
-    unsigned char data[65], buffer[3];
+    unsigned char data[DATAGRAM_SIZE], buffer[4];
 
     double rate[3];
-
     clock_gettime(CLOCK_MONOTONIC, &wake);
     wake.tv_sec += 1;
 
@@ -111,7 +101,6 @@ static void* thread_func(void* arg){
     }
 
     while(1){
-
         /* do once loop to use break to jump to wait */
         do{
             /* create trigger pulse */
@@ -134,7 +123,7 @@ static void* thread_func(void* arg){
             } while(bytes_available < DATAGRAM_SIZE-1);
 
             /* read full datagram */
-            ret = FT_Read(fd, &data[1], 64, &bytes_read);
+            ret = FT_Read(fd, &data[1], DATAGRAM_SIZE-1, &bytes_read);
             if(ret != FT_OK){
                 logging(WARN, "Gyro", "Reading datagram failed, "
                         "error: %d", ret);
@@ -151,7 +140,8 @@ static void* thread_func(void* arg){
 
             /* check gyroscope data quality */
             if(data[10]){
-                logging(WARN, "Gyro", "Bad gyroscope data quality: %2x", data[10]);
+                logging(WARN, "Gyro", "Bad gyroscope data quality, status byte: %2x",
+                        data[10]);
                 gyro_out_of_date();
                 break;
             }
@@ -161,9 +151,10 @@ static void* thread_func(void* arg){
                 buffer[0] = data[3+3*ii];
                 buffer[1] = data[2+3*ii];
                 buffer[2] = data[1+3*ii];
-                sen = (struct sensor_value*)(buffer);
-                rate[ii] = (double)sen->value / (double)16384;
+                buffer[3] = (data[1+3*ii] & 0x80) ? 0xFF : 0x00;
+                rate[ii] = (double)*(int32_t*)buffer / 16384.f;
             }
+
             gyro.x = rate[0];
             gyro.y = rate[1];
             gyro.z = rate[2];
@@ -183,7 +174,6 @@ static void* thread_func(void* arg){
             wake.tv_nsec -= 1000000000;
         }
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-
     }
     return NULL;
 }

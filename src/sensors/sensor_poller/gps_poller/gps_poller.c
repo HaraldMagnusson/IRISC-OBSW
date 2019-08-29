@@ -21,7 +21,6 @@
 #include "gps.h"
 #include "gps_poller.h"
 
-#define GPS_SAMPLE_TIME 4 /* unit: seconds */
 #define BUFFER_S 100
 
 static int check_chksum(const unsigned char* str);

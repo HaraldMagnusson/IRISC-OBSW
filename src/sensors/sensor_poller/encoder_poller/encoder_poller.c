@@ -18,9 +18,6 @@
 #include "global_utils.h"
 #include "encoder.h"
 
-/* unit: nanoseconds */
-#define ENCODER_SAMPLE_TIME 5000000
-
 /* indicies for data arrays */
 #define RA 0
 #define DEC 1
