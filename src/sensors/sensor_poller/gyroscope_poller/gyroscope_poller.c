@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Gyroscope Poller
  * Parent Component: Sensor Poller
- * Author(s):
+ * Author(s): Harald Magnusson
  * Purpose: Poll the gyroscopes for the current angular motion of the telescope.
  * -----------------------------------------------------------------------------
  */
@@ -16,41 +16,42 @@
 #include "gpio.h"
 
 #define SERIAL_NUM "FT2GZ6PG"
-#define PIN 26
 #define DATAGRAM_IDENTIFIER 0xAF
 #define DATAGRAM_SIZE 65
 #define GYRO_SAMPLE_TIME 5000000 /* unit: nanoseconds */
 
-static void* gyro_thread(void* arg);
+static void* thread_func(void* arg);
 
 struct sensor_value
 {
     signed int value:24;
 } __attribute__ ((__packed__));
 
-static pthread_t read_thread;
-
+static pthread_t gyro_thread;
+static FT_HANDLE fd;
 
 int init_gyroscope_poller( void ){
 
-    int ret = gpio_export(PIN);
+    /* pin is left exported in case of crash */
+    //gpio_unexport(PIN);
+
+    int ret = gpio_export(GYRO_TRIG_PIN);
     if(ret != SUCCESS){
         return ret;
     }
 
-    ret = gpio_direction(PIN, OUT);
+    ret = gpio_direction(GYRO_TRIG_PIN, OUT);
     if(ret != SUCCESS){
         return ret;
     }
 
-    gpio_write(PIN, HIGH);
+    gpio_write(GYRO_TRIG_PIN, HIGH);
 
-    FT_HANDLE fd;
     FT_STATUS stat;
 
     stat = FT_OpenEx(SERIAL_NUM, FT_OPEN_BY_SERIAL_NUMBER, &fd);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to open initiate UART, error: %d",
+        logging(ERROR, "GYRO", "Failed to initiate UART, error: %d",
                 stat);
         return FAILURE;
     }
@@ -76,7 +77,7 @@ int init_gyroscope_poller( void ){
         return FAILURE;
     }
 
-    ret = pthread_create(&read_thread, NULL, gyro_thread, (void*)&fd);
+    ret = pthread_create(&gyro_thread, NULL, thread_func, (void*)&fd);
     if(ret != 0){
         logging(ERROR, "GYRO", "Failed to create gyro polling thread: "
                 "%d, (%s)", ret, strerror(ret));
@@ -86,12 +87,16 @@ int init_gyroscope_poller( void ){
     return SUCCESS;
 }
 
-static void* gyro_thread(void* arg){
+static void* thread_func(void* arg){
+    sleep(1);
+
     FT_HANDLE fd = *(FT_HANDLE*)arg;
 
     gyro_t gyro;
     struct timespec wake;
     struct sensor_value* sen;
+
+    int ret;
     unsigned int bytes_read, bytes_available;
     unsigned char data[65], buffer[3];
 
@@ -100,9 +105,9 @@ static void* gyro_thread(void* arg){
     clock_gettime(CLOCK_MONOTONIC, &wake);
     wake.tv_sec += 1;
 
-    int ret = FT_Purge(fd, FT_PURGE_RX);
+    ret = FT_Purge(fd, FT_PURGE_RX);
     if(ret != FT_OK){
-        logging(WARN, "GYRO", "Failed to purge UART receive buffer");
+        logging(WARN, "GYRO", "Failed to purge UART receive buffer: %d", ret);
     }
 
     while(1){
@@ -110,9 +115,9 @@ static void* gyro_thread(void* arg){
         /* do once loop to use break to jump to wait */
         do{
             /* create trigger pulse */
-            gpio_write(PIN, LOW);
+            gpio_write(GYRO_TRIG_PIN, LOW);
             usleep(1);
-            gpio_write(PIN, HIGH);
+            gpio_write(GYRO_TRIG_PIN, HIGH);
 
             /* wait for UART conversion */
             usleep(2000);
@@ -146,7 +151,7 @@ static void* gyro_thread(void* arg){
 
             /* check gyroscope data quality */
             if(data[10]){
-                logging(WARN, "Gyro", "Bad gyroscope data quality");
+                logging(WARN, "Gyro", "Bad gyroscope data quality: %2x", data[10]);
                 gyro_out_of_date();
                 break;
             }
@@ -160,13 +165,13 @@ static void* gyro_thread(void* arg){
                 rate[ii] = (double)sen->value / (double)16384;
             }
             gyro.x = rate[0];
-            gyro.y = rate[0];
-            gyro.z = rate[0];
+            gyro.y = rate[1];
+            gyro.z = rate[2];
 
             set_gyro(&gyro);
 
             #if GYRO_DEBUG
-                logging(DEBUG, "Gyro", "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf\n",
+                logging(DEBUG, "Gyro", "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
                         gyro.x, gyro.y, gyro.z);
             #endif
 

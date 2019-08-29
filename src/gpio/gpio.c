@@ -79,6 +79,11 @@ int gpio_export(int pin){
 
     int fd = open("/sys/class/gpio/export", O_WRONLY);
     if(fd == -1){
+        if(errno == EBUSY){
+            logging(WARN, "GPIO", "Pin %d already exported", pin);
+            pthread_mutex_unlock(&mutex_export);
+            return SUCCESS;
+        }
         logging(ERROR, "GPIO", "Failed to export pin: %d, (%s)",
                 pin, strerror(errno));
         pthread_mutex_unlock(&mutex_export);
@@ -89,6 +94,11 @@ int gpio_export(int pin){
     size_t count = snprintf(buffer, 3, "%d", pin);
     int ret = write(fd, buffer, count);
     if(ret == -1){
+        if(errno == EBUSY){
+            logging(WARN, "GPIO", "Pin %d already exported", pin);
+            pthread_mutex_unlock(&mutex_export);
+            return SUCCESS;
+        }
         logging(ERROR, "GPIO", "Failed to export pin: %d, (%s)",
                 pin, strerror(errno));
         close_unlock(fd, &mutex_export);

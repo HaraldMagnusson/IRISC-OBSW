@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Gyroscope Poller
  * Parent Component: Sensor Poller
- * Author(s):
+ * Author(s): Harald Magnusson
  * Purpose: Poll the gyroscopes for the current angular motion of the telescope.
  * -----------------------------------------------------------------------------
  */

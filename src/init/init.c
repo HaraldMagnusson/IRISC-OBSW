@@ -54,6 +54,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 static void sigint_handler(int signum){
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
     stop_watchdog();
+    gpio_unexport(GYRO_TRIG_PIN);
     _exit(EXIT_SUCCESS);
 }
 
@@ -61,6 +62,7 @@ int main(int argc, char const *argv[]){
 
     sa.sa_handler = sigint_handler;
     sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */

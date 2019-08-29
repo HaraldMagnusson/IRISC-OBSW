@@ -18,6 +18,8 @@
 #define ERROR   3
 #define CRIT    4
 
+#define GYRO_TRIG_PIN 26
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void);
 typedef struct {
