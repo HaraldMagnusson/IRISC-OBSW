@@ -16,6 +16,7 @@
 #include <stdio.h>
 
 #include "global_utils.h"
+#include "sensors.h"
 #include "encoder.h"
 
 /* indicies for data arrays */
@@ -95,8 +96,8 @@ static void proc(unsigned char data[2][2]){
     #endif
 
     encoder_t enc;
-    enc.ra_gimbal = ang[RA];
-    enc.dec_gimbal = ang[DEC];
+    enc.ra = ang[RA];
+    enc.dec = ang[DEC];
 
     set_encoder(&enc);
 }

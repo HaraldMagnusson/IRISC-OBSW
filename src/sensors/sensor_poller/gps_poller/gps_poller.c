@@ -18,8 +18,8 @@
 #include <errno.h>
 
 #include "global_utils.h"
+#include "sensors.h"
 #include "gps.h"
-#include "gps_poller.h"
 
 #define BUFFER_S 100
 

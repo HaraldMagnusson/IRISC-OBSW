@@ -14,6 +14,7 @@
 #include <stdio.h>
 
 #include "global_utils.h"
+#include "sensors.h"
 #include "gyroscope.h"
 #include "gpio.h"
 

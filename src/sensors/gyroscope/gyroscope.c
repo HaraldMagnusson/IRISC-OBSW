@@ -10,8 +10,9 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "gyroscope.h"
 #include "global_utils.h"
+#include "sensors.h"
+#include "gyroscope.h"
 
 static pthread_mutex_t mutex_gyro;
 static gyro_t gyro_local;
@@ -35,7 +36,7 @@ int init_gyroscope( void ){
     return SUCCESS;
 }
 
-void get_gyro(gyro_t* gyro){
+void get_gyro_local(gyro_t* gyro){
 
     pthread_mutex_lock(&mutex_gyro);
 

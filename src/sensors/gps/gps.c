@@ -9,6 +9,7 @@
 #include <pthread.h>
 
 #include "global_utils.h"
+#include "sensors.h"
 #include "gps.h"
 
 static pthread_mutex_t mutex_gps;
@@ -33,7 +34,7 @@ int init_gps( void ){
     return SUCCESS;
 }
 
-void get_gps(gps_t* gps){
+void get_gps_local(gps_t* gps){
 
     pthread_mutex_lock(&mutex_gps);
 

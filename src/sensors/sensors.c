@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Sensors
- * Author(s): 
+ * Author(s): Harald Magnusson
  * Purpose: Poll sensors and store the latest data. Provide an interface for
  *          other components to read the data.
  * -----------------------------------------------------------------------------
@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "global_utils.h"
+#include "sensors.h"
 #include "encoder.h"
 #include "gps.h"
 #include "gyroscope.h"
@@ -38,4 +39,19 @@ int init_sensors( void ){
     }
 
     return SUCCESS;
+}
+
+/* fetch the latest gps data */
+void get_gps(gps_t* gps){
+    get_gps_local(gps);
+}
+
+/* fetch the latest encoder data */
+void get_encoder(encoder_t* encoder){
+    get_encoder_local(encoder);
+}
+
+/* fetch the latest gyro data */
+void get_gyro(gyro_t* gyro){
+    get_gyro_local(gyro);
 }
