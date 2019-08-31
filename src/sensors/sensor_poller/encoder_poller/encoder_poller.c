@@ -96,8 +96,8 @@ static void proc(unsigned char data[2][2]){
     #endif
 
     encoder_t enc;
-    enc.ra = ang[RA];
-    enc.dec = ang[DEC];
+    enc.az = ang[RA];
+    enc.alt_ang = ang[DEC];
 
     set_encoder(&enc);
 }

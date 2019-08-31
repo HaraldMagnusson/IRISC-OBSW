@@ -24,7 +24,7 @@ typedef struct{
 } gyro_t;
 
 typedef struct{
-    double ra, dec;
+    double az, alt_ang;
     char out_of_date;
 } encoder_t;
 

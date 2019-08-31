@@ -23,9 +23,14 @@
 
 #define GYRO_TRIG_PIN 26
 
-#define GPS_SAMPLE_TIME 4           /* unit: seconds */
-#define GYRO_SAMPLE_TIME 10000000    /* unit: nanoseconds */
-#define ENCODER_SAMPLE_TIME 10000000 /* unit: nanoseconds */
+#define GPS_SAMPLE_TIME 4               /* unit: seconds     */
+#define GYRO_SAMPLE_TIME 10000000       /* unit: nanoseconds */
+#define ENCODER_SAMPLE_TIME 10000000    /* unit: nanoseconds */
+#define TRACKING_UPDATE_TIME 100000000  /* unit: nanoseconds */
+
+/* error thresholds for when to start exposing the nir camera */
+#define AZ_THRESHOLD 0.01
+#define ALT_THRESHOLD 0.01
 
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void);
