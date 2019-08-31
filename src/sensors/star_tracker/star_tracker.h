@@ -1,14 +1,12 @@
 /* -----------------------------------------------------------------------------
- * Component Name: Sun
+ * Component Name: Star Tracker
  * Parent Component: Sensors
- * Author(s): 
- * Purpose: Keep track of the current position of the sun.
+ * Author(s):
+ * Purpose: Keep track of the absolute attitude of the telescope.
  *
  * -----------------------------------------------------------------------------
  */
 
-#include "global_utils.h"
+#pragma once
 
-int init_sun( void ){
-    return SUCCESS;
-}
+int init_star_tracker( void );

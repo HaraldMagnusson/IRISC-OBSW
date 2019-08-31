@@ -53,6 +53,7 @@ char logging_levels[5][7] =
 
 int logging(int level, char module_name[12],
             const char * format, ... ) {
+
     if (debug_mode == 0 && level == 0) return 0;
 
     time_t now;
@@ -88,4 +89,6 @@ int logging(int level, char module_name[12],
     fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds,
             logging_levels[level], module_name, buffer);
+
+    return SUCCESS;
 }

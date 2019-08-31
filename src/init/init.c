@@ -19,18 +19,17 @@
 #include "data_storage.h"
 #include "e_link.h"
 #include "global_utils.h"
-#include "i2c.h"
+#include "gpio.h"
 #include "img_processing.h"
 #include "mode.h"
 #include "sensors.h"
-#include "spi.h"
 #include "telemetry.h"
 #include "thermal.h"
 #include "control_sys.h"
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 14
+#define MODULE_COUNT 13
 
 static int ret;
 static struct sigaction sa;
@@ -38,16 +37,15 @@ static struct sigaction sa;
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"watchdog", &init_watchdog},
+    {"gpio", &init_gpio},
     {"camera", &init_camera},
     {"command", &init_command},
     {"data_storage", &init_data_storage},
     {"e_link", &init_elink},
     {"global_utils", &init_global_utils},
-    {"i2c", &init_i2c},
     {"img_processing", &init_img_processing},
     {"mode", &init_mode},
     {"sensors", &init_sensors},
-    {"spi", &init_spi},
     {"telemetry", &init_telemetry},
     {"thermal", &init_thermal},
     {"control_sys", &init_control_sys}
@@ -56,12 +54,14 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 static void sigint_handler(int signum){
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
     stop_watchdog();
+    gpio_unexport(GYRO_TRIG_PIN);
     _exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char const *argv[]){
 
     sa.sa_handler = sigint_handler;
+    sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
     /* redirect stderr to a log file */
