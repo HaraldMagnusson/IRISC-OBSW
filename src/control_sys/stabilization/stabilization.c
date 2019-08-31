@@ -110,7 +110,7 @@ double saturate_output(double given_output){
 }
 
 
-int change_pid_values(double new_p, double new_i, double new_d){
+void change_pid_values(double new_p, double new_i, double new_d){
     pthread_mutex_lock(&pid_values_mutex);
     p_value = new_p;
     i_value = new_i;
