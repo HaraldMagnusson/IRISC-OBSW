@@ -10,49 +10,49 @@ set(COMPILE_DEFINES "")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
-set(LDFLAGS "-lrt -lm -pthread -lftd2xx")
+set(LDFLAGS "-lrt -lm -pthread -lftd2xx -lcfitsio")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
 set(SCR_DIR ${CMAKE_SOURCE_DIR}/src)
 set(SOURCES
-	${SCR_DIR}/camera/camera.c
-	${SCR_DIR}/camera/camera_control/camera_control.c
-	${SCR_DIR}/camera/guiding_camera/guiding_camera.c
-	${SCR_DIR}/camera/nir_camera/nir_camera.c
-	${SCR_DIR}/camera/sanity_camera/sanity_camera.c
-	${SCR_DIR}/command/command.c
+    ${SCR_DIR}/camera/camera.c
+    ${SCR_DIR}/camera/camera_utils/camera_utils.c
+    ${SCR_DIR}/camera/guiding_camera/guiding_camera.c
+    ${SCR_DIR}/camera/nir_camera/nir_camera.c
+    ${SCR_DIR}/camera/sanity_camera/sanity_camera.c
+    ${SCR_DIR}/command/command.c
     ${SCR_DIR}/control_sys/control_sys.c
     ${SCR_DIR}/control_sys/stabilization/stabilization.c
     ${SCR_DIR}/control_sys/current_target/current_target.c
     ${SCR_DIR}/control_sys/gimbal/gimbal.c
     ${SCR_DIR}/control_sys/target_selection/target_selection.c
-	${SCR_DIR}/data_storage/data_storage.c
-	${SCR_DIR}/e_link/e_link.c
-	${SCR_DIR}/global_utils/global_utils.c
-	${SCR_DIR}/gpio/gpio.c
-	${SCR_DIR}/img_processing/img_processing.c
-	${SCR_DIR}/img_processing/data_queue/data_queue.c
-	${SCR_DIR}/img_processing/image_handler/image_handler.c
-	${SCR_DIR}/init/init.c
-	${SCR_DIR}/mode/mode.c
-	${SCR_DIR}/sensors/encoder/encoder.c
-	${SCR_DIR}/sensors/gps/gps.c
-	${SCR_DIR}/sensors/sensors.c
-	${SCR_DIR}/sensors/gyroscope/gyroscope.c
-	${SCR_DIR}/sensors/sensor_poller/encoder_poller/encoder_poller.c
-	${SCR_DIR}/sensors/sensor_poller/gps_poller/gps_poller.c
-	${SCR_DIR}/sensors/sensor_poller/gyroscope_poller/gyroscope_poller.c
-	${SCR_DIR}/sensors/sensor_poller/sensor_poller.c
-	${SCR_DIR}/sensors/sensor_poller/star_tracker_poller/star_tracker_poller.c
-	${SCR_DIR}/sensors/sensor_poller/temperature_poller/temperature_poller.c
-	${SCR_DIR}/sensors/star_tracker/star_tracker.c
-	${SCR_DIR}/sensors/temperature/temperature.c
-	${SCR_DIR}/telemetry/telemetry.c
-	${SCR_DIR}/telemetry/downlink/downlink.c
-	${SCR_DIR}/telemetry/downlink_queue/downlink_queue.c
-	${SCR_DIR}/thermal/thermal.c
-	${SCR_DIR}/watchdog/watchdog.c
+    ${SCR_DIR}/data_storage/data_storage.c
+    ${SCR_DIR}/e_link/e_link.c
+    ${SCR_DIR}/global_utils/global_utils.c
+    ${SCR_DIR}/gpio/gpio.c
+    ${SCR_DIR}/img_processing/img_processing.c
+    ${SCR_DIR}/img_processing/data_queue/data_queue.c
+    ${SCR_DIR}/img_processing/image_handler/image_handler.c
+    ${SCR_DIR}/init/init.c
+    ${SCR_DIR}/mode/mode.c
+    ${SCR_DIR}/sensors/encoder/encoder.c
+    ${SCR_DIR}/sensors/gps/gps.c
+    ${SCR_DIR}/sensors/sensors.c
+    ${SCR_DIR}/sensors/gyroscope/gyroscope.c
+    ${SCR_DIR}/sensors/sensor_poller/encoder_poller/encoder_poller.c
+    ${SCR_DIR}/sensors/sensor_poller/gps_poller/gps_poller.c
+    ${SCR_DIR}/sensors/sensor_poller/gyroscope_poller/gyroscope_poller.c
+    ${SCR_DIR}/sensors/sensor_poller/sensor_poller.c
+    ${SCR_DIR}/sensors/sensor_poller/star_tracker_poller/star_tracker_poller.c
+    ${SCR_DIR}/sensors/sensor_poller/temperature_poller/temperature_poller.c
+    ${SCR_DIR}/sensors/star_tracker/star_tracker.c
+    ${SCR_DIR}/sensors/temperature/temperature.c
+    ${SCR_DIR}/telemetry/telemetry.c
+    ${SCR_DIR}/telemetry/downlink/downlink.c
+    ${SCR_DIR}/telemetry/downlink_queue/downlink_queue.c
+    ${SCR_DIR}/thermal/thermal.c
+    ${SCR_DIR}/watchdog/watchdog.c
 )
 
 #list of sources for exported simulink model
@@ -78,9 +78,23 @@ set(SRC ${SOURCES_X} ${INCLUDES})
 list(REMOVE_ITEM SRC "src/control_sys/stabilization/R2019a/rtw/c/src/common/rt_main.c")
 list(TRANSFORM SRC PREPEND "${CMAKE_SOURCE_DIR}/")
 
+# list of libraries
+string(COMPARE EQUAL ${CMAKE_SYSTEM_PROCESSOR} "armv7l" strcmp)
+if(strcmp)
+    set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib_arm)
+else()
+    set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
+endif(strcmp)
+unset(strcmp CACHE)
+
+set(LIBS
+    ${LIB_DIR}/libASICamera2.so
+)
+
 #remove filenames from source files to add include directories
 set(DIRS ${SOURCES})
 string(REGEX REPLACE "\\/[^\\/]*\\.c" "" DIRS "${DIRS}")
+
 set(DIRS ${DIRS} ${SIMULINK})
 set(SOURCES ${SOURCES} ${SRC})
 
@@ -92,6 +106,8 @@ message("-----INCLUDES----")
 string(REPLACE ";" "\n" txt "${DIRS}")
 message(${txt})
 
-add_executable(irisc-obsw ${SOURCES})
+include_directories(${DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
-target_include_directories(irisc-obsw PUBLIC ${DIRS})
+add_executable(irisc-obsw ${SOURCES})
+target_link_libraries(irisc-obsw ${LIBS})

@@ -12,6 +12,9 @@
 #define SUCCESS 0
 #define FAILURE -1
 
+#define EXP_NOT_READY 1
+#define EXP_FAILED 3
+
 #define DEBUG   0
 #define INFO    1
 #define WARN    2
