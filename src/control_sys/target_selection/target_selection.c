@@ -19,7 +19,7 @@
 #include "sensors.h"
 #include "camera.h"
 
-void* thread(void* arg);
+static void* thread(void* arg);
 
 static double d_mod(double val, int mod);
 static void dec_ha_lat_2_alt_az(double dec, double ha,
@@ -28,14 +28,17 @@ static void fetch_time(double* ut_hours, double* j2000);
 
 static struct timespec wake;
 static int exp_time = 30, sensor_gain = 100;
+static pthread_t sel_track_thread;
+
 
 int init_target_selection(void){
+
+    pthread_create(&sel_track_thread, NULL, thread, NULL);
 
     return SUCCESS;
 }
 
-
-void* thread(void* arg){
+static void* thread(void* arg){
 
     int ret, tar_index;
 
@@ -45,12 +48,13 @@ void* thread(void* arg){
     encoder_t enc;
     telescope_att_t telescope_att;
 
-    clock_gettime(CLOCK_MONOTONIC, &wake);
-
     double j2000, ut_hours, lst, ha, alt, az, max_prio = 0, gon_az;
 
     target_prio_t target_prio[19];
     target_t target_list_aa[19], target_err;
+
+    clock_gettime(CLOCK_MONOTONIC, &wake);
+    wake.tv_sec++;
 
     /* selection */
     while(1){
