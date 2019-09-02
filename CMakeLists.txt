@@ -10,7 +10,7 @@ set(COMPILE_DEFINES "")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
-set(LDFLAGS "-lrt -lm -pthread -lftd2xx -lcfitsio")
+set(LDFLAGS "-lrt -lm -pthread -lcfitsio -lftd2xx")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
