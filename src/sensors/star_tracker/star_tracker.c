@@ -1,13 +1,14 @@
 /* -----------------------------------------------------------------------------
- * Component Name: I2C
- * Author(s): 
- * Purpose: Provide initialisation and an interface for the communications
- *          over the I2C bus.
+ * Component Name: Star Tracker
+ * Parent Component: Sensors
+ * Author(s):
+ * Purpose: Keep track of the absolute attitude of the telescope.
+ *
  * -----------------------------------------------------------------------------
  */
 
 #include "global_utils.h"
 
-int init_i2c( void ){
+int init_star_tracker( void ){
     return SUCCESS;
 }

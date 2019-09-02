@@ -5,10 +5,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # compiler flags
 set(CFLAGS "-O2 -std=gnu17 -Wall")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
+# useful defines: GYRO_DEBUG, GPS_DEBUG, ENCODER_DEBUG
+set(COMPILE_DEFINES "")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
-set(LDFLAGS "-lrt -pthread -lcfitsio")
+set(LDFLAGS "-lrt -pthread -lcfitsio -lftd2xx")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources
@@ -23,18 +25,24 @@ set(SOURCES
 	${SCR_DIR}/data_storage/data_storage.c
 	${SCR_DIR}/e_link/e_link.c
 	${SCR_DIR}/global_utils/global_utils.c
-	${SCR_DIR}/i2c/i2c.c
+	${SCR_DIR}/gpio/gpio.c
 	${SCR_DIR}/img_processing/img_processing.c
 	${SCR_DIR}/img_processing/data_queue/data_queue.c
 	${SCR_DIR}/img_processing/image_handler/image_handler.c
 	${SCR_DIR}/init/init.c
 	${SCR_DIR}/mode/mode.c
+	${SCR_DIR}/sensors/encoder/encoder.c
+	${SCR_DIR}/sensors/gps/gps.c
 	${SCR_DIR}/sensors/sensors.c
-	${SCR_DIR}/sensors/orientation/orientation.c
+	${SCR_DIR}/sensors/gyroscope/gyroscope.c
+	${SCR_DIR}/sensors/sensor_poller/encoder_poller/encoder_poller.c
+	${SCR_DIR}/sensors/sensor_poller/gps_poller/gps_poller.c
+	${SCR_DIR}/sensors/sensor_poller/gyroscope_poller/gyroscope_poller.c
 	${SCR_DIR}/sensors/sensor_poller/sensor_poller.c
-	${SCR_DIR}/sensors/sun/sun.c
+	${SCR_DIR}/sensors/sensor_poller/star_tracker_poller/star_tracker_poller.c
+	${SCR_DIR}/sensors/sensor_poller/temperature_poller/temperature_poller.c
+	${SCR_DIR}/sensors/star_tracker/star_tracker.c
 	${SCR_DIR}/sensors/temperature/temperature.c
-	${SCR_DIR}/spi/spi.c
 	${SCR_DIR}/telemetry/telemetry.c
 	${SCR_DIR}/telemetry/downlink/downlink.c
 	${SCR_DIR}/telemetry/downlink_queue/downlink_queue.c

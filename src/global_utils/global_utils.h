@@ -21,6 +21,12 @@
 #define ERROR   3
 #define CRIT    4
 
+#define GYRO_TRIG_PIN 26
+
+#define GPS_SAMPLE_TIME 4           /* unit: seconds */
+#define GYRO_SAMPLE_TIME 10000000    /* unit: nanoseconds */
+#define ENCODER_SAMPLE_TIME 10000000 /* unit: nanoseconds */
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void);
 typedef struct {

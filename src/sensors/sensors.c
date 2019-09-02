@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Sensors
- * Author(s): 
+ * Author(s): Harald Magnusson
  * Purpose: Poll sensors and store the latest data. Provide an interface for
  *          other components to read the data.
  * -----------------------------------------------------------------------------
@@ -10,19 +10,24 @@
 #include <string.h>
 
 #include "global_utils.h"
-#include "orientation.h"
+#include "sensors.h"
+#include "encoder.h"
+#include "gps.h"
+#include "gyroscope.h"
 #include "sensor_poller.h"
-#include "sun.h"
+#include "star_tracker.h"
 #include "temperature.h"
 
-#define MODULE_COUNT 4
+#define MODULE_COUNT 6
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"orientation", &init_orientation},
+    {"encoder", &init_encoder},
+    {"gps", &init_gps},
+    {"gyroscope", &init_gyroscope},
+    {"star_tracker", &init_star_tracker},
+    {"temperature", &init_temperature},
     {"sensor_poller", &init_sensor_poller},
-    {"sun", &init_sun},
-    {"temperature", &init_temperature}
 };
 
 int init_sensors( void ){
@@ -34,4 +39,19 @@ int init_sensors( void ){
     }
 
     return SUCCESS;
+}
+
+/* fetch the latest gps data */
+void get_gps(gps_t* gps){
+    get_gps_local(gps);
+}
+
+/* fetch the latest encoder data */
+void get_encoder(encoder_t* encoder){
+    get_encoder_local(encoder);
+}
+
+/* fetch the latest gyro data */
+void get_gyro(gyro_t* gyro){
+    get_gyro_local(gyro);
 }
