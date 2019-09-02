@@ -21,6 +21,7 @@
 #define SERIAL_NUM "FT2GZ6PG"
 #define DATAGRAM_IDENTIFIER 0x94
 #define DATAGRAM_SIZE 27
+#define FTDI_BAUDRATE 921600
 
 static void* thread_func(void* arg);
 
@@ -29,6 +30,7 @@ static FT_HANDLE fd;
 
 int init_gyroscope_poller( void ){
 
+    /* gpio pin is used for trigger to poll the gyroscope */
     int ret = gpio_export(GYRO_TRIG_PIN);
     if(ret != SUCCESS){
         return ret;
@@ -41,6 +43,11 @@ int init_gyroscope_poller( void ){
 
     gpio_write(GYRO_TRIG_PIN, HIGH);
 
+    /* ftdi setup:
+     * baud rate = FTDI_BAUDRATE
+     * message time out = 4 ms
+     * lowest latency setting (2 ms)
+     */
     FT_STATUS stat;
 
     stat = FT_OpenEx(SERIAL_NUM, FT_OPEN_BY_SERIAL_NUMBER, &fd);
@@ -50,7 +57,7 @@ int init_gyroscope_poller( void ){
         return FAILURE;
     }
 
-    stat = FT_SetBaudRate(fd, 921600);
+    stat = FT_SetBaudRate(fd, FTDI_BAUDRATE);
     if(stat != FT_OK){
         logging(ERROR, "GYRO", "Failed to set baudrate for UART, error: %d",
                 stat);
@@ -156,6 +163,7 @@ static void* thread_func(void* arg){
                 rate[ii] = (double)*(int32_t*)buffer / 16384.f;
             }
 
+            /* save data in protected object */
             gyro.x = rate[0];
             gyro.y = rate[1];
             gyro.z = rate[2];
