@@ -22,7 +22,8 @@
 void* thread(void* arg);
 
 static double d_mod(double val, int mod);
-static void dec_ha_lat_2_alt_az(double dec, double ha, double lat, double* alt, double* az);
+static void dec_ha_lat_2_alt_az(double dec, double ha,
+        double lat, double* alt, double* az);
 static void fetch_time(double* ut_hours, double* j2000);
 
 static struct timespec wake;
@@ -79,20 +80,24 @@ void* thread(void* arg){
         for(int ii=0; ii<19; ++ii){
             /* calculate alt, az, ha for all targets*/
             target_list_aa[ii].ha = lst - 15 * target_list_rd[ii].ra;
-            dec_ha_lat_2_alt_az(target_list_rd[ii].dec, target_list_aa[ii].ha, gps.lat, &alt, &az);
+            dec_ha_lat_2_alt_az(target_list_rd[ii].dec, target_list_aa[ii].ha,
+                    gps.lat, &alt, &az);
             target_list_aa[ii].alt = alt;
             target_list_aa[ii].az = az;
 
             /* position parameter */
             target_prio[ii].pos_param = gon_az - target_list_aa[ii].az;
-            target_prio[ii].pos_param = fabs(target_prio[ii].pos_param) < OP_FOV/3 ? OP_FOV/3 - target_prio[ii].pos_param : 0;
+            target_prio[ii].pos_param = fabs(target_prio[ii].pos_param) < OP_FOV/3 ?
+                    OP_FOV/3 - target_prio[ii].pos_param : 0;
 
             /* exposure parameter */
-            target_prio[ii].exp_param = target_prio[ii].exp_num > 10 ? 0.1 : exp_prio_list[target_prio[ii].exp_num];
+            target_prio[ii].exp_param = target_prio[ii].exp_num > 10 ?
+                    0.1 : exp_prio_list[target_prio[ii].exp_num];
 
             /* total priority */
-            target_prio[ii].tot_prio = target_list_rd[ii].mag * target_prio[ii].pos_param
-                    * target_prio[ii].exp_param * target_list_rd[ii].type_prio;
+            target_prio[ii].tot_prio = target_list_rd[ii].mag *
+                    target_prio[ii].pos_param * target_prio[ii].exp_param *
+                    target_list_rd[ii].type_prio;
         }
 
         /* finding maximum priority target */
@@ -102,6 +107,10 @@ void* thread(void* arg){
                 tar_index = ii;
             }
         }
+
+        #ifdef SELECTION_DEBUG
+            logging(DEBUG, "Selection", "Current target: %s", target_list_rd[tar_index].name);
+        #endif
 
         /* selection done */
         exposing_flag = 0;
@@ -123,10 +132,16 @@ void* thread(void* arg){
 
             set_tracking_angles(az, alt);
 
+            #ifdef TRACKING_DEBUG
+                logging(DEBUG, "Tracking", "Tracking angles: az: %+9.4lf, alt: %+9.4lf",
+                        az, alt);
+            #endif
+
             /* abort exposure if target is moving out of operational FoV */
             if(fabs(enc.az) > OP_FOV * 0.45){
                 abort_exp_nir("hax.fit");
-                logging(WARN, "Tracking", "Aborted exposure due to telescope leaving operational FoV.");
+                logging(WARN, "Tracking",
+                        "Aborted exposure due to telescope leaving operational FoV.");
                 break;
             }
 
