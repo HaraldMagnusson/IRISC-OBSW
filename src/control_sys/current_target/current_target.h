@@ -22,12 +22,6 @@ typedef struct{
 /* initialise the current target component */
 int init_current_target( void );
 
-/* update protected target to be tracked */
-void set_target( void );
-
-/* return protected target to be tracked */
-void get_target( void );
-
 /* update the list of targets and priorities */
 void set_target_list( void );
 
@@ -41,4 +35,5 @@ void set_telescope_att(telescope_att_t* telescope_att);
 void telescope_att_out_of_date(void);
 
 void set_tracking_angles(double az, double alt);
+
 void get_tracking_angles(double* az, double* alt);

@@ -40,9 +40,6 @@ int init_current_target( void ){
     telescope_att_local.alt = 0;
     telescope_att_local.out_of_date = 1;
 
-
-    filter_current_position = 1;
-    tracking_output_angle = 0.5;
     return SUCCESS;
 }
 
