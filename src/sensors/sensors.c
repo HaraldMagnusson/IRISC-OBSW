@@ -55,3 +55,8 @@ void get_encoder(encoder_t* encoder){
 void get_gyro(gyro_t* gyro){
     get_gyro_local(gyro);
 }
+
+/* set offsets for the azimuth and altitude angle encoders */
+void set_encoder_offsets(double az, double alt){
+    set_encoder_offsets_local(az, alt);
+}

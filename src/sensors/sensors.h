@@ -39,3 +39,6 @@ void get_encoder(encoder_t* encoder);
 
 /* fetch the latest gyro data */
 void get_gyro(gyro_t* gyro);
+
+/* set offsets for the azimuth and altitude angle encoders */
+void set_encoder_offsets(double az, double alt);

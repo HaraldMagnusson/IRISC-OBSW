@@ -36,3 +36,8 @@ int init_sensor_poller( void ){
 
     return SUCCESS;
 }
+
+/* set offsets for the azimuth and altitude angle encoders */
+void set_encoder_offsets_local(double az, double alt){
+    set_offsets(az, alt);
+}

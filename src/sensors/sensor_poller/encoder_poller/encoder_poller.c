@@ -20,8 +20,8 @@
 #include "encoder.h"
 
 /* indicies for data arrays */
-#define RA 0
-#define DEC 1
+#define AZ 0
+#define ALT_ANG 1
 
 static int checksum_ctl(unsigned char data[2][2]);
 static int checksum_ctl_enc(unsigned char data[2]);
@@ -32,6 +32,7 @@ static struct timespec wake_time;
 static pthread_t encoder_thread;
 
 static int fd_spi00, fd_spi01;
+static double az_offset = 0, alt_offset = 0;
 
 int init_encoder_poller( void ){
 
@@ -63,8 +64,8 @@ static void* thread_func(){
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
 
     while(1){
-        read(fd_spi00, data[RA], 2);
-        read(fd_spi01, data[DEC], 2);
+        read(fd_spi00, data[AZ], 2);
+        read(fd_spi01, data[ALT_ANG], 2);
 
         if(checksum_ctl(data)){
             encoder_out_of_date();
@@ -92,12 +93,12 @@ static void proc(unsigned char data[2][2]){
     }
 
     #ifdef ENCODER_DEBUG
-        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+        logging(DEBUG, "Encoder", "az: %lf \t alt_ang: %lf", ang[AZ], ang[ALT_ANG]);
     #endif
 
     encoder_t enc;
-    enc.az = ang[RA];
-    enc.alt_ang = ang[DEC];
+    enc.az = ang[AZ] - az_offset;
+    enc.alt_ang = ang[ALT_ANG] - alt_offset;
 
     set_encoder(&enc);
 }
@@ -109,16 +110,16 @@ static int checksum_ctl(unsigned char data[2][2]){
         ctl[ii] = checksum_ctl_enc(data[ii]);
     }
 
-    if(ctl[RA]){
-        if(ctl[DEC]){
-            logging(WARN, "Encoder", "Incorrect checksum from encoders: ra & dec");
+    if(ctl[AZ]){
+        if(ctl[ALT_ANG]){
+            logging(WARN, "Encoder", "Incorrect checksum from encoders: az & alt_ang");
             return FAILURE;
         }
-        logging(WARN, "Encoder", "Incorrect checksum from encoder: ra");
+        logging(WARN, "Encoder", "Incorrect checksum from encoder: az");
         return FAILURE;
     }
-    if(ctl[DEC]){
-        logging(WARN, "Encoder", "Incorrect checksum from encoder: dec");
+    if(ctl[ALT_ANG]){
+        logging(WARN, "Encoder", "Incorrect checksum from encoder: alt_ang");
         return FAILURE;
     }
     return SUCCESS;
@@ -152,3 +153,8 @@ static int checksum_ctl_enc(unsigned char data[2]){
     return FAILURE;
 }
 
+/* set offsets for the azimuth and altitude angle encoders */
+void set_offsets(double az, double alt){
+    az_offset = az;
+    alt_offset = alt;
+}
