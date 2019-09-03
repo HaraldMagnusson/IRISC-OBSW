@@ -30,6 +30,8 @@ static struct timespec wake;
 static int exp_time = 30, sensor_gain = 100;
 static pthread_t sel_track_thread;
 
+static double az_threshold = 0.01, alt_threshold = 0.01;
+
 
 int init_target_selection(void){
 
@@ -155,8 +157,8 @@ static void* thread(void* arg){
             target_err.alt = alt - telescope_att.alt;
 
             if(     !exposing_flag                  &&
-                    target_err.az < AZ_THRESHOLD    &&
-                    target_err.alt < ALT_THRESHOLD) {
+                    target_err.az < az_threshold    &&
+                    target_err.alt < alt_threshold) {
 
                 /* start exp */
                 expose_nir(exp_time, sensor_gain);
@@ -186,11 +188,12 @@ static void* thread(void* arg){
     return NULL;
 }
 
-
+/* Modulo opperation on doubles */
 static double d_mod(double val, int mod){
     return val - mod*(unsigned long)(val/mod);
 }
 
+/* Calculates azimuth and altitude from declination, hour angle, and lattitude */
 static void dec_ha_lat_2_alt_az(double dec, double ha, double lat, double* alt, double* az){
     dec *= M_PI / 180;
     ha *= M_PI / 180;
@@ -207,6 +210,7 @@ static void dec_ha_lat_2_alt_az(double dec, double ha, double lat, double* alt, 
     *az *= 180 / M_PI;
 }
 
+/* Fetch the current UTC time in hours with decimals and as julian-2000 date */ 
 static void fetch_time(double* ut_hours, double* j2000){
     struct tm date_time;
     time_t epoch_time;
@@ -215,4 +219,10 @@ static void fetch_time(double* ut_hours, double* j2000){
     gmtime_r(&epoch_time, &date_time);
     *ut_hours = date_time.tm_hour + date_time.tm_min/60 + date_time.tm_sec/3600;
     *j2000 = 6938.5f + date_time.tm_yday + 1 + *ut_hours/24;
+}
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds_local(double az, double alt_ang){
+    az_threshold = az;
+    alt_threshold = alt_ang;
 }

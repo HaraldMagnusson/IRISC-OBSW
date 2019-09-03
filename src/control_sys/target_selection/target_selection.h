@@ -53,3 +53,6 @@ const static int exp_prio_list[11] = {1, 2, 3, 4, 4, 4, 3, 2, 1, 1, 1};
 
 /* initialise the target selecting component */
 int init_target_selection(void);
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds_local(double az, double alt_ang);

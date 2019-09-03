@@ -34,3 +34,8 @@ int init_control_sys(void){
 
     return SUCCESS;
 }
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds(double az, double alt_ang){
+    set_error_thresholds_local(az, alt_ang);
+}
