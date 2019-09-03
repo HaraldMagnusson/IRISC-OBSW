@@ -3,7 +3,7 @@
  * Parent Component: Tracking
  * Author(s): Anja Möslinger, Harald Magnusson
  * Purpose: Keep track of target prioritisation. Update the current target if
- *          a higher priority target is available. Provide an interface to 
+ *          a higher priority target is available. Provide an interface to
  *          update target priority list.
  * -----------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ static void* thread(void* arg){
         /* kahlmann */
         get_telescope_att(&telescope_att);
 
-
         /* select target */
         lst = 100.46 + 0.985647 * j2000 + gps.lon + 15 * ut_hours;
         lst = d_mod(lst, 360);
@@ -143,9 +142,11 @@ static void* thread(void* arg){
 
             /* abort exposure if target is moving out of operational FoV */
             if(fabs(enc.az) > OP_FOV * 0.45){
-                abort_exp_nir("hax.fit");
-                logging(WARN, "Tracking",
-                        "Aborted exposure due to telescope leaving operational FoV.");
+                if(exposing_flag){
+                    abort_exp_nir("hax.fit");
+                    logging(WARN, "Tracking",
+                            "Aborted exposure due to telescope leaving operational FoV.");
+                }
                 break;
             }
 
