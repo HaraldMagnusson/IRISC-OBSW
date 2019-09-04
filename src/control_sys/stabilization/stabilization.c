@@ -25,9 +25,9 @@
 void *stabilization_main_loop();
 double saturate_output(double given_output);
 
-double p_value = 0;
-double i_value = 0;
-double d_value = 0;
+double p_value = 1;
+double i_value = 1;
+double d_value = 1;
 pthread_mutex_t pid_values_mutex;
 
 double stabilization_timestep = 0.01;
@@ -46,8 +46,12 @@ FILE *simdata;
 
 int init_stabilization(void){
     stabilization_output_angle = 0;
-    simdata = fopen("./src/control_sys/"
-                    "stabilization/simdata.txt","w+");
+//    simdata = fopen("/home/asmialek/Projects/BEXUS/IRISC-OBSW/src/control_sys/"
+//    "stabilization/simdata.txt","w+");
+//    char cwd[150];
+//    getcwd(cwd, sizeof(cwd));
+//    printf("Current working dir: %s\n", cwd);
+    simdata = fopen("./src/control_sys/stabilization/simdata.txt","w+");
     pthread_t main_loop;
     pthread_create(&main_loop, NULL,
                    stabilization_main_loop, NULL);
@@ -91,9 +95,10 @@ void *stabilization_main_loop() {
         filter_current_position = current_position + output*stabilization_timestep;
 
 //        fprintf(simdata, "%.10f,%.10f\n", sim_time, current_position);
-            fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
-                    sim_time, current_position, position_error, target_position,
-                    i_value*integral, d_value*derivative, p_value*position_error);
+        fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
+                sim_time, current_position, position_error, target_position,
+                i_value*integral, d_value*derivative, p_value*position_error);
+//        fprintf(simdata, "Hello!!!");
         fflush(simdata);
         fprintf(stderr, "\033[22D\033[7A");
 
