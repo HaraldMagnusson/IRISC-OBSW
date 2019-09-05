@@ -15,13 +15,13 @@
 #include "star_tracker_poller.h"
 #include "temperature_poller.h"
 
-#define MODULE_COUNT 5
+#define MODULE_COUNT 2
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"encoder_poller", &init_encoder_poller},
-    {"gps_poller", &init_gps_poller},
-    {"gyroscope_poller", &init_gyroscope_poller},
+    //{"encoder_poller", &init_encoder_poller},
+    //{"gps_poller", &init_gps_poller},
+    //{"gyroscope_poller", &init_gyroscope_poller},
     {"star_tracker_poller", &init_star_tracker_poller},
     {"temperature_poller", &init_temperature_poller}
 };

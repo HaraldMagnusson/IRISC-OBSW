@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <pthread.h>
 
 #include "camera.h"
 #include "command.h"
@@ -27,6 +28,8 @@
 #include "thermal.h"
 #include "tracking.h"
 #include "watchdog.h"
+
+#include "star_tracker_caller.h"
 
 /* not including init */
 #define MODULE_COUNT 13
@@ -99,9 +102,35 @@ int main(int argc, char const *argv[]){
         return FAILURE;
     }
 
+    struct timespec samp_0, samp, diff;
+
     while(1){
-        sleep(1000);
+        float hax[4];
+        clock_gettime(CLOCK_MONOTONIC, &samp_0);
+        iriscTetra(hax);
+        clock_gettime(CLOCK_MONOTONIC, &samp);
+
+        diff.tv_sec = samp.tv_sec - samp_0.tv_sec;
+        diff.tv_nsec = samp.tv_nsec - samp_0.tv_nsec;
+        if(diff.tv_nsec < 0){
+            diff.tv_sec--;
+            diff.tv_nsec += 1000000000;
+        }
+        logging(DEBUG, "Star Tracker", "Star tracker sample time: %ld.%09ld s",
+                diff.tv_sec, diff.tv_nsec);
+        if(hax[3] == 0){
+            logging(ERROR, "Star Tracker", "Star tracker error");
+            return FAILURE;
+        }
+        for(int ii=0; ii<4; ++ii){
+            logging(DEBUG, "Star Tracker", "%f\n", hax[ii]);
+        }
+
+        sleep(10);
     }
+
+
+
 
     return SUCCESS;
 }
