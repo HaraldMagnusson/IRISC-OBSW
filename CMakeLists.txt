@@ -42,7 +42,6 @@ set(SOURCES
 	${SCR_DIR}/sensors/sensor_poller/star_tracker_poller/star_tracker_poller.c
 	${SCR_DIR}/sensors/sensor_poller/temperature_poller/temperature_poller.c
 	${SCR_DIR}/sensors/star_tracker/star_tracker.c
-	${SCR_DIR}/sensors/star_tracker/star_tracker_caller.c
 	${SCR_DIR}/sensors/temperature/temperature.c
 	${SCR_DIR}/telemetry/telemetry.c
 	${SCR_DIR}/telemetry/downlink/downlink.c

@@ -29,7 +29,7 @@
 #include "tracking.h"
 #include "watchdog.h"
 
-#include "star_tracker_caller.h"
+#include "star_tracker_poller.h"
 
 /* not including init */
 #define MODULE_COUNT 13
@@ -107,7 +107,7 @@ int main(int argc, char const *argv[]){
     while(1){
         float hax[4];
         clock_gettime(CLOCK_MONOTONIC, &samp_0);
-        iriscTetra(hax);
+        irisc_tetra(hax);
         clock_gettime(CLOCK_MONOTONIC, &samp);
 
         diff.tv_sec = samp.tv_sec - samp_0.tv_sec;
@@ -126,7 +126,7 @@ int main(int argc, char const *argv[]){
             logging(DEBUG, "Star Tracker", "%f\n", hax[ii]);
         }
 
-        sleep(10);
+        sleep(0);
     }
 
 
