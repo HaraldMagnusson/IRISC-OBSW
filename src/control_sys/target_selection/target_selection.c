@@ -19,32 +19,33 @@
 #include "sensors.h"
 #include "camera.h"
 
-static void* thread(void* arg);
+static void* sel_track_thread_func(void* arg);
 
 static double d_mod(double val, int mod);
-static void dec_ha_lat_2_alt_az(double dec, double ha,
+static void angle_calc(double dec, double ha,
         double lat, double* alt, double* az);
 static void fetch_time(double* ut_hours, double* j2000);
 
-static struct timespec wake;
 static int exp_time = 30, sensor_gain = 100;
-static pthread_t sel_track_thread;
+static pthread_t sel_track_thread_id;
 
 static double az_threshold = 0.01, alt_threshold = 0.01;
 
 
 int init_target_selection(void){
 
-    pthread_create(&sel_track_thread, NULL, thread, NULL);
+    pthread_create(&sel_track_thread_id, NULL, sel_track_thread_func, NULL);
 
     return SUCCESS;
 }
 
-static void* thread(void* arg){
+static void* sel_track_thread_func(void* arg){
 
     int ret, tar_index;
 
     char exposing_flag;
+
+    struct timespec wake;
 
     gps_t gps;
     encoder_t enc;
@@ -85,7 +86,7 @@ static void* thread(void* arg){
         for(int ii=0; ii<19; ++ii){
             /* calculate alt, az, ha for all targets*/
             target_list_aa[ii].ha = lst - 15 * target_list_rd[ii].ra;
-            dec_ha_lat_2_alt_az(target_list_rd[ii].dec, target_list_aa[ii].ha,
+            angle_calc(target_list_rd[ii].dec, target_list_aa[ii].ha,
                     gps.lat, &alt, &az);
             target_list_aa[ii].alt = alt;
             target_list_aa[ii].az = az;
@@ -133,7 +134,7 @@ static void* thread(void* arg){
             lst = d_mod(lst, 360);
 
             ha = lst - 15 * target_list_rd[tar_index].ra;
-            dec_ha_lat_2_alt_az(target_list_rd[tar_index].dec, ha, gps.lat, &alt, &az);
+            angle_calc(target_list_rd[tar_index].dec, ha, gps.lat, &alt, &az);
 
             set_tracking_angles(az, alt);
 
@@ -194,7 +195,7 @@ static double d_mod(double val, int mod){
 }
 
 /* Calculates azimuth and altitude from declination, hour angle, and lattitude */
-static void dec_ha_lat_2_alt_az(double dec, double ha, double lat, double* alt, double* az){
+static void angle_calc(double dec, double ha, double lat, double* alt, double* az){
     dec *= M_PI / 180;
     ha *= M_PI / 180;
     lat *= M_PI / 180;
