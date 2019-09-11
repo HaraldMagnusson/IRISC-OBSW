@@ -10,5 +10,3 @@
 #pragma once
 
 int init_star_tracker_poller( void );
-
-void irisc_tetra(float st_return[]);

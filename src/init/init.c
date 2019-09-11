@@ -102,31 +102,8 @@ int main(int argc, char const *argv[]){
         return FAILURE;
     }
 
-    struct timespec samp_0, samp, diff;
-
     while(1){
-        float hax[4];
-        clock_gettime(CLOCK_MONOTONIC, &samp_0);
-        irisc_tetra(hax);
-        clock_gettime(CLOCK_MONOTONIC, &samp);
-
-        diff.tv_sec = samp.tv_sec - samp_0.tv_sec;
-        diff.tv_nsec = samp.tv_nsec - samp_0.tv_nsec;
-        if(diff.tv_nsec < 0){
-            diff.tv_sec--;
-            diff.tv_nsec += 1000000000;
-        }
-        logging(DEBUG, "Star Tracker", "Star tracker sample time: %ld.%09ld s",
-                diff.tv_sec, diff.tv_nsec);
-        if(hax[3] == 0){
-            logging(ERROR, "Star Tracker", "Star tracker error");
-            return FAILURE;
-        }
-        for(int ii=0; ii<4; ++ii){
-            logging(DEBUG, "Star Tracker", "%f\n", hax[ii]);
-        }
-
-        sleep(0);
+        sleep(1000);
     }
 
 

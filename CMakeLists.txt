@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 # compiler flags
 set(CFLAGS "-O2 -std=gnu17 -Wall")
 # useful defines: GYRO_DEBUG, GPS_DEBUG, ENCODER_DEBUG
-set(COMPILE_DEFINES "")
+set(COMPILE_DEFINES "-DST_DEBUG")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
