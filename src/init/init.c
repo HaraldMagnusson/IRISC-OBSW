@@ -57,7 +57,13 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 static void sigint_handler(int signum){
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
     stop_watchdog();
-    gpio_unexport(GYRO_TRIG_PIN);
+
+    #ifdef __arm__
+        gpio_unexport(GYRO_TRIG_PIN);
+    #elif defined(__aarch64__)
+        gpio_unexport(GYRO_TRIG_PIN);
+    #endif
+
     _exit(EXIT_SUCCESS);
 }
 
