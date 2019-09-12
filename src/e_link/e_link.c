@@ -20,7 +20,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <signal.h>
-
+#include <termios.h>
+#include <sys/ioctl.h>
 #include <string.h>
 
 
@@ -38,6 +39,7 @@ static int ret;
 
 static void* thread_read(void*);
 static void* thread_socket(void*);
+static unsigned short sleep_time = 500;
 
 
 int init_elink( void ){
@@ -133,7 +135,7 @@ int write_elink(char *buffer, int bytes){
     }
     //printf("Message sent:\n");
 
-    usleep(500);
+    usleep(sleep_time);
     pthread_mutex_unlock( &e_link_mutex );
 
     return SUCCESS;
@@ -163,6 +165,26 @@ static void* thread_read(void* param){
     }
 
     return SUCCESS;
+}
+
+char* read_elink(int bytes){
+    int n, bytes_avail;
+    char *buffer = malloc(bytes);
+
+    do{
+        ioctl(sockfd, FIONREAD, &bytes_avail);
+        usleep(1);
+    } while(bytes_avail < bytes);
+
+    n=read(newsockfd, buffer, bytes);
+    fflush(stdout);
+    if (n<0){
+        printf("ERROR reading from socket: %s\n", strerror(errno));
+    } else if(n>0){
+        printf("Message read: %s\n", buffer);
+    }
+
+    return buffer;
 }
 
 static void* thread_socket(void* param){
@@ -210,4 +232,10 @@ static void* thread_socket(void* param){
 void close_socket( void ){
     close(newsockfd);
     close(sockfd);
+}
+
+int set_datarate (unsigned short datarate){
+    sleep_time=datarate;
+
+    return SUCCESS;
 }

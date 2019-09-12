@@ -30,3 +30,6 @@ int send_telemetry_local(char *f, int p, int flag, unsigned short packets_sent);
 
 /* Return the data of the oldest message of the highest priority. */
 struct node read_downlink_queue();
+
+/* Return the highest priority in the queue */
+int queue_priority();

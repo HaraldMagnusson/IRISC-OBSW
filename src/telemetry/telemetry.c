@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Telemetry
- * Author(s): Adam Smialek
+ * Author(s): Adam Smialek, William Eriksson
  * Purpose: Provide a queue for telemetry messages to be sent to ground and
  *          send them when possible.
  *
@@ -32,46 +32,6 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
         {"downlink_", &init_downlink}
 };
 
-/*
-// TODO: For test purposes only!
-void *test_telemetry_generator() {
-    for (int i = 0; i < 100; ++i) {
-        send_telemetry_local(i, 0);
-    }
-    return NULL;
-}
-
-*/
-
-/**
- * Infinite loop for sending telemetry via UDP.
- *
- * @return
- *
- * @TODO Move it to `init_telemetry`?
- * @TODO Redo it all!!!
- */
-/*
-void *telemetry_sender() {
-    while (1) {
-        char msg[64];
-        int num = read_downlink_queue();
-        sprintf(msg, "Message nr.%d", num);
-        send_data_packet(msg);
-    }
-    return NULL;
-}
-
-*/
-
-/**
- *
- * @return
- *
- * @TODO Add threads parameters and all that security stuff.
- */
-
-
 int init_telemetry(void) {
 
     /* init whatever in this module */
@@ -80,35 +40,8 @@ int init_telemetry(void) {
         return ret;
     }
 
-  //  pthread_t generator;
-  //  pthread_t sender;
-
-  //  pthread_create(&sender, NULL, telemetry_sender, NULL);
-  //  pthread_create(&generator, NULL, test_telemetry_generator, NULL);
-
-
-/*  Test for queue
-
-  send_telemetry("/tmp/test/ostkaka.csv", 5);
-  send_telemetry("/home/rooo/bulle", 3);
-  send_telemetry("/git/gud/404.cake", 7);
-
-  char *temp;
-
-  temp = read_downlink_queue();
-  printf("First item: %s\n",temp);
-  temp = read_downlink_queue();
-  printf("Second item: %s\n",temp);
-  temp = read_downlink_queue();
-  printf("Third item: %s\n",temp);
-
-
-  */
-
     return SUCCESS;
 }
-
-
 
 /**
  * Put data into the downlink queue.

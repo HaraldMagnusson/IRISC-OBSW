@@ -68,6 +68,16 @@ char *peek(downlink_node **head) {
     }
 }
 
+int queue_priority(){
+    downlink_node **temp = &downlink_queue;
+
+    if (!is_empty(temp)) {
+        return (*temp)->priority;
+    } else {
+        return 100;
+    }
+}
+
 /**
  * Removes the element with the highest priority form the list and
  * return it's data value.
@@ -88,6 +98,7 @@ struct node pop(downlink_node **head) {
     ret.filepath = temp->filepath;
     ret.flag = temp->flag;
     ret.packets_sent = temp->packets_sent;
+    ret.priority = temp->priority;
 
     free(temp);
 

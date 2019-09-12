@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Downlink
  * Parent Component: Telemetry
- * Author(s): Adam Smialek, William Eriksson
+ * Author(s): William Eriksson
  * Purpose: Read telemetry messages from the queue and send them over the
  *          downlink whenever possible.
  * -----------------------------------------------------------------------------
@@ -23,12 +23,9 @@ static pthread_attr_t thread_attr;
 static struct sched_param param;
 static int ret;
 
-
-static int ostkaka=0;
-
 /* prototypes declaration */
 static void* thread_func(void*);
-static unsigned short send_file(char *filepath, unsigned short packets_sent);
+static unsigned short send_file(char *filepath, unsigned short packets_sent, int priority);
 
 int init_downlink(void) {
 
@@ -88,6 +85,7 @@ int init_downlink(void) {
     return SUCCESS;
 }
 
+
 static void* thread_func(void* param){
 
     struct node temp;
@@ -96,26 +94,30 @@ static void* thread_func(void* param){
     while(1){
         char msg[1400];
         char *data;
+        int len;
 
         memset(msg, 0, sizeof(msg));
-        //memset(filepath, 0, 1400);
 
         temp = read_downlink_queue();
+        printf("Priority of next item is: %d\n", queue_priority());
         if(temp.flag==0){
             msg[0]=0;
             data = temp.filepath;
-            printf("temp.filepath is :%s\n",data);
-            int len = strlen(data)+1;
-            for(int ii=0; ii<len; ++ii){
-                msg[ii+1] = data[ii];
-            }
-            for(int jj=len+1;jj<1400;jj++){
-                msg[jj]='0';
+            len = strlen(data);
+
+            char* bytes = (char*)&len;
+            msg[1] = bytes[0];
+            msg[2] = bytes[1];
+
+            for(int ii=0; ii<len+1; ++ii){
+                msg[ii+3] = data[ii];
             }
 
-            write_elink(msg, 1400);
+            write_elink(msg, strlen(data)+4);
+
         } else {
-            ret = send_file(temp.filepath, temp.packets_sent);
+
+            ret = send_file(temp.filepath, temp.packets_sent, temp.priority);
             if(ret != 0){
                 msg[0]=0;
                 msg[1]=0;
@@ -124,7 +126,6 @@ static void* thread_func(void* param){
                 msg[4]=0;
                 msg[5]=0;
                 write_elink(msg, 6);
-                printf("Ostkaka\n");
                 send_telemetry_local(temp.filepath, (temp.priority)-1, temp.flag, ret);
             }
         }
@@ -133,12 +134,13 @@ static void* thread_func(void* param){
     return SUCCESS;
 }
 
-static unsigned short send_file(char *filepath, unsigned short packets_sent){
+
+static unsigned short send_file(char *filepath, unsigned short packets_sent, int priority){
 
     int max_packet_size = 1400-6;
     char buffer[max_packet_size];
     char msg[max_packet_size];
-    unsigned short n, packets, bytes, current_packet;
+    unsigned short n, packets, current_packet;
     long buff_size, sent_bytes;
 
     current_packet = 0;
@@ -161,12 +163,8 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent){
         //ERROR
     }
 
-    printf("Buff_size - pre : %ld\n", buff_size);
-    printf("Packets sent: %d\n", packets_sent);
     sent_bytes = max_packet_size*packets_sent;
     buff_size=buff_size-sent_bytes;
-    printf("Buff_size - post : %ld\n", buff_size);
-    printf("Sent_bytes: %ld\n", sent_bytes);
 
     n = buff_size/max_packet_size;
 
@@ -179,8 +177,6 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent){
     msg[0]=1;
     msg[1]=0;
     
-    
-    printf("Packets: %d\n", packets);
 
     char* current_packet_num = (char*)&current_packet;
     msg[2] = current_packet_num[0];
@@ -201,11 +197,8 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent){
     char* bytes_num = (char*)&len;
     msg[6] = bytes_num[0];
     msg[7] = bytes_num[1];
-
-    printf("fn: %s\nmsg: %s\n",fn,&msg[6]);
     
     write_elink(msg, len+8);
-    //current_packet++;
 
     char temp[6];
 
@@ -216,8 +209,6 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent){
     if(packets_sent>0){
            fseek(fp, packets_sent*max_packet_size, SEEK_SET); 
     }
-
-    printf("N: %d\n", n);
 
     for(int i = 0; i<n;i++){
 
@@ -230,30 +221,28 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent){
 
         read_bytes = fread(buffer, sizeof(char), max_packet_size, fp);
         
-        //printf("Bytes_read: %d\n", read_bytes);
-        
         char* bytes_num = (char*)&read_bytes;
         temp[4] = bytes_num[0];
         temp[5] = bytes_num[1];
 
         memcpy(total, temp,6*sizeof(char));
         memcpy(total+6, buffer, (read_bytes)*sizeof(char));
-        
-        //printf("Current packet: %d\n", current_packet_num);
 
         write_elink(total, read_bytes+6);
         current_packet++;
 
-        if(i==1000 && ostkaka == 0){
-            ostkaka = 1;
-            printf("Abort transfer - i: %d\n", i);
-            printf("Packets sent: %d\n", current_packet);
-            //current_packet--;
-            return current_packet;
+
+        /*
+         *  Check if there is another item in downlink queue with higher priority
+         */
+
+        if(i%10==0){
+            if(priority>queue_priority()){
+                return current_packet;
+            }            
         }
     }
     printf("Done\n");
-    //printf("Sent data: %s", buffer);
 
     fclose(fp);
 
