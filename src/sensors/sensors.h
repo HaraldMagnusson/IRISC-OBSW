@@ -28,6 +28,11 @@ typedef struct{
     char out_of_date;
 } encoder_t;
 
+typedef struct{
+    float ra, dec, roll;
+    char out_of_date;
+} star_tracker_t;
+
 /* initialise the sensors component */
 int init_sensors( void );
 

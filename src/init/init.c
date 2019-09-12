@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <pthread.h>
+#include <libgen.h>
 
 #include "camera.h"
 #include "command.h"
@@ -69,6 +70,11 @@ static void sigint_handler(int signum){
 
 int main(int argc, char const *argv[]){
 
+    char buf[100];
+    getcwd(buf, 100);
+    printf("%s\n", buf);
+    printf("%s\n", dirname(argv[0]));
+
     sa.sa_handler = sigint_handler;
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
@@ -111,9 +117,6 @@ int main(int argc, char const *argv[]){
     while(1){
         sleep(1000);
     }
-
-
-
 
     return SUCCESS;
 }

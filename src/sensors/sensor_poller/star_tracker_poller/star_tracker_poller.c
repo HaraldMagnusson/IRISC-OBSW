@@ -12,6 +12,8 @@
 #include <stdio.h>
 
 #include "global_utils.h"
+#include "sensors.h"
+#include "star_tracker.h"
 
 #define TETRAPATH "Tetra/tetra.py"
 
@@ -19,11 +21,11 @@ static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
 static void* st_poller_thread(void* arg);
 
-static pthread_t st_poller_id;
+static pthread_t st_poller_tid;
 
 int init_star_tracker_poller( void ){
 
-    pthread_create(&st_poller_id, NULL, st_poller_thread, NULL);
+    pthread_create(&st_poller_tid, NULL, st_poller_thread, NULL);
 
     return SUCCESS;
 }
@@ -38,10 +40,19 @@ static void* st_poller_thread(void* arg){
     wake.tv_sec++;
 
     while(1){
+
+        /* capture image */
+
+        /* star tracker calculations */
         if(call_tetra(st_return)){
-            /* set out of date */
+            st_out_of_date();
             continue;
         }
+
+        /* move image to img queue dir */
+
+        /* queue up image */
+
 
 
 
@@ -51,6 +62,8 @@ static void* st_poller_thread(void* arg){
 
 
 static int call_tetra(float st_return[]){
+
+    star_tracker_t st;
 
     #ifdef ST_DEBUG
         struct timespec samp_0, samp, diff;
@@ -80,6 +93,13 @@ static int call_tetra(float st_return[]){
         logging(WARN, "Star Tracker", "FoV = 0, lost in space failed");
         return FAILURE;
     }
+
+    st.ra = st_return[0];
+    st.dec = st_return[1];
+    st.roll = st_return[2];
+
+    set_star_tracker(&st);
+
     return SUCCESS;
 }
 
