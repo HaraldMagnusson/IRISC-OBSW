@@ -37,6 +37,12 @@ typedef struct {
 /* initialise the global utils component */
 int init_global_utils(void* args);
 
+/* top_dir is the absolute path for the top directory
+ * of the project evaluated at runtime.
+ * get_top_dir returns a pointer to a string containing that directory.
+ */
+const char* const get_top_dir(void);
+
 int init_submodules(const module_init_t init_sequence[], int module_count);
 
 int logging(int level, char module_name[12],

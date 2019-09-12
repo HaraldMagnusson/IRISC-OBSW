@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <pthread.h>
-#include <libgen.h>
 
 #include "camera.h"
 #include "command.h"
@@ -70,11 +69,6 @@ static void sigint_handler(int signum){
 
 int main(int argc, char* const argv[]){
 
-    char buf[100];
-    getcwd(buf, 100);
-    printf("%s\n", buf);
-    printf("%s\n", dirname(argv[0]));
-
     sa.sa_handler = sigint_handler;
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
@@ -91,7 +85,13 @@ int main(int argc, char* const argv[]){
 
     int count = 0;
     for(int i=0; i<MODULE_COUNT; ++i){
-        ret = init_sequence[i].init(NULL);
+        if(strcmp(init_sequence[i].name, "global_utils") == 0){
+            ret = init_sequence[i].init(argv[0]);
+        }
+        else{
+            ret = init_sequence[i].init(NULL);
+        }
+
         if( ret == SUCCESS ){
             logging(INFO, "INIT", "Module \"%s\" initialised successfully.",
                 init_sequence[i].name);
