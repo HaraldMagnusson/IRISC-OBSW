@@ -9,7 +9,7 @@
 
 #pragma once
 
-int init_star_tracker( void );
+int init_star_tracker(void* args);
 
 /* fetch the latest star tracker data */
 void get_star_tracker_local(star_tracker_t* st);

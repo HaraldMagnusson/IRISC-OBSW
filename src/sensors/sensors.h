@@ -34,7 +34,7 @@ typedef struct{
 } star_tracker_t;
 
 /* initialise the sensors component */
-int init_sensors( void );
+int init_sensors(void* args);
 
 /* fetch the latest gps data */
 void get_gps(gps_t* gps);

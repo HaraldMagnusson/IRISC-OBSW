@@ -22,7 +22,7 @@ static ASI_CAMERA_INFO cam_info;
  *      SUCCESS: operation is successful
  *      FAILURE: failure to set up camera, log written to stderr
  */
-int init_nir_camera( void ){
+int init_nir_camera(void* args){
 
     int ret = cam_setup(&cam_info, 'n');
     if(ret == ENODEV){

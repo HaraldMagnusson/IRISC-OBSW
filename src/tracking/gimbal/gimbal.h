@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the gimbal component */
-int init_gimbal( void );
+int init_gimbal(void* args);
 
 /* control the gimbal motors 
  * placeholder name

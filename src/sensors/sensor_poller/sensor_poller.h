@@ -10,4 +10,4 @@
 #pragma once
 
 /* initialise the sensor poller component */
-int init_sensor_poller( void );
+int init_sensor_poller(void* args);

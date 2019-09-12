@@ -26,7 +26,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"temperature_poller", &init_temperature_poller}
 };
 
-int init_sensor_poller( void ){
+int init_sensor_poller(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

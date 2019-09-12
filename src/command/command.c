@@ -8,6 +8,6 @@
 
 #include "global_utils.h"
 
-int init_command( void ){
+int init_command(void* args){
     return SUCCESS;
 }

@@ -28,7 +28,7 @@ static void* thread_func(void* arg);
 static pthread_t gyro_thread;
 static FT_HANDLE fd;
 
-int init_gyroscope_poller( void ){
+int init_gyroscope_poller(void* args){
 
     /* gpio pin is used for trigger to poll the gyroscope */
     int ret = gpio_export(GYRO_TRIG_PIN);

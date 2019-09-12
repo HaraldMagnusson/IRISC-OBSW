@@ -68,7 +68,7 @@ static void sigint_handler(int signum){
     _exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char const *argv[]){
+int main(int argc, char* const argv[]){
 
     char buf[100];
     getcwd(buf, 100);
@@ -91,7 +91,7 @@ int main(int argc, char const *argv[]){
 
     int count = 0;
     for(int i=0; i<MODULE_COUNT; ++i){
-        ret = init_sequence[i].init();
+        ret = init_sequence[i].init(NULL);
         if( ret == SUCCESS ){
             logging(INFO, "INIT", "Module \"%s\" initialised successfully.",
                 init_sequence[i].name);

@@ -16,7 +16,7 @@
 static pthread_mutex_t mutex_st;
 static star_tracker_t st_local;
 
-int init_star_tracker( void ){
+int init_star_tracker(void* args){
 
     st_local.ra = 0;
     st_local.dec = 0;

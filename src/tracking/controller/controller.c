@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_controller( void ){
+int init_controller(void* args){
     return SUCCESS;
 }

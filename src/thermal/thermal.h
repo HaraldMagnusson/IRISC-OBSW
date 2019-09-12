@@ -9,4 +9,4 @@
 #pragma once
 
 /* initialise the thermal component */
-int init_thermal( void );
+int init_thermal(void* args);

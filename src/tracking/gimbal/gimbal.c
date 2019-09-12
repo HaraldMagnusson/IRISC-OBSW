@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_gimbal( void ){
+int init_gimbal(void* args){
     return SUCCESS;
 }

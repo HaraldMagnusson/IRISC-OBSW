@@ -38,7 +38,7 @@ static pthread_t gps_thread;
 static int fd_spi12;
 
 
-int init_gps_poller( void ){
+int init_gps_poller(void* args){
 
     char* spi12 = "/dev/spidev1.2";
 

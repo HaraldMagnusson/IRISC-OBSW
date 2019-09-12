@@ -17,7 +17,7 @@
 static pthread_mutex_t mutex_gyro;
 static gyro_t gyro_local;
 
-int init_gyroscope( void ){
+int init_gyroscope(void* args){
 
     gyro_local.x = 0;
     gyro_local.y = 0;

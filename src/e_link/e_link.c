@@ -8,6 +8,6 @@
 
 #include "global_utils.h"
 
-int init_elink( void ){
+int init_elink(void* args){
     return SUCCESS;
 }

@@ -9,4 +9,4 @@
 
 #pragma once
 
-int init_star_tracker_poller( void );
+int init_star_tracker_poller(void* args);

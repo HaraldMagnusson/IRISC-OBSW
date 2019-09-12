@@ -23,7 +23,7 @@ static void* st_poller_thread(void* arg);
 
 static pthread_t st_poller_tid;
 
-int init_star_tracker_poller( void ){
+int init_star_tracker_poller(void* args){
 
     pthread_create(&st_poller_tid, NULL, st_poller_thread, NULL);
 

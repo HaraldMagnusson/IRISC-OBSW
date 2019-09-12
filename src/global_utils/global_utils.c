@@ -13,7 +13,7 @@
 
 #include "global_utils.h"
 
-int init_global_utils( void ){
+int init_global_utils(void* args){
     return SUCCESS;
 }
 
@@ -21,7 +21,7 @@ int init_submodules(const module_init_t *init_sequence, int module_count) {
     int ret;
 
     for(int i=0; i<module_count; ++i){
-        ret = init_sequence[i].init();
+        ret = init_sequence[i].init(NULL);
         if( ret == SUCCESS ){
             logging(INFO, "INIT", " - Sub module \"%s\" initialised successfully.",
                     init_sequence[i].name);

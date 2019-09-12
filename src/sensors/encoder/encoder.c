@@ -16,7 +16,7 @@
 static pthread_mutex_t mutex_encoder;
 static encoder_t encoder_local;
 
-int init_encoder( void ){
+int init_encoder(void* args){
 
     encoder_local.ra = 0;
     encoder_local.dec = 0;
