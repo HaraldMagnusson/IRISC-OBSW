@@ -10,6 +10,11 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/wait.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -20,6 +25,9 @@
 static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
 static void* st_poller_thread(void* arg);
+pid_t popen2(char* const * command, int *infp, int *outfp);
+
+static pid_t py_pid;
 
 static pthread_t st_poller_tid;
 
@@ -121,7 +129,35 @@ static int call_tetra(float st_return[]){
  */
 static void irisc_tetra(float st_return[]) {
 
+    char* cmd[6] = {
+        "chrt",
+        "-f",
+        "30",
+        "python",
+        TETRAPATH,
+        NULL
+    };
 
+    int outfp = -1;
+    py_pid = popen2(cmd, NULL, &outfp);
+    waitpid(py_pid, NULL, 0);
+
+    char buffer[100];
+    int cnt = 0, ii;
+    for(ii = 0; cnt < 4 && ii < 100; ++ii){
+        read(outfp, &buffer[ii], 1);
+        if(buffer[ii] == '\n'){
+            cnt++;
+        }
+    }
+    buffer[ii] = '\0';
+
+    sscanf(buffer, "%*s %f\n" "%*s %f\n" "%*s %f\n" "%*s %f\n",
+            &st_return[0], &st_return[1], &st_return[2], &st_return[3]);
+
+    close(outfp);
+
+/*
     FILE *fp = popen("sudo chrt -f 30 python "TETRAPATH, "r");
 
     for (int i = 0; i < 4; i++) {
@@ -129,6 +165,50 @@ static void irisc_tetra(float st_return[]) {
     }
 
     pclose(fp);
+*/
     return;
 
+}
+
+pid_t get_star_tracker_pid(void){
+    return py_pid;
+}
+
+#define READ 0
+#define WRITE 1
+
+pid_t popen2(char* const * command, int *infp, int *outfp){
+    int p_stdin[2], p_stdout[2];
+    pid_t pid;
+
+    if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0)
+        return -1;
+
+    pid = fork();
+
+    if (pid < 0)
+        return pid;
+    else if (pid == 0)
+    {
+        close(p_stdin[WRITE]);
+        dup2(p_stdin[READ], READ);
+        close(p_stdout[READ]);
+        dup2(p_stdout[WRITE], WRITE);
+
+        execvp(*command, command);
+        perror("execvp");
+        exit(1);
+    }
+
+    if (infp == NULL)
+        close(p_stdin[WRITE]);
+    else
+        *infp = p_stdin[WRITE];
+
+    if (outfp == NULL)
+        close(p_stdout[READ]);
+    else
+        *outfp = p_stdout[READ];
+
+    return pid;
 }

@@ -9,4 +9,8 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 int init_star_tracker_poller(void* args);
+
+pid_t get_star_tracker_pid(void);

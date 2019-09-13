@@ -13,6 +13,8 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <pthread.h>
 
 #include "camera.h"
@@ -55,14 +57,23 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 };
 
 static void sigint_handler(int signum){
-    write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
+    write(STDOUT_FILENO, "\nSIGINT caught\n", 15);
+
     stop_watchdog();
+    write(STDOUT_FILENO, "watchdog stopped\n", 17);
 
     #ifdef __arm__
         gpio_unexport(GYRO_TRIG_PIN);
     #elif defined(__aarch64__)
         gpio_unexport(GYRO_TRIG_PIN);
     #endif
+    write(STDOUT_FILENO, "gpio pin unexported\n", 20);
+
+    pid_t st_pid = get_star_tracker_pid();
+    kill(st_pid, SIGTERM);
+    write(STDOUT_FILENO, "SIGTERM sent to star tracker\n", 29);
+    waitpid(st_pid, NULL, 0);
+    write(STDOUT_FILENO, "exiting\n\n", 9);
 
     _exit(EXIT_SUCCESS);
 }
