@@ -13,23 +13,30 @@
 #include <string.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <sys/wait.h>
 
 #include "global_utils.h"
 #include "sensors.h"
 #include "star_tracker.h"
+#include "camera.h"
 
 #define TETRAPATH "Tetra/tetra.py"
+#define ST_WAIT_TIME 100*1000*1000
+
+/* macros used in popen2 */
+#define READ 0
+#define WRITE 1
 
 static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
 static void* st_poller_thread(void* arg);
-pid_t popen2(char* const * command, int *infp, int *outfp);
+static pid_t popen2(char* const * command, int *infp, int *outfp);
+static int capture_image();
 
 static pid_t py_pid;
-
 static pthread_t st_poller_tid;
+
+static int exp_time = 5*1000*1000, gain = 300;
 
 int init_star_tracker_poller(void* args){
 
@@ -38,36 +45,76 @@ int init_star_tracker_poller(void* args){
     return SUCCESS;
 }
 
+/*
+ * TODO: This system will overwrite old files if the system restarts
+ *       (might not be an issue since these files are only for the
+ *       image handling queue)
+ */
 static void* st_poller_thread(void* arg){
+    sleep(1);
 
-    struct timespec wake;
-
+    char st_fn[100], out_fp[100], out_fn[100];
     float st_return[4];
 
-    clock_gettime(CLOCK_MONOTONIC, &wake);
-    wake.tv_sec++;
+    struct timespec wake;
+    wake.tv_nsec = ST_WAIT_TIME;
+    wake.tv_sec = 0;
 
-    while(1){
+    strcpy(st_fn, get_top_dir());
+    strcat(st_fn, "output/guiding/star_tracker/img.fit");
 
-        /* capture image */
+    strcpy(out_fp, get_top_dir());
+    strcat(out_fp, "output/guiding/");
 
-        /* star tracker calculations */
-        if(call_tetra(st_return)){
-            st_out_of_date();
-            continue;
-        }
+    for(int ii=0; 1; ++ii){
 
-        /* move image to img queue dir */
+        do{
+            /* capture image */
+            if(capture_image(st_fn)){
+                break;
+            }
 
-        /* queue up image */
+            /* star tracker calculations */
+            if(call_tetra(st_return)){
+                st_out_of_date();
+                break;
+            }
 
+            /* move image to img queue dir */
+            snprintf(out_fn, 100, "%s%4d.fit", out_fp, ii);
+            rename(st_fn, out_fn);
 
+            /* queue up image */
 
+        } while(0);
 
+        clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
     }
     return NULL;
 }
 
+/*
+ * TODO: error handling from camera
+ */
+static int capture_image(char* fn){
+
+    int ret;
+
+    ret = expose_guiding(exp_time, gain);
+    if(ret != SUCCESS){
+        return ret;
+    }
+
+    ret = usleep(0.95 * exp_time);
+    printf("%d\n", ret);
+
+    do{
+        usleep(1);
+        ret = save_img_guiding(fn);
+    } while(ret == EXP_NOT_READY);
+
+    return ret;
+}
 
 static int call_tetra(float st_return[]){
 
@@ -110,7 +157,6 @@ static int call_tetra(float st_return[]){
 
     return SUCCESS;
 }
-
 
 /*
  * Purpose: This is the interface to run the Tetra python program from the
@@ -156,28 +202,14 @@ static void irisc_tetra(float st_return[]) {
             &st_return[0], &st_return[1], &st_return[2], &st_return[3]);
 
     close(outfp);
-
-/*
-    FILE *fp = popen("sudo chrt -f 30 python "TETRAPATH, "r");
-
-    for (int i = 0; i < 4; i++) {
-        fscanf( fp, "%*s %f", &st_return[i]);
-    }
-
-    pclose(fp);
-*/
     return;
-
 }
 
 pid_t get_star_tracker_pid(void){
     return py_pid;
 }
 
-#define READ 0
-#define WRITE 1
-
-pid_t popen2(char* const * command, int *infp, int *outfp){
+static pid_t popen2(char* const * command, int *infp, int *outfp){
     int p_stdin[2], p_stdout[2];
     pid_t pid;
 

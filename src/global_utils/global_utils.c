@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "global_utils.h"
 
@@ -27,20 +28,34 @@ static const char* const top_dir_p = top_dir;
 
 int init_global_utils(void* args){
 
-    char* launch_dir = (char*) args;
+    char* launch_arg = (char*) args;
 
-    if(strlen(launch_dir) >= TOP_DIR_S){
+    char* launch_dir = dirname(launch_arg);
+    size_t dir_len = strlen(launch_dir);
+
+    if(dir_len >= TOP_DIR_S){
         logging(ERROR, "INIT", "path to binary too long");
+        return FAILURE;
     }
 
     /* absolute path */
-    if(launch_dir[0] == '/'){
-        strncpy(top_dir, dirname(launch_dir), TOP_DIR_S);
+    if(launch_arg[0] == '/'){
+        strncpy(top_dir, launch_dir, TOP_DIR_S);
     }
     /* relative path */
-    else if(launch_dir[0] == '.'){
-        getcwd(top_dir, TOP_DIR_S);
-        strcat(top_dir, dirname(&launch_dir[1]));
+    else if(launch_arg[0] == '.'){
+        if(getcwd(top_dir, TOP_DIR_S) == NULL){
+            logging(ERROR, "INIT", "Failed to fetch working directory, "
+                    "%d (%s)", errno, strerror(errno));
+            return FAILURE;
+        }
+
+        printf("%s\n", top_dir);
+        printf("%s\n", launch_dir);
+
+        dir_len += strlen(top_dir);
+        if(dir_len)
+        strcat(top_dir, &launch_dir[1]);
     }
 
     /* remove bin at end of path
