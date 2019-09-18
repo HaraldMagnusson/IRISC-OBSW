@@ -49,4 +49,4 @@ void get_gyro(gyro_t* gyro);
 pid_t get_star_tracker_pid(void);
 
 /* set the exposure time (in microseconds) and gain for the star tracker */
-void set_st_exp_gain(int exp, int st_gain);
+void set_st_exp_gain(int st_exp, int st_gain);

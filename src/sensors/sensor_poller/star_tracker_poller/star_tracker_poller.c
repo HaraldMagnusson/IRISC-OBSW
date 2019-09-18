@@ -244,7 +244,7 @@ pid_t get_st_pid_local(void){
     return py_pid;
 }
 /* set the exposure time (in microseconds) and gain for the star tracker */
-void set_st_exp_gain_ll(int exp, int st_gain){
-    exp_time = exp;
+void set_st_exp_gain_ll(int st_exp, int st_gain){
+    exp_time = st_exp;
     gain = st_gain;
 }
