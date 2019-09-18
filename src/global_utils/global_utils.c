@@ -50,11 +50,11 @@ int init_global_utils(void* args){
             return FAILURE;
         }
 
-        printf("%s\n", top_dir);
-        printf("%s\n", launch_dir);
-
         dir_len += strlen(top_dir);
-        if(dir_len)
+        if(dir_len >= TOP_DIR_S){
+            logging(ERROR, "INIT", "path to binary too long");
+            return FAILURE;
+        }
         strcat(top_dir, &launch_dir[1]);
     }
 
@@ -62,12 +62,12 @@ int init_global_utils(void* args){
      * If run from the bin folder the result from the previous if statements
      * will end with "/bin/" otherwise it will end with "/bin".
      */
-    int len = strlen(top_dir);
-    if(top_dir[len - 1] == '/'){
-        top_dir[len - 4] = '\0';
+    dir_len = strlen(top_dir);
+    if(top_dir[dir_len - 1] == '/'){
+        top_dir[dir_len - 4] = '\0';
     }
     else{
-        top_dir[len - 3] = '\0';
+        top_dir[dir_len - 3] = '\0';
     }
 
     return SUCCESS;
