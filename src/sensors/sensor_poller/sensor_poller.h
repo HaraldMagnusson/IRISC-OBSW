@@ -14,3 +14,6 @@ int init_sensor_poller(void* args);
 
 /* return the pid for the star tracker child process */
 pid_t get_st_pid(void);
+
+/* set the exposure time (in microseconds) and gain for the star tracker */
+void set_st_exp_gain_l(int exp, int st_gain);

@@ -243,3 +243,8 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
 pid_t get_st_pid_local(void){
     return py_pid;
 }
+/* set the exposure time (in microseconds) and gain for the star tracker */
+void set_st_exp_gain_ll(int exp, int st_gain){
+    exp_time = exp;
+    gain = st_gain;
+}

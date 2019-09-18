@@ -47,3 +47,6 @@ void get_gyro(gyro_t* gyro);
 
 /* return the pid for the star tracker child process */
 pid_t get_star_tracker_pid(void);
+
+/* set the exposure time (in microseconds) and gain for the star tracker */
+void set_st_exp_gain(int exp, int st_gain);
