@@ -51,14 +51,18 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"tracking", &init_tracking}
 };
 
-static void sigint_handler(int signum){
+static void sigint_handler(int signum) {
     write(STDOUT_FILENO, "\nSIGINT caught, exiting\n", 24);
     stop_watchdog();
+
     gpio_unexport(GYRO_TRIG_PIN);
+
+    close_socket();
+
     _exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char const *argv[]){
+int main(int argc, char const *argv[]) {
 
     sa.sa_handler = sigint_handler;
     sa.sa_flags = 0;
@@ -75,7 +79,7 @@ int main(int argc, char const *argv[]){
     }
 
     int count = 0;
-    for(int i=0; i<MODULE_COUNT; ++i){
+    for (int i = 0; i < MODULE_COUNT; ++i) {
         ret = init_sequence[i].init();
         if( ret == SUCCESS ){
             logging(INFO, "INIT", "Module \"%s\" initialised successfully.",
@@ -95,11 +99,11 @@ int main(int argc, char const *argv[]){
         "A total of %d modules initialised successfully and %d failed.",
         MODULE_COUNT-count, count);
 
-    if(count != 0){
+    if (count != 0) {
         return FAILURE;
     }
 
-    while(1){
+    while (1) {
         sleep(1000);
     }
 
