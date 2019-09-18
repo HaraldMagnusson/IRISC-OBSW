@@ -61,7 +61,7 @@ static void* st_poller_thread(void* arg){
     wake.tv_sec = 0;
 
     strcpy(st_fn, get_top_dir());
-    strcat(st_fn, "output/guiding/star_tracker/img.fit");
+    strcat(st_fn, "output/guiding/star_tracker/st_img.fit");
 
     strcpy(out_fp, get_top_dir());
     strcat(out_fp, "output/guiding/");
@@ -105,8 +105,7 @@ static int capture_image(char* fn){
         return ret;
     }
 
-    ret = usleep(0.95 * exp_time);
-    printf("%d\n", ret);
+    usleep(0.95 * exp_time);
 
     do{
         usleep(1);
@@ -189,11 +188,11 @@ static void irisc_tetra(float st_return[]) {
     waitpid(py_pid, NULL, 0);
 
     char buffer[100];
-    int cnt = 0, ii;
-    for(ii = 0; cnt < 4 && ii < 100; ++ii){
+    int cntr = 0, ii;
+    for(ii = 0; cntr < 4 && ii < 100; ++ii){
         read(outfp, &buffer[ii], 1);
         if(buffer[ii] == '\n'){
-            cnt++;
+            cntr++;
         }
     }
     buffer[ii] = '\0';
