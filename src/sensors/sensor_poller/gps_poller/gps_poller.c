@@ -303,4 +303,3 @@ static int divide_NMEA_str(const unsigned char* str, unsigned char NMEA_str_arr[
     }
     return SUCCESS;
 }
-

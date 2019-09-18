@@ -151,4 +151,3 @@ static int checksum_ctl_enc(unsigned char data[2]){
     }
     return FAILURE;
 }
-
