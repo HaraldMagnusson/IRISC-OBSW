@@ -7,6 +7,8 @@
  * -----------------------------------------------------------------------------
  */
 
+#include <stdlib.h>
+
 #include "global_utils.h"
 
 #include "gps_poller.h"
@@ -35,4 +37,9 @@ int init_sensor_poller(void* args){
     }
 
     return SUCCESS;
+}
+
+/* return the pid for the star tracker child process */
+pid_t get_st_pid(void){
+    return get_st_pid_local();
 }

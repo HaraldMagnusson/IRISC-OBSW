@@ -7,7 +7,7 @@
  */
 
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -54,4 +54,9 @@ void get_encoder(encoder_t* encoder){
 /* fetch the latest gyro data */
 void get_gyro(gyro_t* gyro){
     get_gyro_local(gyro);
+}
+
+/* return the pid for the star tracker child process */
+pid_t get_star_tracker_pid(void){
+    return get_st_pid();
 }

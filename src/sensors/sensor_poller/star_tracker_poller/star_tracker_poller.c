@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/wait.h>
 
 #include "global_utils.h"
@@ -204,10 +203,6 @@ static void irisc_tetra(float st_return[]) {
     return;
 }
 
-pid_t get_star_tracker_pid(void){
-    return py_pid;
-}
-
 static pid_t popen2(char* const * command, int *infp, int *outfp){
     int p_stdin[2], p_stdout[2];
     pid_t pid;
@@ -242,4 +237,9 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         *outfp = p_stdout[READ];
 
     return pid;
+}
+
+/* return the pid for the star tracker child process */
+pid_t get_st_pid_local(void){
+    return py_pid;
 }

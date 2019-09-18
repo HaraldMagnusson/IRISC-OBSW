@@ -44,3 +44,6 @@ void get_encoder(encoder_t* encoder);
 
 /* fetch the latest gyro data */
 void get_gyro(gyro_t* gyro);
+
+/* return the pid for the star tracker child process */
+pid_t get_star_tracker_pid(void);

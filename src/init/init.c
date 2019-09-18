@@ -31,8 +31,6 @@
 #include "tracking.h"
 #include "watchdog.h"
 
-#include "star_tracker_poller.h"
-
 /* not including init */
 #define MODULE_COUNT 13
 
