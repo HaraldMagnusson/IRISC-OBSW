@@ -22,7 +22,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"image_handler", &init_image_handler}
 };
 
-int init_img_processing( void ){
+int init_img_processing(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

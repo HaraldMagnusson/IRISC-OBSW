@@ -16,7 +16,7 @@ static pthread_mutex_t mutex_gps;
 static gps_t gps_local;
 
 
-int init_gps( void ){
+int init_gps(void* args){
 
     gps_local.lat = 0;
     gps_local.lon = 0;

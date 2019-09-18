@@ -15,7 +15,7 @@
 static pthread_mutex_t mutex_mode;
 static enum mode_t mode;
 
-int init_mode( void ){
+int init_mode(void* args){
 
     mode = NORMAL;
 

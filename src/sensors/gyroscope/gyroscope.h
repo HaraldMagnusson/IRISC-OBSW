@@ -9,7 +9,7 @@
 
 #pragma once
 
-int init_gyroscope(void);
+int init_gyroscope(void* args);
 
 void get_gyro_local(gyro_t* gyro);
 

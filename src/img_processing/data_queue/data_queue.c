@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_data_queue( void ){
+int init_data_queue(void* args){
     return SUCCESS;
 }

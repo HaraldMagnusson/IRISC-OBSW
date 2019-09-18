@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the img processing component */
-int init_img_processing( void );
+int init_img_processing(void* args);
 
 /* enqueue an image with meta data in the queue to be processed */
 void queue_image( void );

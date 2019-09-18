@@ -8,4 +8,4 @@
 
 #pragma once
 
-int init_gyroscope_poller( void );
+int init_gyroscope_poller(void* args);

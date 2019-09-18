@@ -28,8 +28,13 @@ typedef struct{
     char out_of_date;
 } encoder_t;
 
+typedef struct{
+    float ra, dec, roll;
+    char out_of_date;
+} star_tracker_t;
+
 /* initialise the sensors component */
-int init_sensors( void );
+int init_sensors(void* args);
 
 /* fetch the latest gps data */
 void get_gps(gps_t* gps);
@@ -39,3 +44,9 @@ void get_encoder(encoder_t* encoder);
 
 /* fetch the latest gyro data */
 void get_gyro(gyro_t* gyro);
+
+/* return the pid for the star tracker child process */
+pid_t get_star_tracker_pid(void);
+
+/* set the exposure time (in microseconds) and gain for the star tracker */
+void set_st_exp_gain(int st_exp, int st_gain);

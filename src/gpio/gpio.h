@@ -14,7 +14,7 @@
 #define LOW  0
 #define HIGH 1
 
-int init_gpio( void );
+int init_gpio(void* args);
 
 /* enable a pin for I/O usage */
 int gpio_export(int pin);

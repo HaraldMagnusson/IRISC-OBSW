@@ -8,6 +8,6 @@
 
 #include "global_utils.h"
 
-int init_temperature_poller( void ){
+int init_temperature_poller(void* args){
     return SUCCESS;
 }

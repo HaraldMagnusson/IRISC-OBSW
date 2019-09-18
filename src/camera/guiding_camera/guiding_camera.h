@@ -16,7 +16,7 @@
  *      SUCCESS: operation is successful
  *      FAILURE: failure to set up camera, log written to stderr
  */
-int init_guiding_camera(void);
+int init_guiding_camera(void* args);
 
 /* expose_guiding:
  * Start an exposure of the guiding camera. Call save_img to store store

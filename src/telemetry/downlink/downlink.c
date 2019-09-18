@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_downlink( void ){
+int init_downlink(void* args){
     return SUCCESS;
 }

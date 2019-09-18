@@ -8,4 +8,4 @@
 
 #pragma once
 
-int init_encoder_poller( void );
+int init_encoder_poller(void* args);

@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_image_handler( void ){
+int init_image_handler(void* args){
     return SUCCESS;
 }

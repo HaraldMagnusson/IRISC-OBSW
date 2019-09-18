@@ -23,7 +23,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"nir_camera", &init_nir_camera}
 };
 
-int init_camera( void ){
+int init_camera(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

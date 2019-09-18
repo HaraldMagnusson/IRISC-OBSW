@@ -7,6 +7,8 @@
  * -----------------------------------------------------------------------------
  */
 
+#include <stdlib.h>
+
 #include "global_utils.h"
 
 #include "gps_poller.h"
@@ -26,7 +28,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"temperature_poller", &init_temperature_poller}
 };
 
-int init_sensor_poller( void ){
+int init_sensor_poller(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);
@@ -35,4 +37,14 @@ int init_sensor_poller( void ){
     }
 
     return SUCCESS;
+}
+
+/* return the pid for the star tracker child process */
+pid_t get_st_pid(void){
+    return get_st_pid_local();
+}
+
+/* set the exposure time (in microseconds) and gain for the star tracker */
+void set_st_exp_gain_l(int st_exp, int st_gain){
+    return set_st_exp_gain_ll(st_exp, st_gain);
 }
