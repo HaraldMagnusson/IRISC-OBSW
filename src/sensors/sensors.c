@@ -56,6 +56,11 @@ void get_gyro(gyro_t* gyro){
     get_gyro_local(gyro);
 }
 
+/* fetch the latest star tracker data */
+void get_star_tracker(star_tracker_t* st){
+    get_star_tracker_local(st);
+}
+
 /* return the pid for the star tracker child process */
 pid_t get_star_tracker_pid(void){
     return get_st_pid();
