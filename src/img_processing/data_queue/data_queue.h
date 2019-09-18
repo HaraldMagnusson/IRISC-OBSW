@@ -2,20 +2,29 @@
  * Component Name: Data Queue
  * Parent Component: Img Processing
  * Author(s): 
- * Purpose: Hold images along with housekeeping data until handler is ready.
+ * Purpose: Hold images untill they can be compressed, stored and sent to ground.
  *
  * -----------------------------------------------------------------------------
  */
 
 #pragma once
 
-/* initialise the data queue component */
-int init_data_queue( void );
-
-/* enqueue an image with meta data in the queue to be processed 
- * provided to external components
+/**
+ * Node structure declaration.
  */
-void queue_image_local( void );
+typedef struct node {
+    char *filepath;     // Filepath of data to be compressed.
+    int priority;       // Lower values indicate higher priority
+    int type;           // Type of file
+    struct node *next;  // Pointer to the node next on the list.
 
-/* read the oldest message in the queue (FIFO) */
-void read_queue( void );
+} data_node;
+
+/* initialise the data queue component */
+int init_data_queue(void);
+
+/* Compress and store file, for type use IMAGE_MAIN or IMAGE_STARTRACKER */
+int store_data_local(char *f, int p, int type);
+
+/* Return the data of the oldest message of the highest priority. */
+struct node read_data_queue();
