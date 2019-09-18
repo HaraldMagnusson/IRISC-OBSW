@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "global_utils.h"
-
+#include <pthread.h>
 #include "data_queue.h"
 #include "image_handler.h"
 
@@ -29,6 +29,15 @@ int init_img_processing( void ){
     if( ret != SUCCESS ){
         return ret;
     }
+
+    return SUCCESS;
+}
+
+int queue_image(char *filepath, int p, int type){
+    int ret;
+
+    store_data_local(filepath, p, type);
+
 
     return SUCCESS;
 }

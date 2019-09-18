@@ -14,6 +14,24 @@
 #include <zstd.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <limits.h>
+#include <time.h>
+
+#include "data_queue.h"
+#include "img_processing.h"
+
+static pthread_t thread_data;
+static pthread_attr_t thread_attr;
+static struct sched_param param;
+static int ret;
+
+int img_main_counter = 0;
+int img_startracker_counter = 0;
+
+/* prototypes declaration */
+static void* thread_func(void*);
+int compression_stream(const char* in_filename, const char* out_filename);
 
 static size_t fread_return_size(void* buffer, size_t sizeToRead, FILE* file)
 {
@@ -76,18 +94,19 @@ static void compress_file(const char* file_name_in, const char* file_name_out, i
  *
  * input:
  * in_filename: filepath of file to be compressed.
+ * out_filename: filepath for storage location
  */
-int compression_stream(const char* in_filename) {
-
+int compression_stream(const char* in_filename, const char* out_filename) {
+/*
     size_t const in_length = strlen(in_filename);
     size_t const out_length = in_length + 5;
     char* const out_filename = (char *) malloc(out_length);
     memset(out_filename, 0, out_length);
     strcat(out_filename, in_filename);
     strcat(out_filename, ".zst");
-
+*/
     compress_file(in_filename, out_filename, 1);
-    free(out_filename);
+    //free(out_filename);
 
     return SUCCESS;
 
@@ -95,6 +114,95 @@ int compression_stream(const char* in_filename) {
 
 int init_image_handler(void) {
 
+    /*
+     *  --Thread
+     */
+
+    ret = pthread_attr_init(&thread_attr);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed pthread_attr_init for e_link component. "
+            "Return value: %d\n", ret);
+        return ret;
+    }
+
+    ret = pthread_attr_setstacksize(&thread_attr, PTHREAD_STACK_MIN);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed pthread_attr_setstacksize of e_link component. "
+            "Return value: %d\n", ret);
+        return ret;
+    }
+
+    ret = pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed pthread_attr_setschedpolicy of e_link component. "
+            "Return value: %d\n", ret);
+        return ret;
+    }
+
+    param.sched_priority = 50;
+    ret = pthread_attr_setschedparam(&thread_attr, &param);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed pthread_attr_setschedparam of e_link component. "
+            "Return value: %d\n", ret);
+        return ret;
+    }
+
+    ret = pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed pthread_attr_setinheritsched of e_link component. "
+            "Return value: %d\n", ret);
+        return ret;
+    }
+
+    ret = pthread_create(&thread_data, &thread_attr, thread_func, NULL);
+    if( ret != 0 ){
+        fprintf(stderr,
+            "Failed pthread_create of socket component. "
+            "Return value: %d\n", ret);
+        return ret;
+    }
+
     return SUCCESS;
 
+}
+
+static void* thread_func(void* param){
+
+    struct node temp;
+    
+    while(1){
+        char out_name[100];
+        temp = read_data_queue();
+
+        struct tm date_time;
+        time_t epoch_time;
+
+        time(&epoch_time);
+        gmtime_r(&epoch_time, &date_time);
+
+        if(temp.type==IMAGE_MAIN){
+            
+            sprintf(out_name, "/tmp/IMG_MAIN/IMG_MAIN_%2d:%2d:%2d_.fit.zst",
+                    date_time.tm_hour, date_time.tm_min, date_time.tm_sec);
+            img_main_counter++;
+
+        } else if (temp.type==IMAGE_STARTRACKER){
+
+            sprintf(out_name, "/tmp/IMG_START/IMG_START_%2d:%2d:%2d_.fit.zst",
+                    date_time.tm_hour, date_time.tm_min, date_time.tm_sec);
+            img_startracker_counter++;
+
+        }
+
+        compression_stream(temp.filepath, out_name);
+        remove(temp.filepath);
+        //send_telemetry_local(out_name, temp.priority, 1, 0);
+    }
+
+    return SUCCESS;
 }

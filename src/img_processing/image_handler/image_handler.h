@@ -11,3 +11,6 @@
 
 /* initialise the image handler component */
 int init_image_handler( void );
+
+/* Compress and store a file */
+int compression_stream(const char* in_filename, const char* out_filename);

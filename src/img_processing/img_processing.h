@@ -8,8 +8,11 @@
 
 #pragma once
 
+#define IMAGE_MAIN 1
+#define IMAGE_STARTRACKER 2
+
 /* initialise the img processing component */
 int init_img_processing( void );
 
 /* enqueue an image with meta data in the queue to be processed */
-void queue_image( void );
+void queue_image( const char *filepath, int p , int type);
