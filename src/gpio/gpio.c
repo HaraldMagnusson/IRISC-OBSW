@@ -6,7 +6,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include <wiringPi.h>
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
