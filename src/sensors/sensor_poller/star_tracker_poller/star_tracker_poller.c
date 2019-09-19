@@ -32,12 +32,22 @@ static void* st_poller_thread(void* arg);
 static pid_t popen2(char* const * command, int *infp, int *outfp);
 static int capture_image();
 
-static pid_t py_pid;
+static pthread_mutex_t mutex_st_child;
+static pid_t py_pid = -1;
+static char st_running = 0;
 static pthread_t st_poller_tid;
 
 static int exp_time = 5*1000*1000, gain = 300;
 
 int init_star_tracker_poller(void* args){
+
+    int ret = pthread_mutex_init(&mutex_st_child, NULL);
+    if(ret){
+        logging(ERROR, "Star Tracker",
+                "The initialisation of the star tracker child "
+                "mutex failed with code %d.\n", ret);
+        return FAILURE;
+    }
 
     pthread_create(&st_poller_tid, NULL, st_poller_thread, NULL);
 
@@ -183,8 +193,12 @@ static void irisc_tetra(float st_return[]) {
     };
 
     int outfp = -1;
+
+    pthread_mutex_lock(&mutex_st_child);
+    st_running = 1;
     py_pid = popen2(cmd, NULL, &outfp);
     waitpid(py_pid, NULL, 0);
+    st_running = 0;
 
     char buffer[100];
     int cntr = 0, ii;
@@ -226,6 +240,7 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         exit(1);
     }
 
+    pthread_mutex_unlock(&mutex_st_child);
     if (infp == NULL)
         close(p_stdin[WRITE]);
     else
@@ -241,7 +256,10 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
 
 /* return the pid for the star tracker child process */
 pid_t get_st_pid_local(void){
-    return py_pid;
+    if(st_running){
+        return py_pid;
+    }
+    return FAILURE;
 }
 /* set the exposure time (in microseconds) and gain for the star tracker */
 void set_st_exp_gain_ll(int st_exp, int st_gain){
