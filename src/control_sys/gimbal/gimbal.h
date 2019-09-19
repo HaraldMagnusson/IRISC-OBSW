@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Gimbal
- * Parent Component: Tracking
+ * Parent Component: Control System
  * Author(s): 
  * Purpose: Provide an interface for the control of the gimbal motors.
  *

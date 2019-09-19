@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
- * Component Name: Target Selecting
- * Parent Component: Tracking
+ * Component Name: Target Selection
+ * Parent Component: Control System
  * Author(s): Anja Möslinger, Harald Magnusson
  * Purpose: Keep track of target prioritisation. Update the current target if
  *          a higher priority target is available. Provide an interface to
@@ -32,7 +32,7 @@ static pthread_t sel_track_thread_id;
 static double az_threshold = 0.01, alt_threshold = 0.01;
 
 
-int init_target_selection(void){
+int init_target_selection(void* args){
 
     pthread_create(&sel_track_thread_id, NULL, sel_track_thread_func, NULL);
 

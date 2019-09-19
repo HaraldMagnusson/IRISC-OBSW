@@ -21,7 +21,7 @@ file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.c")
 list(TRANSFORM SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 
 # remove certain sources
-list(REMOVE_ITEM SOURCES "${SCR_DIR}/control_sys/stabilization/R2019a/rtw/c/src/common/rt_main.c")
+# list(REMOVE_ITEM SOURCES "${SCR_DIR}/control_sys/stabilization/R2019a/rtw/c/src/common/rt_main.c")
 
 # list of includes
 file(GLOB_RECURSE INCLUDES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.h")

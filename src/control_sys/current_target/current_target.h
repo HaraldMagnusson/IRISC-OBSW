@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Current Target
- * Parent Component: Tracking
+ * Parent Component: Control System
  * Author(s): 
  * Purpose: Store the currently highest priority target.
  *
@@ -20,7 +20,7 @@ typedef struct{
 } telescope_att_t;
 
 /* initialise the current target component */
-int init_current_target( void );
+int init_current_target(void* args);
 
 /* update the list of targets and priorities */
 void set_target_list( void );

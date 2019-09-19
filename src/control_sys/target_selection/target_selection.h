@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
- * Component Name: Target Selecting
- * Parent Component: Tracking
+ * Component Name: Target Selection
+ * Parent Component: Control System
  * Author(s): Anja Möslinger, Harald Magnusson
  * Purpose: Keep track of target prioritisation. Update the current target if
  *          a higher priority target is available. Provide an interface to 
@@ -51,8 +51,8 @@ const static const_target_t target_list_rd[19] = {
 
 const static int exp_prio_list[11] = {1, 2, 3, 4, 4, 4, 3, 2, 1, 1, 1};
 
-/* initialise the target selecting component */
-int init_target_selection(void);
+/* initialise the target selection component */
+int init_target_selection(void* args);
 
 /* Set the error thresholds for when to start exposing camera */
 void set_error_thresholds_local(double az, double alt_ang);

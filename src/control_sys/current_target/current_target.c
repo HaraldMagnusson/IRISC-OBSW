@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Current Target
- * Parent Component: Tracking
+ * Parent Component: Control System
  * Author(s): 
  * Purpose: Store the currently highest priority target.
  *
@@ -18,7 +18,7 @@ static pthread_mutex_t mutex_telescope_att, mutex_track_ang;
 static telescope_att_t telescope_att_local;
 static target_t current_target;
 
-int init_current_target( void ){
+int init_current_target(void* args){
 
     int ret = pthread_mutex_init( &mutex_telescope_att, NULL );
     if( ret ){
