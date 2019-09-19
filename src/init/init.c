@@ -68,10 +68,12 @@ static void sigint_handler(int signum){
     write(STDOUT_FILENO, "gpio pin unexported\n", 20);
 
     pid_t st_pid = get_star_tracker_pid();
-    kill(st_pid, SIGTERM);
-    write(STDOUT_FILENO, "SIGTERM sent to star tracker\n", 29);
-    waitpid(st_pid, NULL, 0);
-    write(STDOUT_FILENO, "exiting\n\n", 9);
+    if(st_pid != FAILURE){
+        kill(st_pid, SIGTERM);
+        write(STDOUT_FILENO, "SIGTERM sent to star tracker\n", 29);
+        waitpid(st_pid, NULL, 0);
+        write(STDOUT_FILENO, "exiting\n\n", 9);
+    }
 
     _exit(EXIT_SUCCESS);
 }
