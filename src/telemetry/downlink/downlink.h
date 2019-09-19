@@ -10,4 +10,4 @@
 #pragma once
 
 /* initialise the downlink component */
-int init_downlink( void );
+int init_downlink(void* args);

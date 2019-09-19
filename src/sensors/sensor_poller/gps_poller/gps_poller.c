@@ -38,7 +38,7 @@ static pthread_t gps_thread;
 static int fd_spi12;
 
 
-int init_gps_poller( void ){
+int init_gps_poller(void* args){
 
     char* spi12 = "/dev/spidev1.2";
 
@@ -303,4 +303,3 @@ static int divide_NMEA_str(const unsigned char* str, unsigned char NMEA_str_arr[
     }
     return SUCCESS;
 }
-

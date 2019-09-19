@@ -9,7 +9,7 @@
 #pragma once
 
 /* initialise the orientation component */
-int init_gps(void);
+int init_gps(void* args);
 
 /* fetch the latest gps data */
 void get_gps_local(gps_t* gps);

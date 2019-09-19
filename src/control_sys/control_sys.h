@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the control_sys component */
-int init_control_sys(void);
+int init_control_sys(void* args);
 
 /* return the current target to be tracked */
 void get_target( void );

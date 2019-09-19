@@ -8,7 +8,7 @@
 
 #pragma once
 
-int init_encoder_poller( void );
+int init_encoder_poller(void* args);
 
 /* set offsets for the azimuth and altitude angle encoders */
 void set_offsets(double az, double alt);

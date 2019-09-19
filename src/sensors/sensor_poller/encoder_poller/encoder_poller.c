@@ -34,7 +34,7 @@ static pthread_t encoder_thread;
 static int fd_spi00, fd_spi01;
 static double az_offset = 0, alt_offset = 0;
 
-int init_encoder_poller( void ){
+int init_encoder_poller(void* args){
 
     char* spi00 = "/dev/spidev0.0";
     char* spi01 = "/dev/spidev0.1";

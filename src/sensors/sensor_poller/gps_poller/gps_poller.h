@@ -8,4 +8,4 @@
 
 #pragma once
 
-int init_gps_poller( void );
+int init_gps_poller(void* args);

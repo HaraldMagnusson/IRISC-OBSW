@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_downlink_queue( void ){
+int init_downlink_queue(void* args){
     return SUCCESS;
 }

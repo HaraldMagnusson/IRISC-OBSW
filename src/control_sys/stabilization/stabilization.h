@@ -10,4 +10,4 @@
 #pragma once
 
 /* initialise the stabilization component */
-int init_stabilization(void);
+int init_stabilization(void* args);

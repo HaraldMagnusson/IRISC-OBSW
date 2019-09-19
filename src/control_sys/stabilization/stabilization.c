@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_stabilization(void){
+int init_stabilization(void* args){
     return SUCCESS;
 }

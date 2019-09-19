@@ -24,7 +24,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"gimbal", &init_gimbal}
 };
 
-int init_control_sys(void){
+int init_control_sys(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

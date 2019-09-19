@@ -38,7 +38,7 @@ static int ret;
 
 static void* thread_func( void*);
 
-int init_watchdog( void ){
+int init_watchdog(void* args){
 
     fd_watchdog = open(WATCHDOG_DIR, O_WRONLY | O_TRUNC | O_CREAT, S_IRWXU);
     if( fd_watchdog == -1 ){
