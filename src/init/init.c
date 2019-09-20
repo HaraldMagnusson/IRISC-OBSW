@@ -124,9 +124,18 @@ int main(int argc, char* const argv[]){
     if(count != 0){
         return FAILURE;
     }
+    /* initialization sequence done */
+
+
+
 
     while(1){
-        sleep(1000);
+        set_mode(SLEEP);
+        printf("sleeping\n");
+        sleep(10);
+        printf("starting\n");
+        set_mode(NORMAL);
+        sleep(10);
     }
 
     return SUCCESS;

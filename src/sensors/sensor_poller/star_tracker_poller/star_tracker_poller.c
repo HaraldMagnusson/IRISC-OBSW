@@ -18,6 +18,7 @@
 #include "sensors.h"
 #include "star_tracker.h"
 #include "camera.h"
+#include "mode.h"
 
 #define TETRAPATH "Tetra/tetra.py"
 #define ST_WAIT_TIME 100*1000*1000
@@ -30,7 +31,10 @@ static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
 static void* st_poller_thread(void* arg);
 static pid_t popen2(char* const * command, int *infp, int *outfp);
-static int capture_image();
+
+#ifndef ST_TEST
+    static int capture_image();
+#endif
 
 static pthread_mutex_t mutex_st_child;
 static pid_t py_pid = -1;
@@ -62,7 +66,10 @@ int init_star_tracker_poller(void* args){
 static void* st_poller_thread(void* arg){
     sleep(1);
 
-    char st_fn[100], out_fp[100], out_fn[100];
+    char st_fn[100], out_fp[100];
+    #ifndef ST_TEST
+        char out_fn[100];
+    #endif
     float st_return[4];
 
     struct timespec wake;
@@ -75,33 +82,45 @@ static void* st_poller_thread(void* arg){
     strcpy(out_fp, get_top_dir());
     strcat(out_fp, "output/guiding/");
 
-    for(int ii=0; 1; ++ii){
+    while(1){
+        /* inactive loop */
+        while(get_mode() != NORMAL){
+            sleep(1);
+        }
 
-        do{
-            /* capture image */
-            if(capture_image(st_fn)){
-                break;
-            }
+        /* active loop */
+        for(int ii=0; get_mode() == NORMAL; ++ii){
+            do{
+                /* capture image */
+                #ifndef ST_TEST
+                if(capture_image(st_fn)){
+                    break;
+                }
 
-            /* star tracker calculations */
-            if(call_tetra(st_return)){
-                st_out_of_date();
-                break;
-            }
+                #endif
+                /* star tracker calculations */
+                if(call_tetra(st_return)){
+                    st_out_of_date();
+                    break;
+                }
 
-            /* move image to img queue dir */
-            snprintf(out_fn, 100, "%s%4d.fit", out_fp, ii);
-            rename(st_fn, out_fn);
+                #ifndef ST_TEST
+                /* move image to img queue dir */
+                snprintf(out_fn, 100, "%s%4d.fit", out_fp, ii);
+                rename(st_fn, out_fn);
 
-            /* queue up image */
+                #endif
+                /* queue up image */
 
-        } while(0);
+            } while(0);
 
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
+            clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
+        }
     }
     return NULL;
 }
 
+#ifndef ST_TEST
 /*
  * TODO: error handling from camera
  */
@@ -123,6 +142,7 @@ static int capture_image(char* fn){
 
     return ret;
 }
+#endif
 
 static int call_tetra(float st_return[]){
 
