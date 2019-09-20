@@ -18,6 +18,7 @@
 #include "global_utils.h"
 #include "sensors.h"
 #include "encoder.h"
+#include "mode.h"
 
 /* indicies for data arrays */
 #define RA 0
@@ -61,23 +62,30 @@ static void* thread_func(){
     clock_gettime(CLOCK_MONOTONIC, &wake_time);
     wake_time.tv_sec += 2;
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
-
     while(1){
-        read(fd_spi00, data[RA], 2);
-        read(fd_spi01, data[DEC], 2);
-
-        if(checksum_ctl(data)){
-            encoder_out_of_date();
+        /* inactive loop */
+        while(get_mode() != NORMAL){
+            sleep(1);
         }
 
-        proc(data);
+        /* active loop */
+        while(get_mode() == NORMAL){
+            read(fd_spi00, data[RA], 2);
+            read(fd_spi01, data[DEC], 2);
 
-        wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
-        if(wake_time.tv_nsec >= 1000000000){
-            wake_time.tv_sec++;
-            wake_time.tv_nsec -= 1000000000;
+            if(checksum_ctl(data)){
+                encoder_out_of_date();
+            }
+
+            proc(data);
+
+            wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
+            if(wake_time.tv_nsec >= 1000000000){
+                wake_time.tv_sec++;
+                wake_time.tv_nsec -= 1000000000;
+            }
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
         }
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
     }
     return NULL;
 }
