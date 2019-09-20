@@ -60,12 +60,11 @@ static void* thread_func(){
     unsigned char data[2][2];
 
     clock_gettime(CLOCK_MONOTONIC, &wake_time);
-    wake_time.tv_sec += 2;
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
     while(1){
         /* inactive loop */
         while(get_mode() != NORMAL){
-            sleep(1);
+            wake_time.tv_sec++;
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
         }
 
         /* active loop */

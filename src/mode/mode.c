@@ -17,7 +17,7 @@ static enum mode_t mode;
 
 int init_mode(void* args){
 
-    mode = NORMAL;
+    mode = SLEEP;
 
     int res = pthread_mutex_init( &mutex_mode, NULL );
     if( res ){

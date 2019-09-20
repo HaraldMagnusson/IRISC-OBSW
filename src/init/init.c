@@ -40,6 +40,7 @@ static struct sigaction sa;
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"watchdog", &init_watchdog},
+    {"mode", &init_mode},
     {"gpio", &init_gpio},
     {"camera", &init_camera},
     {"command", &init_command},
@@ -47,7 +48,6 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"e_link", &init_elink},
     {"global_utils", &init_global_utils},
     {"img_processing", &init_img_processing},
-    {"mode", &init_mode},
     {"sensors", &init_sensors},
     {"telemetry", &init_telemetry},
     {"thermal", &init_thermal},
@@ -125,9 +125,6 @@ int main(int argc, char* const argv[]){
         return FAILURE;
     }
     /* initialization sequence done */
-
-
-
 
     while(1){
         set_mode(SLEEP);

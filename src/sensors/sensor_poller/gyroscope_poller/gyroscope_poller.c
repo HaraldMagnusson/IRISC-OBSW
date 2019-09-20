@@ -102,7 +102,6 @@ static void* thread_func(void* arg){
 
     double rate[3];
     clock_gettime(CLOCK_MONOTONIC, &wake);
-    wake.tv_sec += 1;
 
     ret = FT_Purge(fd, FT_PURGE_RX);
     if(ret != FT_OK){
@@ -112,7 +111,8 @@ static void* thread_func(void* arg){
     while(1){
         /* inactive loop */
         while(get_mode() != NORMAL){
-            sleep(1);
+            wake.tv_sec += 1;
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
         }
 
         /* active loop */
