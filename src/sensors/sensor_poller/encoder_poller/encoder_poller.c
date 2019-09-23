@@ -30,7 +30,6 @@ static void proc(unsigned char data[2][2]);
 static void* thread_func();
 static void active_m(void);
 
-static struct timespec wake_time;
 static pthread_t encoder_thread;
 
 pthread_mutex_t mutex_cond_enc;
@@ -61,6 +60,8 @@ int init_encoder_poller(void* args){
 
 static void* thread_func(){
 
+    struct timespec wake_time;
+
     pthread_mutex_lock(&mutex_cond_enc);
 
     while(1){
@@ -71,6 +72,13 @@ static void* thread_func(){
 
         while(get_mode() == NORMAL){
             active_m();
+
+            wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
+            if(wake_time.tv_nsec >= 1000000000){
+                wake_time.tv_sec++;
+                wake_time.tv_nsec -= 1000000000;
+            }
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
         }
     }
 
@@ -90,13 +98,6 @@ static void active_m(void){
     else{
         proc(data);
     }
-
-    wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
-    if(wake_time.tv_nsec >= 1000000000){
-        wake_time.tv_sec++;
-        wake_time.tv_nsec -= 1000000000;
-    }
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
 }
 
 static void proc(unsigned char data[2][2]){

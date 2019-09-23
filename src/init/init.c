@@ -218,6 +218,12 @@ static void wake_up_m(void){
     pthread_mutex_unlock(&mutex_cond_enc);
     pthread_cond_signal(&cond_enc);
 
+    sleep(2);
+
+    printf("waking gyroscope\n");
+    pthread_mutex_lock(&mutex_cond_gyro);
+    pthread_mutex_unlock(&mutex_cond_gyro);
+    pthread_cond_signal(&cond_gyro);
 
     printf("entering normal mode\n");
 }
