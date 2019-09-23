@@ -13,13 +13,13 @@
 #include "mode.h"
 
 static pthread_mutex_t mutex_mode;
-static enum mode_t mode;
+static char mode;
 
 int init_mode(void* args){
 
     mode = SLEEP;
 
-    int res = pthread_mutex_init( &mutex_mode, NULL );
+    int res = pthread_mutex_init(&mutex_mode, NULL);
     if( res ){
         fprintf(stderr,
             "The initialisation of the mode mutex failed with code %d.\n",

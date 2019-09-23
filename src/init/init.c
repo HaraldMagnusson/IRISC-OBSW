@@ -34,6 +34,13 @@
 /* not including init */
 #define MODULE_COUNT 13
 
+static int init_func(char* const argv[]);
+static int state_machine(void);
+static void normal_m(void);
+static void reset_m(void);
+static void sleep_m(void);
+static void wake_up_m(void);
+
 static int ret;
 static struct sigaction sa;
 
@@ -94,6 +101,18 @@ int main(int argc, char* const argv[]){
         //return FAILURE;
     }
 
+    if(init_func(argv)){
+        return FAILURE;
+    }
+    /* initialization sequence done */
+
+    state_machine();
+
+    return FAILURE;
+}
+
+static int init_func(char* const argv[]){
+
     int count = 0;
     for(int i=0; i<MODULE_COUNT; ++i){
         if(strcmp(init_sequence[i].name, "global_utils") == 0){
@@ -124,16 +143,71 @@ int main(int argc, char* const argv[]){
     if(count != 0){
         return FAILURE;
     }
-    /* initialization sequence done */
-
-    while(1){
-        set_mode(SLEEP);
-        printf("sleeping\n");
-        sleep(10);
-        printf("starting\n");
-        set_mode(NORMAL);
-        sleep(10);
-    }
 
     return SUCCESS;
+}
+
+static int state_machine(void){
+
+    while(1){
+        switch(get_mode()){
+            case NORMAL:
+                normal_m();
+                break;
+
+            case SLEEP:
+                sleep_m();
+                //usleep(1000);
+                break;
+
+            case RESET:
+                reset_m();
+                break;
+
+            case WAKE_UP:
+                wake_up_m();
+                break;
+        }
+    }
+
+    return FAILURE;
+}
+
+static void sleep_m(void){
+
+    char ch = fgetc(stdin);
+
+    if(ch == 'r'){
+        printf("resetting\n");
+        set_mode(RESET);
+    }
+}
+
+static void normal_m(void){
+
+    char ch = fgetc(stdin);
+
+    if(ch == 'r'){
+        set_mode(RESET);
+    }
+    else if(ch == 's'){
+        set_mode(SLEEP);
+        printf("entering sleep mode\n");
+    }
+}
+
+static void reset_m(void){
+    printf("entered reset mode\n");
+    sleep(0);
+    set_mode(WAKE_UP);
+}
+
+static void wake_up_m(void){
+    printf("entered wake_up mode\n");
+
+    pthread_mutex_lock(&mutex_cond_st);
+    set_mode(NORMAL);
+    pthread_mutex_unlock(&mutex_cond_st);
+    pthread_cond_signal(&cond_st);
+    printf("entering normal mode\n");
 }

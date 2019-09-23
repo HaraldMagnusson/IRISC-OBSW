@@ -31,21 +31,46 @@ static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
 static void* st_poller_thread(void* arg);
 static pid_t popen2(char* const * command, int *infp, int *outfp);
+static void active_m(void);
 
 #ifndef ST_TEST
     static int capture_image();
 #endif
 
-static pthread_mutex_t mutex_st_child;
+static pthread_mutex_t mutex_cond_st_child;
+
+pthread_mutex_t mutex_cond_st = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
+
 static pid_t py_pid = -1;
 static char st_running = 0;
 static pthread_t st_poller_tid;
 
 static int exp_time = 5*1000*1000, gain = 300;
 
+/* filenames for images */
+static char st_fn[100], out_fp[100];
+static float st_return[4];
+
+#ifndef ST_TEST
+    static char out_fn[100];
+    static int img_cntr = 0;
+#endif
+
+static struct timespec wake;
+
 int init_star_tracker_poller(void* args){
 
-    int ret = pthread_mutex_init(&mutex_st_child, NULL);
+    wake.tv_nsec = ST_WAIT_TIME;
+    wake.tv_sec = 0;
+
+    strcpy(st_fn, get_top_dir());
+    strcat(st_fn, "output/guiding/star_tracker/st_img.fit");
+
+    strcpy(out_fp, get_top_dir());
+    strcat(out_fp, "output/guiding/");
+
+    int ret = pthread_mutex_init(&mutex_cond_st_child, NULL);
     if(ret){
         logging(ERROR, "Star Tracker",
                 "The initialisation of the star tracker child "
@@ -58,66 +83,59 @@ int init_star_tracker_poller(void* args){
     return SUCCESS;
 }
 
+
 /*
  * TODO: This system will overwrite old files if the system restarts
  *       (might not be an issue since these files are only for the
  *       image handling queue)
  */
 static void* st_poller_thread(void* arg){
-    sleep(1);
 
-    char st_fn[100], out_fp[100];
-    #ifndef ST_TEST
-        char out_fn[100];
-    #endif
-    float st_return[4];
-
-    struct timespec wake;
-    wake.tv_nsec = ST_WAIT_TIME;
-    wake.tv_sec = 0;
-
-    strcpy(st_fn, get_top_dir());
-    strcat(st_fn, "output/guiding/star_tracker/st_img.fit");
-
-    strcpy(out_fp, get_top_dir());
-    strcat(out_fp, "output/guiding/");
-
+    pthread_mutex_lock(&mutex_cond_st);
     while(1){
-        /* inactive loop */
-        while(get_mode() != NORMAL){
-            sleep(1);
-        }
 
-        /* active loop */
-        for(int ii=0; get_mode() == NORMAL; ++ii){
-            do{
-                /* capture image */
-                #ifndef ST_TEST
-                if(capture_image(st_fn)){
-                    break;
-                }
+        printf("before lock\n");
+        pthread_cond_wait(&cond_st, &mutex_cond_st);
+        printf("after lock\n");
 
-                #endif
-                /* star tracker calculations */
-                if(call_tetra(st_return)){
-                    st_out_of_date();
-                    break;
-                }
-
-                #ifndef ST_TEST
-                /* move image to img queue dir */
-                snprintf(out_fn, 100, "%s%4d.fit", out_fp, ii);
-                rename(st_fn, out_fn);
-
-                #endif
-                /* queue up image */
-
-            } while(0);
-
-            clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
+        while(get_mode() == NORMAL){
+            logging(DEBUG, "Star Tracker", "before algorithm");
+            active_m();
         }
     }
+
+    pthread_mutex_unlock(&mutex_cond_st);
+
+    printf("jumped out of while loop (should never happen)\n");
     return NULL;
+}
+
+static void active_m(void){
+
+    do{
+        #ifndef ST_TEST
+            /* capture image */
+            if(capture_image(st_fn)){
+                break;
+            }
+        #endif
+
+        /* star tracker calculations */
+        if(call_tetra(st_return)){
+            st_out_of_date();
+            break;
+        }
+    
+        #ifndef ST_TEST
+            /* move image to img queue dir */
+            snprintf(out_fn, 100, "%s%4d.fit", out_fp, img_cntr++);
+            rename(st_fn, out_fn);
+        #endif
+    } while(0);
+
+    clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
+
+    /* queue up image */
 }
 
 #ifndef ST_TEST
@@ -214,7 +232,7 @@ static void irisc_tetra(float st_return[]) {
 
     int outfp = -1;
 
-    pthread_mutex_lock(&mutex_st_child);
+    pthread_mutex_lock(&mutex_cond_st_child);
     st_running = 1;
     py_pid = popen2(cmd, NULL, &outfp);
     waitpid(py_pid, NULL, 0);
@@ -260,7 +278,7 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         exit(1);
     }
 
-    pthread_mutex_unlock(&mutex_st_child);
+    pthread_mutex_unlock(&mutex_cond_st_child);
     if (infp == NULL)
         close(p_stdin[WRITE]);
     else

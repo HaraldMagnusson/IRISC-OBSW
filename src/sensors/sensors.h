@@ -8,6 +8,9 @@
 
 #pragma once
 
+extern pthread_mutex_t mutex_cond_st;
+extern pthread_cond_t cond_st;
+
 /* The out_of_date flag shows if the available data is the latest (value: 0)
  * or if an error occured in the respective module while updating (value: 1).
  * If an error has occured, the data in the struct is the latest valid data.
