@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 #include "camera.h"
 #include "command.h"
@@ -43,6 +44,9 @@ static void wake_up_m(void);
 
 static int ret;
 static struct sigaction sa;
+
+static char gyro_wake_flag, rotate_flag, float_flag;
+static char rotate_flag_fn[100], float_flag_fn[100];
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
@@ -106,6 +110,23 @@ int main(int argc, char* const argv[]){
     }
     /* initialization sequence done */
 
+    strcpy(rotate_flag_fn, get_top_dir());
+    strcat(rotate_flag_fn, "output/init_rotate_flag.log");
+
+    strcpy(float_flag_fn, get_top_dir());
+    strcat(float_flag_fn, "output/init_float_flag.log");
+
+    int fd = open(rotate_flag_fn, O_RDONLY);
+    read(fd, &rotate_flag, 1);
+    close(fd);
+
+    fd = open(float_flag_fn, O_RDONLY);
+    read(fd, &float_flag, 1);
+    close(fd);
+
+    rotate_flag = 0;
+    float_flag = 0;
+
     state_machine();
 
     return FAILURE;
@@ -147,6 +168,7 @@ static int init_func(char* const argv[]){
     return SUCCESS;
 }
 
+
 static int state_machine(void){
 
     while(1){
@@ -157,7 +179,7 @@ static int state_machine(void){
 
             case SLEEP:
                 sleep_m();
-                //usleep(1000);
+                sleep(1);
                 break;
 
             case RESET:
@@ -175,12 +197,70 @@ static int state_machine(void){
 
 static void sleep_m(void){
 
+    int fd;
+
+    #if 0
     char ch = fgetc(stdin);
 
     if(ch == 'r'){
         printf("resetting\n");
         set_mode(RESET);
     }
+    #else
+
+    fd = open(float_flag_fn, O_RDONLY);
+    read(fd, &float_flag, 1);
+    close(fd);
+
+    if(float_flag){
+        set_mode(WAKE_UP);
+        return;
+    }
+
+    gps_t gps;
+    get_gps(&gps);
+
+    if(!gps.out_of_date && gps.alt > 5000 && !rotate_flag){
+        /* rotate telescope */
+
+        /* set flag */
+        rotate_flag = 1;
+
+        /* write flag to storage */
+        fd = open(rotate_flag_fn, O_WRONLY);
+        write(fd, &rotate_flag, 1);
+        close(fd);
+
+    }
+
+    if(!gps.out_of_date && gps.alt > 14000 && !gyro_wake_flag){
+        /* wake gyro */
+
+        printf("waking gyroscope\n");
+        pthread_mutex_lock(&mutex_cond_gyro);
+        pthread_mutex_unlock(&mutex_cond_gyro);
+        pthread_cond_signal(&cond_gyro);
+
+        gyro_wake_flag = 1;
+    }
+
+    if(!gps.out_of_date && gps.alt > 15000){
+
+        double ang_rate = 0.0;
+
+        /* fetch gondola rotation rate */
+
+        if(ang_rate < ANG_RATE_THRESHOLD){
+            set_mode(WAKE_UP);
+
+            /* write flag to storage */
+            float_flag = 1;
+            fd = open(float_flag_fn, O_WRONLY);
+            write(fd, &float_flag, 1);
+            close(fd);
+        }
+    }
+    #endif
 }
 
 static void normal_m(void){
@@ -205,6 +285,7 @@ static void reset_m(void){
 static void wake_up_m(void){
     printf("entered wake_up mode\n");
 
+    #if 0
     printf("waking star tracker\n");
     pthread_mutex_lock(&mutex_cond_st);
     set_mode(NORMAL);
@@ -224,6 +305,23 @@ static void wake_up_m(void){
     pthread_mutex_lock(&mutex_cond_gyro);
     pthread_mutex_unlock(&mutex_cond_gyro);
     pthread_cond_signal(&cond_gyro);
+
+    #else
+
+    printf("waking star tracker\n");
+    pthread_mutex_lock(&mutex_cond_st);
+    set_mode(NORMAL);
+    pthread_mutex_unlock(&mutex_cond_st);
+    pthread_cond_signal(&cond_st);
+
+    sleep(2);
+
+    printf("waking encoder\n");
+    pthread_mutex_lock(&mutex_cond_enc);
+    pthread_mutex_unlock(&mutex_cond_enc);
+    pthread_cond_signal(&cond_enc);
+
+    #endif
 
     printf("entering normal mode\n");
 }
