@@ -83,7 +83,6 @@ int init_star_tracker_poller(void* args){
     return SUCCESS;
 }
 
-
 /*
  * TODO: This system will overwrite old files if the system restarts
  *       (might not be an issue since these files are only for the
@@ -92,21 +91,16 @@ int init_star_tracker_poller(void* args){
 static void* st_poller_thread(void* arg){
 
     pthread_mutex_lock(&mutex_cond_st);
+
     while(1){
 
-        printf("before lock\n");
         pthread_cond_wait(&cond_st, &mutex_cond_st);
-        printf("after lock\n");
 
         while(get_mode() == NORMAL){
-            logging(DEBUG, "Star Tracker", "before algorithm");
             active_m();
         }
     }
 
-    pthread_mutex_unlock(&mutex_cond_st);
-
-    printf("jumped out of while loop (should never happen)\n");
     return NULL;
 }
 

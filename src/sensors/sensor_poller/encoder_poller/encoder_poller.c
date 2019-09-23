@@ -28,9 +28,13 @@ static int checksum_ctl(unsigned char data[2][2]);
 static int checksum_ctl_enc(unsigned char data[2]);
 static void proc(unsigned char data[2][2]);
 static void* thread_func();
+static void active_m(void);
 
 static struct timespec wake_time;
 static pthread_t encoder_thread;
+
+pthread_mutex_t mutex_cond_enc;
+pthread_cond_t cond_enc;
 
 static int fd_spi00, fd_spi01;
 
@@ -57,36 +61,42 @@ int init_encoder_poller(void* args){
 
 static void* thread_func(){
 
-    unsigned char data[2][2];
+    pthread_mutex_lock(&mutex_cond_enc);
 
-    clock_gettime(CLOCK_MONOTONIC, &wake_time);
     while(1){
-        /* inactive loop */
-        while(get_mode() != NORMAL){
-            wake_time.tv_sec++;
-            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
-        }
 
-        /* active loop */
+        pthread_cond_wait(&cond_enc, &mutex_cond_enc);
+
+        clock_gettime(CLOCK_MONOTONIC, &wake_time);
+
         while(get_mode() == NORMAL){
-            read(fd_spi00, data[RA], 2);
-            read(fd_spi01, data[DEC], 2);
-
-            if(checksum_ctl(data)){
-                encoder_out_of_date();
-            }
-
-            proc(data);
-
-            wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
-            if(wake_time.tv_nsec >= 1000000000){
-                wake_time.tv_sec++;
-                wake_time.tv_nsec -= 1000000000;
-            }
-            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
+            active_m();
         }
     }
+
     return NULL;
+}
+
+static void active_m(void){
+
+    unsigned char data[2][2];
+
+    read(fd_spi00, data[RA], 2);
+    read(fd_spi01, data[DEC], 2);
+
+    if(checksum_ctl(data)){
+        encoder_out_of_date();
+    }
+    else{
+        proc(data);
+    }
+
+    wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
+    if(wake_time.tv_nsec >= 1000000000){
+        wake_time.tv_sec++;
+        wake_time.tv_nsec -= 1000000000;
+    }
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
 }
 
 static void proc(unsigned char data[2][2]){
@@ -130,7 +140,6 @@ static int checksum_ctl(unsigned char data[2][2]){
     }
     return SUCCESS;
 }
-
 
 static int checksum_ctl_enc(unsigned char data[2]){
 
