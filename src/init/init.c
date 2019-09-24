@@ -277,7 +277,7 @@ static void normal_m(void){
 
 static void reset_m(void){
     printf("entered reset mode\n");
-    sleep(0);
+    sleep(20);
     set_mode(WAKE_UP);
 }
 
@@ -309,7 +309,6 @@ static void wake_up_m(void){
 
     printf("waking star tracker\n");
     pthread_mutex_lock(&mutex_cond_st);
-    set_mode(NORMAL);
     pthread_mutex_unlock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
 
@@ -322,5 +321,6 @@ static void wake_up_m(void){
 
     #endif
 
+    set_mode(NORMAL);
     printf("entering normal mode\n");
 }

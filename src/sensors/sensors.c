@@ -70,3 +70,8 @@ pid_t get_star_tracker_pid(void){
 void set_st_exp_gain(int st_exp, int st_gain){
     return set_st_exp_gain_l(st_exp, st_gain);
 }
+
+/* fetch a single sample from the encoder */
+int enc_single_samp(encoder_t* enc){
+    return enc_single_samp_l(enc);
+}

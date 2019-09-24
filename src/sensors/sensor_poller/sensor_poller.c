@@ -11,6 +11,8 @@
 
 #include "global_utils.h"
 
+#include "sensors.h"
+
 #include "gps_poller.h"
 #include "encoder_poller.h"
 #include "gyroscope_poller.h"
@@ -47,4 +49,9 @@ pid_t get_st_pid(void){
 /* set the exposure time (in microseconds) and gain for the star tracker */
 void set_st_exp_gain_l(int st_exp, int st_gain){
     return set_st_exp_gain_ll(st_exp, st_gain);
+}
+
+/* fetch a single sample from the encoder */
+int enc_single_samp_l(encoder_t* enc){
+    return enc_single_samp_ll(enc);
 }

@@ -18,6 +18,7 @@
 #include "global_utils.h"
 #include "sensors.h"
 #include "encoder.h"
+#include "encoder_poller.h"
 #include "mode.h"
 
 /* indicies for data arrays */
@@ -26,7 +27,7 @@
 
 static int checksum_ctl(unsigned char data[2][2]);
 static int checksum_ctl_enc(unsigned char data[2]);
-static void proc(unsigned char data[2][2]);
+static void proc(unsigned char data[2][2], encoder_t* enc);
 static void* thread_func();
 static void active_m(void);
 
@@ -55,6 +56,22 @@ int init_encoder_poller(void* args){
 
     pthread_create(&encoder_thread, NULL, thread_func, NULL);
 
+    return SUCCESS;
+}
+
+/* fetch a single sample from the encoder */
+int enc_single_samp_ll(encoder_t* enc){
+
+    unsigned char data[2][2];
+
+    read(fd_spi00, data[RA], 2);
+    read(fd_spi01, data[DEC], 2);
+
+    if(checksum_ctl(data)){
+        return FAILURE;
+    }
+
+    proc(data, enc);
     return SUCCESS;
 }
 
@@ -87,37 +104,14 @@ static void* thread_func(){
 
 static void active_m(void){
 
-    unsigned char data[2][2];
+    encoder_t enc;
 
-    read(fd_spi00, data[RA], 2);
-    read(fd_spi01, data[DEC], 2);
-
-    if(checksum_ctl(data)){
+    if(enc_single_samp(&enc)){
         encoder_out_of_date();
     }
     else{
-        proc(data);
+        set_encoder(&enc);
     }
-}
-
-static void proc(unsigned char data[2][2]){
-    unsigned short data_s[2];
-    double ang[2];
-
-    for(int ii=0; ii<2; ++ii){
-        data_s[ii] = (unsigned short)(data[ii][0] & 0x3F) << 8 | (unsigned short)data[ii][1];
-        ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
-    }
-
-    #ifdef ENCODER_DEBUG
-        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
-    #endif
-
-    encoder_t enc;
-    enc.ra = ang[RA];
-    enc.dec = ang[DEC];
-
-    set_encoder(&enc);
 }
 
 static int checksum_ctl(unsigned char data[2][2]){
@@ -167,4 +161,21 @@ static int checksum_ctl_enc(unsigned char data[2]){
         return SUCCESS;
     }
     return FAILURE;
+}
+
+static void proc(unsigned char data[2][2], encoder_t* enc){
+    unsigned short data_s[2];
+    double ang[2];
+
+    for(int ii=0; ii<2; ++ii){
+        data_s[ii] = (unsigned short)(data[ii][0] & 0x3F) << 8 | (unsigned short)data[ii][1];
+        ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
+    }
+
+    #ifdef ENCODER_DEBUG
+        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+    #endif
+
+    enc->ra = ang[RA];
+    enc->dec = ang[DEC];
 }
