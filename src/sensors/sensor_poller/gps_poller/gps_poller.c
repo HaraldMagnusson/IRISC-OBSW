@@ -40,6 +40,7 @@ static int fd_spi12;
 
 int init_gps_poller(void* args){
 
+    #if 0
     char* spi12 = "/dev/spidev1.2";
 
     fd_spi12 = open(spi12, O_RDONLY);
@@ -53,12 +54,14 @@ int init_gps_poller(void* args){
 
     buffer[0] = '$';
 
+    #endif
     pthread_create(&gps_thread, NULL, gps_thread_func, NULL);
 
     return SUCCESS;
 }
 
 static void* gps_thread_func(){
+    #if 0
     int ii, ret = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &wake_time);
@@ -97,6 +100,16 @@ static void* gps_thread_func(){
             }
         }
     }
+    #else
+        gps_t gps;
+        for(int ii=0; ii<25; ++ii){
+            gps.alt = ii*1000 + 1;
+            set_gps(&gps);
+            sleep(2);
+        }
+        sleep(1000000);
+        return NULL;
+    #endif
 }
 
 /* process_gps:

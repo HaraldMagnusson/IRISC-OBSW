@@ -45,7 +45,7 @@ static void wake_up_m(void);
 static int ret;
 static struct sigaction sa;
 
-static char gyro_wake_flag, rotate_flag, float_flag;
+static char gyro_wake_flag = '0', rotate_flag, float_flag;
 static char rotate_flag_fn[100], float_flag_fn[100];
 
 /* This list controls the order of initialisation */
@@ -124,8 +124,8 @@ int main(int argc, char* const argv[]){
     read(fd, &float_flag, 1);
     close(fd);
 
-    rotate_flag = 0;
-    float_flag = 0;
+    rotate_flag = '0';
+    float_flag = '0';
 
     state_machine();
 
@@ -168,7 +168,6 @@ static int init_func(char* const argv[]){
     return SUCCESS;
 }
 
-
 static int state_machine(void){
 
     while(1){
@@ -208,11 +207,7 @@ static void sleep_m(void){
     }
     #else
 
-    fd = open(float_flag_fn, O_RDONLY);
-    read(fd, &float_flag, 1);
-    close(fd);
-
-    if(float_flag){
+    if(float_flag == '1'){
         set_mode(WAKE_UP);
         return;
     }
@@ -220,11 +215,13 @@ static void sleep_m(void){
     gps_t gps;
     get_gps(&gps);
 
-    if(!gps.out_of_date && gps.alt > 5000 && !rotate_flag){
-        /* rotate telescope */
+    printf("alt: %lf\n", gps.alt);
 
+    if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
+        /* rotate telescope */
+        printf("rotating out telescope\n");
         /* set flag */
-        rotate_flag = 1;
+        rotate_flag = '1';
 
         /* write flag to storage */
         fd = open(rotate_flag_fn, O_WRONLY);
@@ -233,7 +230,7 @@ static void sleep_m(void){
 
     }
 
-    if(!gps.out_of_date && gps.alt > 14000 && !gyro_wake_flag){
+    if(!gps.out_of_date && gps.alt > 14000 && gyro_wake_flag == '0'){
         /* wake gyro */
 
         printf("waking gyroscope\n");
@@ -241,20 +238,22 @@ static void sleep_m(void){
         pthread_mutex_unlock(&mutex_cond_gyro);
         pthread_cond_signal(&cond_gyro);
 
-        gyro_wake_flag = 1;
+        gyro_wake_flag = '1';
     }
 
     if(!gps.out_of_date && gps.alt > 15000){
 
+        printf("checking gyro\n");
         double ang_rate = 0.0;
 
         /* fetch gondola rotation rate */
 
         if(ang_rate < ANG_RATE_THRESHOLD){
+            printf("wake up sequence\n");
             set_mode(WAKE_UP);
 
             /* write flag to storage */
-            float_flag = 1;
+            float_flag = '1';
             fd = open(float_flag_fn, O_WRONLY);
             write(fd, &float_flag, 1);
             close(fd);
