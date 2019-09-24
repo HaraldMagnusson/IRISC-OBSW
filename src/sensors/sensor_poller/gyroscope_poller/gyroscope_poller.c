@@ -116,7 +116,7 @@ static void* thread_func(void* arg){
 
         clock_gettime(CLOCK_MONOTONIC, &wake_time);
 
-        while(get_mode() == NORMAL){
+        while(get_mode() != RESET){
             active_m();
 
             wake_time.tv_nsec += GYRO_SAMPLE_TIME;

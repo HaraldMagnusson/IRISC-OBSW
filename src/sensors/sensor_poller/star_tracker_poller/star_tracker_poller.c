@@ -96,7 +96,7 @@ static void* st_poller_thread(void* arg){
 
         pthread_cond_wait(&cond_st, &mutex_cond_st);
 
-        while(get_mode() == NORMAL){
+        while(get_mode() != RESET){
             active_m();
         }
     }
