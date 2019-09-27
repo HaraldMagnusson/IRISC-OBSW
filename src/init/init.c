@@ -45,7 +45,7 @@ static void sleep_m(void);
 static void wake_m(void);
 
 #ifdef SEQ_TEST
-    static void normal_m(void);
+static void normal_m(void);
 #endif
 
 static int ret;
@@ -118,8 +118,10 @@ int main(int argc, char* const argv[]){
 
     check_flags();
 
-    rotate_flag = '0';
-    float_flag = '0';
+    #ifdef SEQ_TEST
+        rotate_flag = '0';
+        float_flag = '0';
+    #endif
 
     state_machine();
 

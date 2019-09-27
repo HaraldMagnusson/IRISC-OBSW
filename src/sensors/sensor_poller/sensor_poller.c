@@ -48,7 +48,7 @@ pid_t get_st_pid(void){
 
 /* set the exposure time (in microseconds) and gain for the star tracker */
 void set_st_exp_gain_l(int st_exp, int st_gain){
-    return set_st_exp_gain_ll(st_exp, st_gain);
+    set_st_exp_gain_ll(st_exp, st_gain);
 }
 
 /* fetch a single sample from the encoder */
