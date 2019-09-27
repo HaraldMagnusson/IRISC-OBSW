@@ -246,8 +246,6 @@ static void sleep_m(void){
         double ang_rate = 0, sin_dec = 0, cos_dec = 0;
 
         sincos(enc.dec * M_PI / 180, &sin_dec, &cos_dec);
-        sin_dec *= 180 * M_1_PI;
-        cos_dec *= 180 * M_1_PI;
 
         gyro_t gyro;
         get_gyro(&gyro);
@@ -258,7 +256,7 @@ static void sleep_m(void){
 
         ang_rate = gyro.y * sin_dec - gyro.x * cos_dec;
 
-        if(ang_rate < GON_ROT_THRESHOLD){
+        if(fabs(ang_rate) < GON_ROT_THRESHOLD){
             /* write flag to storage */
             float_flag = '1';
             fd = open(float_flag_fn, O_WRONLY);
