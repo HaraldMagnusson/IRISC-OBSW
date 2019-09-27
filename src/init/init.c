@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include "camera.h"
 #include "command.h"
@@ -244,22 +245,30 @@ static void sleep_m(void){
     if(!gps.out_of_date && gps.alt > 15000){
 
         printf("checking gyro\n");
-        double ang_rate = 0.0;
         /* fetch gondola rotation rate */
 
         encoder_t enc;
         do{
             ret = enc_single_samp(&enc);
-            usleep(100);
+            usleep(1000);
         } while(ret != SUCCESS);
 
+        double ang_rate = 0, sin_dec = 0, cos_dec = 0;
 
+        sincos(enc.dec * M_PI / 180, &sin_dec, &cos_dec);
+        sin_dec *= 180 * M_1_PI;
+        cos_dec *= 180 * M_1_PI;
 
+        gyro_t gyro;
+        get_gyro(&gyro);
 
+        if(gyro.out_of_date){
+            return;
+        }
 
-        if(ang_rate < ANG_RATE_THRESHOLD){
-            printf("wake up sequence\n");
+        ang_rate = gyro.y * sin_dec - gyro.x * cos_dec;
 
+        if(ang_rate < GON_ROT_THRESHOLD){
             /* write flag to storage */
             float_flag = '1';
             fd = open(float_flag_fn, O_WRONLY);
@@ -267,6 +276,9 @@ static void sleep_m(void){
             close(fd);
 
             set_mode(WAKE);
+        }
+        else{
+            logging(INFO, "INIT", "Gondola rotation rate too high to start observation: %lf", ang_rate);
         }
     }
     #endif
