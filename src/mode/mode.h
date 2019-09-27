@@ -11,7 +11,7 @@
 #define NORMAL  0
 #define SLEEP   1
 #define RESET   2
-#define WAKE_UP 3
+#define WAKE    3
 
 /* initialise the mode component */
 int init_mode(void* args);

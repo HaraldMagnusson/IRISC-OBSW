@@ -15,6 +15,13 @@
 static pthread_mutex_t mutex_mode;
 static char mode;
 
+static const char* modes[] = {
+    "NORMAL",
+    "SLEEP",
+    "RESET",
+    "WAKE"
+};
+
 int init_mode(void* args){
 
     mode = SLEEP;
@@ -30,15 +37,16 @@ int init_mode(void* args){
     return SUCCESS;
 }
 
-void set_mode( char ch ){
+void set_mode(char ch){
 
     pthread_mutex_lock( &mutex_mode );
     mode = ch;
+    logging(INFO, "MODE", "Entering %s mode", modes[(size_t)ch]);
     pthread_mutex_unlock( &mutex_mode );
 
 }
 
-char get_mode( void ){
+char get_mode(void){
 
     char ch;
 

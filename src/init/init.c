@@ -40,7 +40,7 @@ static int state_machine(void);
 static void normal_m(void);
 static void reset_m(void);
 static void sleep_m(void);
-static void wake_up_m(void);
+static void wake_m(void);
 
 static int ret;
 static struct sigaction sa;
@@ -185,8 +185,8 @@ static int state_machine(void){
                 reset_m();
                 break;
 
-            case WAKE_UP:
-                wake_up_m();
+            case WAKE:
+                wake_m();
                 break;
         }
     }
@@ -195,8 +195,6 @@ static int state_machine(void){
 }
 
 static void sleep_m(void){
-
-    int fd;
 
     #if 0
     char ch = fgetc(stdin);
@@ -207,8 +205,10 @@ static void sleep_m(void){
     }
     #else
 
+    int fd, ret;
+
     if(float_flag == '1'){
-        set_mode(WAKE_UP);
+        set_mode(WAKE);
         return;
     }
 
@@ -245,18 +245,28 @@ static void sleep_m(void){
 
         printf("checking gyro\n");
         double ang_rate = 0.0;
-
         /* fetch gondola rotation rate */
+
+        encoder_t enc;
+        do{
+            ret = enc_single_samp(&enc);
+            usleep(100);
+        } while(ret != SUCCESS);
+
+
+
+
 
         if(ang_rate < ANG_RATE_THRESHOLD){
             printf("wake up sequence\n");
-            set_mode(WAKE_UP);
 
             /* write flag to storage */
             float_flag = '1';
             fd = open(float_flag_fn, O_WRONLY);
             write(fd, &float_flag, 1);
             close(fd);
+
+            set_mode(WAKE);
         }
     }
     #endif
@@ -271,18 +281,15 @@ static void normal_m(void){
     }
     else if(ch == 's'){
         set_mode(SLEEP);
-        printf("entering sleep mode\n");
     }
 }
 
 static void reset_m(void){
-    printf("entered reset mode\n");
     sleep(20);
-    set_mode(WAKE_UP);
+    set_mode(WAKE);
 }
 
-static void wake_up_m(void){
-    printf("entered wake_up mode\n");
+static void wake_m(void){
 
     #if 0
     printf("waking star tracker\n");
@@ -322,5 +329,4 @@ static void wake_up_m(void){
     #endif
 
     set_mode(NORMAL);
-    printf("entering normal mode\n");
 }
