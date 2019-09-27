@@ -38,11 +38,15 @@
 #define MODULE_COUNT 13
 
 static int init_func(char* const argv[]);
+static void check_flags(void);
 static int state_machine(void);
-static void normal_m(void);
 static void reset_m(void);
 static void sleep_m(void);
 static void wake_m(void);
+
+#ifdef SEQ_TEST
+    static void normal_m(void);
+#endif
 
 static int ret;
 static struct sigaction sa;
@@ -112,19 +116,7 @@ int main(int argc, char* const argv[]){
     }
     /* initialization sequence done */
 
-    strcpy(rotate_flag_fn, get_top_dir());
-    strcat(rotate_flag_fn, "output/init_rotate_flag.log");
-
-    strcpy(float_flag_fn, get_top_dir());
-    strcat(float_flag_fn, "output/init_float_flag.log");
-
-    int fd = open(rotate_flag_fn, O_RDONLY);
-    read(fd, &rotate_flag, 1);
-    close(fd);
-
-    fd = open(float_flag_fn, O_RDONLY);
-    read(fd, &float_flag, 1);
-    close(fd);
+    check_flags();
 
     rotate_flag = '0';
     float_flag = '0';
@@ -170,12 +162,33 @@ static int init_func(char* const argv[]){
     return SUCCESS;
 }
 
+static void check_flags(void){
+
+    strcpy(rotate_flag_fn, get_top_dir());
+    strcat(rotate_flag_fn, "output/init_rotate_flag.log");
+
+    strcpy(float_flag_fn, get_top_dir());
+    strcat(float_flag_fn, "output/init_float_flag.log");
+
+    int fd = open(rotate_flag_fn, O_RDONLY);
+    read(fd, &rotate_flag, 1);
+    close(fd);
+
+    fd = open(float_flag_fn, O_RDONLY);
+    read(fd, &float_flag, 1);
+    close(fd);
+}
+
 static int state_machine(void){
 
     while(1){
         switch(get_mode()){
             case NORMAL:
-                normal_m();
+                #ifdef SEQ_TEST
+                    normal_m();
+                #else
+                    sleep(1);
+                #endif
                 break;
 
             case SLEEP:
@@ -208,7 +221,9 @@ static void sleep_m(void){
     gps_t gps;
     get_gps(&gps);
 
-    logging(INFO, "MODE", "altitude: %f", gps.alt);
+    #ifdef SEQ_DEBUG
+        logging(DEBUG, "MODE", "altitude: %f", gps.alt);
+    #endif
 
     if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
         /* rotate telescope */
@@ -271,6 +286,7 @@ static void sleep_m(void){
     }
 }
 
+#ifdef SEQ_TEST
 static void normal_m(void){
 
     char ch = fgetc(stdin);
@@ -282,10 +298,12 @@ static void normal_m(void){
         set_mode(SLEEP);
     }
 }
+#endif
 
 static void reset_m(void){
     for(int ii=0; ii<20; ++ii){
         logging(INFO, "MODE", "resetting: %d/%d", ii, 20);
+        sleep(1);
     }
     set_mode(WAKE);
 }
