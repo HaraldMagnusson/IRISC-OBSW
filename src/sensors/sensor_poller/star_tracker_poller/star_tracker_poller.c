@@ -37,8 +37,6 @@ static void active_m(void);
     static int capture_image();
 #endif
 
-static pthread_mutex_t mutex_cond_st_child;
-
 pthread_mutex_t mutex_cond_st = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
 
@@ -69,14 +67,6 @@ int init_star_tracker_poller(void* args){
 
     strcpy(out_fp, get_top_dir());
     strcat(out_fp, "output/guiding/");
-
-    int ret = pthread_mutex_init(&mutex_cond_st_child, NULL);
-    if(ret){
-        logging(ERROR, "Star Tracker",
-                "The initialisation of the star tracker child "
-                "mutex failed with code %d.\n", ret);
-        return FAILURE;
-    }
 
     pthread_create(&st_poller_tid, NULL, st_poller_thread, NULL);
 
@@ -226,7 +216,6 @@ static void irisc_tetra(float st_return[]) {
 
     int outfp = -1;
 
-    pthread_mutex_lock(&mutex_cond_st_child);
     st_running = 1;
     py_pid = popen2(cmd, NULL, &outfp);
     waitpid(py_pid, NULL, 0);
@@ -253,15 +242,16 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
     int p_stdin[2], p_stdout[2];
     pid_t pid;
 
-    if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0)
-        return -1;
+    if(pipe(p_stdin) != 0 || pipe(p_stdout) != 0){
+        return FAILURE;
+    }
 
     pid = fork();
 
-    if (pid < 0)
+    if(pid < 0){
         return pid;
-    else if (pid == 0)
-    {
+    }
+    else if(pid == 0){
         close(p_stdin[WRITE]);
         dup2(p_stdin[READ], READ);
         close(p_stdout[READ]);
@@ -272,16 +262,19 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         exit(1);
     }
 
-    pthread_mutex_unlock(&mutex_cond_st_child);
-    if (infp == NULL)
+    if(infp == NULL){
         close(p_stdin[WRITE]);
-    else
+    }
+    else{
         *infp = p_stdin[WRITE];
+    }
 
-    if (outfp == NULL)
+    if(outfp == NULL){
         close(p_stdout[READ]);
-    else
+    }
+    else{
         *outfp = p_stdout[READ];
+    }
 
     return pid;
 }
