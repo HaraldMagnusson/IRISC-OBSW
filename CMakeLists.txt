@@ -10,7 +10,7 @@ set(COMPILE_DEFINES "-DST_DEBUG -DST_TEST -DGYRO_DEBUG -DGPS_DEBUG -DENCODER_DEB
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
-set(LDFLAGS "-lrt -pthread -lcfitsio -lftd2xx")
+set(LDFLAGS "-lrt -lm -pthread -lcfitsio -lftd2xx")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources

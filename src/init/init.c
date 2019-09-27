@@ -5,6 +5,7 @@
  *
  * -----------------------------------------------------------------------------
  */
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <signal.h>
@@ -197,15 +198,6 @@ static int state_machine(void){
 
 static void sleep_m(void){
 
-    #if 0
-    char ch = fgetc(stdin);
-
-    if(ch == 'r'){
-        printf("resetting\n");
-        set_mode(RESET);
-    }
-    #else
-
     int fd, ret;
 
     if(float_flag == '1'){
@@ -216,11 +208,11 @@ static void sleep_m(void){
     gps_t gps;
     get_gps(&gps);
 
-    printf("alt: %lf\n", gps.alt);
+    logging(INFO, "MODE", "altitude: %f", gps.alt);
 
     if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
         /* rotate telescope */
-        printf("rotating out telescope\n");
+        logging(INFO, "MODE", "rotating out telescope");
         /* set flag */
         rotate_flag = '1';
 
@@ -234,7 +226,7 @@ static void sleep_m(void){
     if(!gps.out_of_date && gps.alt > 14000 && gyro_wake_flag == '0'){
         /* wake gyro */
 
-        printf("waking gyroscope\n");
+        logging(INFO, "MODE", "waking gyroscope");
         pthread_mutex_lock(&mutex_cond_gyro);
         pthread_mutex_unlock(&mutex_cond_gyro);
         pthread_cond_signal(&cond_gyro);
@@ -243,9 +235,7 @@ static void sleep_m(void){
     }
 
     if(!gps.out_of_date && gps.alt > 15000){
-
-        printf("checking gyro\n");
-        /* fetch gondola rotation rate */
+        /* check gondola rotation rate */
 
         encoder_t enc;
         do{
@@ -278,10 +268,9 @@ static void sleep_m(void){
             set_mode(WAKE);
         }
         else{
-            logging(INFO, "INIT", "Gondola rotation rate too high to start observation: %lf", ang_rate);
+            logging(INFO, "MODE", "Gondola rotation rate too high to start observation: %lf", ang_rate);
         }
     }
-    #endif
 }
 
 static void normal_m(void){
@@ -297,48 +286,23 @@ static void normal_m(void){
 }
 
 static void reset_m(void){
-    sleep(20);
+    for(int ii=0; ii<20; ++ii){
+        logging(INFO, "MODE", "resetting: %d/%d", ii, 20);
+    }
     set_mode(WAKE);
 }
 
 static void wake_m(void){
 
-    #if 0
-    printf("waking star tracker\n");
-    pthread_mutex_lock(&mutex_cond_st);
-    set_mode(NORMAL);
-    pthread_mutex_unlock(&mutex_cond_st);
-    pthread_cond_signal(&cond_st);
-
-    sleep(2);
-
-    printf("waking encoder\n");
+    logging(INFO, "MODE", "waking encoder");
     pthread_mutex_lock(&mutex_cond_enc);
     pthread_mutex_unlock(&mutex_cond_enc);
     pthread_cond_signal(&cond_enc);
 
-    sleep(2);
-
-    printf("waking gyroscope\n");
-    pthread_mutex_lock(&mutex_cond_gyro);
-    pthread_mutex_unlock(&mutex_cond_gyro);
-    pthread_cond_signal(&cond_gyro);
-
-    #else
-
-    printf("waking star tracker\n");
+    logging(INFO, "MODE", "waking star tracker");
     pthread_mutex_lock(&mutex_cond_st);
     pthread_mutex_unlock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
-
-    sleep(2);
-
-    printf("waking encoder\n");
-    pthread_mutex_lock(&mutex_cond_enc);
-    pthread_mutex_unlock(&mutex_cond_enc);
-    pthread_cond_signal(&cond_enc);
-
-    #endif
 
     set_mode(NORMAL);
 }
