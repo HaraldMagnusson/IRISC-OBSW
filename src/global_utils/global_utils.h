@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Global Utils
- * Author(s): 
+ * Author(s): Adam Śmiałek, Harald Magnusson
  * Purpose: Define utilities and constants available to all components.
  *
  * -----------------------------------------------------------------------------
@@ -28,7 +28,7 @@
 #define ENCODER_SAMPLE_TIME 10000000 /* unit: nanoseconds */
 
 /* the threshold for the acceptable angular rate of the gondola to start observation phase */
-#define GON_ROT_THRESHOLD 0.1 /* unit: degree per second */
+#define GON_ROT_THRESHOLD 1.0 /* unit: degree per second */
 
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);
