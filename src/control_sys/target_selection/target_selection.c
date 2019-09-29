@@ -74,7 +74,7 @@ static void* sel_track_thread_func(void* arg){
         /* encoder */
         get_encoder(&enc);
 
-        /* kahlmann */
+        /* kalman */
         get_telescope_att(&telescope_att);
 
         /* select target */
@@ -129,7 +129,7 @@ static void* sel_track_thread_func(void* arg){
             get_encoder(&enc);
             get_telescope_att(&telescope_att);
 
-            /* calulate tracking angles */
+            /* calculate tracking angles */
             lst = 100.46 + 0.985647 * j2000 + gps.lon + 15 * ut_hours;
             lst = d_mod(lst, 360);
 
@@ -139,8 +139,8 @@ static void* sel_track_thread_func(void* arg){
             set_tracking_angles(az, alt);
 
             #ifdef TRACKING_DEBUG
-                logging(DEBUG, "Tracking", "Tracking angles: az: %+9.4lf, alt: %+9.4lf",
-                        az, alt);
+//                logging(DEBUG, "Tracking", "Tracking angles: az: %+9.4lf, alt: %+9.4lf",
+//                        az, alt);
             #endif
 
             /* abort exposure if target is moving out of operational FoV */

@@ -18,7 +18,7 @@
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"target_selection", &init_target_selection},
+    {"tar__selection", &init_target_selection},
     {"current_target", &init_current_target},
     {"stabilization", &init_stabilization},
     {"gimbal", &init_gimbal}
