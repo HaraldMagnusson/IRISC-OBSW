@@ -50,3 +50,8 @@ int init_submodules(const module_init_t init_sequence[], int module_count);
 
 int logging(int level, char module_name[12],
             const char * format, ... );
+
+/* a call to pthread_create with additional thread attributes,
+ * specifically priority
+ */
+int create_thread(char* comp_name, void *(*thread_func)(void *), int prio);

@@ -24,17 +24,13 @@
 #define DATAGRAM_SIZE 27
 #define FTDI_BAUDRATE 921600
 
-static void* thread_func(void* arg);
+static void* thread_func(void* args);
 static void active_m(void);
 
-
-static pthread_t gyro_thread;
 static FT_HANDLE fd;
 
 pthread_mutex_t mutex_cond_gyro;
 pthread_cond_t cond_gyro;
-
-
 
 int init_gyroscope_poller(void* args){
 
@@ -86,19 +82,12 @@ int init_gyroscope_poller(void* args){
         return FAILURE;
     }
 
-    ret = pthread_create(&gyro_thread, NULL, thread_func, (void*)&fd);
-    if(ret != 0){
-        logging(ERROR, "GYRO", "Failed to create gyro polling thread: "
-                "%d, (%s)", ret, strerror(ret));
-        return ret;
-    }
-
-    return SUCCESS;
+    return create_thread("gyro_poller", thread_func, 40);
 }
 
-static void* thread_func(void* arg){
+static void* thread_func(void* args){
 
-    FT_HANDLE fd = *(FT_HANDLE*)arg;
+    FT_HANDLE fd = *(FT_HANDLE*)args;
 
     struct timespec wake_time;
     int ret;
