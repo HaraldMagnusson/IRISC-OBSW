@@ -131,13 +131,13 @@ static void* thread_func(void* arg){
     return NULL;
 }
 
-static void active_m(void){
+static gyro_t gyro;
+static unsigned char data[DATAGRAM_SIZE], buffer[4];
+static unsigned int bytes_read, bytes_available;
+static double rate[3];
+static int ret;
 
-    gyro_t gyro;
-    unsigned char data[DATAGRAM_SIZE], buffer[4];
-    unsigned int bytes_read, bytes_available;
-    double rate[3];
-    int ret;
+static void active_m(void){
 
     /* create trigger pulse */
     gpio_write(GYRO_TRIG_PIN, LOW);

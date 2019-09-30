@@ -102,9 +102,8 @@ static void* thread_func(){
     return NULL;
 }
 
+static encoder_t enc;
 static void active_m(void){
-
-    encoder_t enc;
 
     if(enc_single_samp(&enc)){
         encoder_out_of_date();

@@ -94,6 +94,7 @@ static void* st_poller_thread(void* arg){
     return NULL;
 }
 
+//TODO queue up image from star tracker
 static void active_m(void){
 
     do{
@@ -119,7 +120,7 @@ static void active_m(void){
 
     clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
 
-    /* queue up image */
+    /* TODO: queue up image */
 }
 
 #ifndef ST_TEST
