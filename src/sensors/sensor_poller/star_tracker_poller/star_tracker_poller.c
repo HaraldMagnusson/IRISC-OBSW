@@ -28,14 +28,13 @@
 
 static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
-static void* st_poller_thread(void* arg);
+static void* st_poller_thread(void* args);
 static pid_t popen2(char* const * command, int *infp, int *outfp);
 static int capture_image();
 
 static pthread_mutex_t mutex_st_child;
 static pid_t py_pid = -1;
 static char st_running = 0;
-static pthread_t st_poller_tid;
 
 static int exp_time = 5*1000*1000, gain = 300;
 
@@ -49,9 +48,7 @@ int init_star_tracker_poller(void* args){
         return FAILURE;
     }
 
-    pthread_create(&st_poller_tid, NULL, st_poller_thread, NULL);
-
-    return SUCCESS;
+    return create_thread("star_tracker_poller", st_poller_thread, 23);
 }
 
 /*
@@ -59,7 +56,7 @@ int init_star_tracker_poller(void* args){
  *       (might not be an issue since these files are only for the
  *       image handling queue)
  */
-static void* st_poller_thread(void* arg){
+static void* st_poller_thread(void* args){
     sleep(1);
 
     char st_fn[100], out_fp[100], out_fn[100];

@@ -26,10 +26,9 @@
 static int checksum_ctl(unsigned char data[2][2]);
 static int checksum_ctl_enc(unsigned char data[2]);
 static void proc(unsigned char data[2][2]);
-static void* thread_func();
+static void* thread_func(void* args);
 
 static struct timespec wake_time;
-static pthread_t encoder_thread;
 
 static int fd_spi00, fd_spi01;
 
@@ -49,12 +48,10 @@ int init_encoder_poller(void* args){
     ioctl(fd_spi00, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
     ioctl(fd_spi01, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
 
-    pthread_create(&encoder_thread, NULL, thread_func, NULL);
-
-    return SUCCESS;
+    return create_thread("encoder", thread_func, 25);
 }
 
-static void* thread_func(){
+static void* thread_func(void* args){
 
     unsigned char data[2][2];
 
