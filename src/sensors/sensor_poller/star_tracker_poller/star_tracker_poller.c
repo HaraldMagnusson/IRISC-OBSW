@@ -110,10 +110,10 @@ static void active_m(void){
             st_out_of_date();
             break;
         }
-    
+
         #ifndef ST_TEST
             /* move image to img queue dir */
-            snprintf(out_fn, 100, "%s%4d.fit", out_fp, img_cntr++);
+            snprintf(out_fn, 100, "%s%04d.fit", out_fp, img_cntr++);
             rename(st_fn, out_fn);
         #endif
     } while(0);

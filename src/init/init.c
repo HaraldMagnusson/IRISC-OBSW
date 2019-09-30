@@ -86,8 +86,8 @@ static void sigint_handler(int signum){
 
     pid_t st_pid = get_star_tracker_pid();
     if(st_pid != FAILURE){
-        kill(st_pid, SIGTERM);
-        write(STDOUT_FILENO, "SIGTERM sent to star tracker\n", 29);
+        kill(st_pid, SIGKILL);
+        write(STDOUT_FILENO, "SIGKILL sent to star tracker\n", 29);
         waitpid(st_pid, NULL, 0);
         write(STDOUT_FILENO, "exiting\n\n", 9);
     }
@@ -217,7 +217,7 @@ static void sleep_m(void){
     int fd, ret;
 
     if(float_flag == '1'){
-        set_mode(WAKE);
+        set_mode(RESET);
         return;
     }
 
@@ -249,8 +249,8 @@ static void sleep_m(void){
 
         logging(INFO, "MODE", "waking gyroscope");
         pthread_mutex_lock(&mutex_cond_gyro);
-        pthread_mutex_unlock(&mutex_cond_gyro);
         pthread_cond_signal(&cond_gyro);
+        pthread_mutex_unlock(&mutex_cond_gyro);
 
         gyro_wake_flag = '1';
     }
@@ -312,19 +312,24 @@ static void reset_m(void){
         sleep(1);
     }
     set_mode(WAKE);
+
+    logging(INFO, "MODE", "waking gyroscope");
+    pthread_mutex_lock(&mutex_cond_gyro);
+    pthread_cond_signal(&cond_gyro);
+    pthread_mutex_unlock(&mutex_cond_gyro);
 }
 
 static void wake_m(void){
 
     logging(INFO, "MODE", "waking encoder");
     pthread_mutex_lock(&mutex_cond_enc);
-    pthread_mutex_unlock(&mutex_cond_enc);
     pthread_cond_signal(&cond_enc);
+    pthread_mutex_unlock(&mutex_cond_enc);
 
     logging(INFO, "MODE", "waking star tracker");
     pthread_mutex_lock(&mutex_cond_st);
-    pthread_mutex_unlock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
+    pthread_mutex_unlock(&mutex_cond_st);
 
     /*TODO: start
         - selection & tracking
