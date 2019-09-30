@@ -211,6 +211,7 @@ static int state_machine(void){
     return FAILURE;
 }
 
+//TODO: rotate telescope
 static void sleep_m(void){
 
     int fd, ret;
@@ -230,6 +231,9 @@ static void sleep_m(void){
     if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
         /* rotate telescope */
         logging(INFO, "MODE", "rotating out telescope");
+
+        //TODO: rotate telescope
+
         /* set flag */
         rotate_flag = '1';
 
@@ -321,6 +325,11 @@ static void wake_m(void){
     pthread_mutex_lock(&mutex_cond_st);
     pthread_mutex_unlock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
+
+    /*TODO: start
+        - selection & tracking
+        - control system
+    */
 
     set_mode(NORMAL);
 }
