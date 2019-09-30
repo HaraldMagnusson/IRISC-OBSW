@@ -6,6 +6,8 @@
  * -----------------------------------------------------------------------------
  */
 
+#define _GNU_SOURCE
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -15,7 +17,6 @@
 #include <libgen.h>
 #include <limits.h>
 #include <errno.h>
-#include <pthread.h>
 
 #include "global_utils.h"
 
@@ -208,6 +209,8 @@ int create_thread(char* comp_name, void *(*thread_func)(void *), int prio){
             "Return value: %d (%s)\n", comp_name, ret, strerror(ret));
         return ret;
     }
+
+    pthread_setname_np(tid, comp_name);
 
     return SUCCESS;
 }
