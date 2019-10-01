@@ -55,7 +55,7 @@ ret = pthread_attr_init(&thread_attr);
         return ret;
     }
 
-    param.sched_priority = 50;
+    param.sched_priority = 30;
     ret = pthread_attr_setschedparam(&thread_attr, &param);
     if( ret != 0 ){
         fprintf(stderr,

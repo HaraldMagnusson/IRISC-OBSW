@@ -13,7 +13,7 @@
  * Node structure declaration.
  */
 typedef struct node {
-    char *filepath;     // Filepath of data to be compressed.
+    char filepath[100];     // Filepath of data to be compressed.
     int priority;       // Lower values indicate higher priority
     int type;           // Type of file
     struct node *next;  // Pointer to the node next on the list.

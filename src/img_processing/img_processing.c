@@ -34,10 +34,8 @@ int init_img_processing( void ){
 }
 
 int queue_image(char *filepath, int p, int type){
-    int ret;
 
     store_data_local(filepath, p, type);
-
 
     return SUCCESS;
 }

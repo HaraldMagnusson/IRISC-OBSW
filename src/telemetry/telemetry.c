@@ -54,5 +54,12 @@ int init_telemetry(void) {
  * @return      0
  */
 int send_telemetry(char *filepath, int p, int flag, unsigned short packets_sent) {
+        //check_downlink_list();
     return send_telemetry_local(filepath, p, flag, packets_sent);
+}
+
+void check_downlink_list(void){
+    check_downlink_list_local();
+
+    return;
 }

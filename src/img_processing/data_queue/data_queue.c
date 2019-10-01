@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "global_utils.h"
 
@@ -30,9 +31,9 @@ int init_data_queue(void) {
  * @param d     Filepath of data to be sent.
  * @param p     Priority of the data.
  */
-data_node *new_node(char *f, int p, int type){
+data_node *new_data_node(char *f, int p, int type){
     data_node *temp = (data_node *) malloc(sizeof(data_node));
-    temp->filepath = f;
+    strncpy(temp->filepath, f, 100);
     temp->priority = p;
     temp->type = type;
     temp->next = NULL;
@@ -46,15 +47,15 @@ data_node *new_node(char *f, int p, int type){
  * @param head  Pointer to the first node of the linked list.
  * @return      1 if the list is empty, 0 if not.
  */
-int is_empty(data_node **head) {
+int is_empty_data(data_node **head) {
     return (*head) == NULL;
 }
 
-char *peek(data_node **head) {
-    if (!is_empty(head)) {
+char *peek_data(data_node **head) {
+    if (!is_empty_data(head)) {
         return (*head)->filepath;
     } else {
-        return FAILURE;
+        return NULL;
     }
 }
 
@@ -65,17 +66,18 @@ char *peek(data_node **head) {
  * @param head  Pointer to the first node of the linked list.
  * @return      Data from the popped node.
  */
-struct node pop(data_node **head) {
+struct node pop_data(data_node **head) {
     pthread_mutex_lock(&data_mutex);
 
-    while (is_empty(head)) {
+    while (is_empty_data(head)) {
+        //logging(DEBUG, "data_queue", "no data in data_queue");
         pthread_cond_wait(&data_queue_non_empty_cond, &data_mutex);
     }
 
     data_node *temp = *head;
     (*head) = (*head)->next;
     struct node ret;
-    ret.filepath = temp->filepath;
+    strncpy(ret.filepath, temp->filepath, 100);
     ret.priority = temp->priority;
     ret.type = temp->type;
 
@@ -92,13 +94,14 @@ struct node pop(data_node **head) {
  * @param f     Filepath of data to be sent.
  * @param p     Priority of the data.
  */
-void push(data_node **head, char *f, int p, int type) {
+void push_data(data_node **head, char *f, int p, int type) {
+    
     pthread_mutex_lock(&data_mutex);
     data_node *start = (*head);
 
-    if (!is_empty(head)) {
+    if (!is_empty_data(head)) {
         // Create new node
-        data_node *temp = new_node(f, p, type);
+        data_node *temp = new_data_node(f, p, type);
         // Special Case: The head of list has lesser
         // priority than new node. So insert new
         // node before head node and change head node.
@@ -119,7 +122,7 @@ void push(data_node **head, char *f, int p, int type) {
             start->next = temp;
         }
     } else {
-        *head = new_node(f, p, type);
+        *head = new_data_node(f, p, type);
     }
 
     pthread_mutex_unlock(&data_mutex);
@@ -138,7 +141,7 @@ void push(data_node **head, char *f, int p, int type) {
  * @return      0
  */
 int store_data_local(char *f, int p, int type) {
-    push(&data_queue, f, p, type);
+    push_data(&data_queue, f, p, type);
     return SUCCESS;
 }
 
@@ -151,6 +154,6 @@ int store_data_local(char *f, int p, int type) {
  * @return      filepath from the first node of the linked list.
  */
 struct node read_data_queue() {
-    struct node temp = pop(&data_queue);
+    struct node temp = pop_data(&data_queue);
     return temp;
 }

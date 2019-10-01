@@ -57,7 +57,7 @@ int init_downlink(void) {
         return ret;
     }
 
-    param.sched_priority = 50;
+    param.sched_priority = 15;
     ret = pthread_attr_setschedparam(&thread_attr, &param);
     if( ret != 0 ){
         fprintf(stderr,
@@ -97,9 +97,10 @@ static void* thread_func(void* param){
         int len;
 
         memset(msg, 0, sizeof(msg));
-
+        check_downlink_list_local();
         temp = read_downlink_queue();
-        printf("Priority of next item is: %d\n", queue_priority());
+        printf("Removed from queue: %s\n", temp.filepath);
+        check_downlink_list_local();
         if(temp.flag==0){
             msg[0]=0;
             data = temp.filepath;
@@ -146,6 +147,7 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
     current_packet = 0;
 
     FILE *fp;
+    //printf("Starting to send file: %s\n", filepath);
     fp=fopen(filepath, "rb");
     if(fp == NULL){
         return FAILURE;
@@ -156,11 +158,11 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
 
     buff_size = ftell(fp);
     if(buff_size == -1){
-        //ERROR
+        printf("Error ftell\n");
     }
 
     if(fseek(fp, 0L, SEEK_SET) != 0){
-        //ERROR
+        printf("Error fseek\n");
     }
 
     sent_bytes = max_packet_size*packets_sent;
@@ -199,6 +201,11 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
     msg[7] = bytes_num[1];
     
     write_elink(msg, len+8);
+    printf("DL: ");
+    for(int iii = 6; iii<len+8; iii++){
+        printf("%c", msg[iii]);
+    }
+    printf("\n");
 
     char temp[6];
 
@@ -242,7 +249,7 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
             }            
         }
     }
-    printf("Done\n");
+    //printf("Done sending file: %s\n", filepath);
 
     fclose(fp);
 

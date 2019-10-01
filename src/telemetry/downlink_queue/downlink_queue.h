@@ -13,7 +13,7 @@
  * Node structure declaration.
  */
 typedef struct node {
-    char *filepath;           // Filepath of data to be send as a telemetry.
+    char filepath[100];           // Filepath of data to be send as a telemetry.
     int priority;       // Lower values indicate higher priority
     int flag;           // If 1 data is in a file, if 0 data as a string.
     unsigned short packets_sent;
@@ -33,3 +33,5 @@ struct node read_downlink_queue();
 
 /* Return the highest priority in the queue */
 int queue_priority();
+
+void check_downlink_list_local(void);

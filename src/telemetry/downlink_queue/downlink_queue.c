@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "global_utils.h"
 
@@ -41,7 +42,7 @@ int init_downlink_queue(void) {
  */
 downlink_node *new_node(char *f, int p, int flag, unsigned short packets_sent){
     downlink_node *temp = (downlink_node *) malloc(sizeof(downlink_node));
-    temp->filepath = f;
+    strncpy(temp->filepath, f, 100);
     temp->priority = p;
     temp->flag = flag;
     temp->packets_sent = packets_sent;
@@ -64,7 +65,7 @@ char *peek(downlink_node **head) {
     if (!is_empty(head)) {
         return (*head)->filepath;
     } else {
-        return FAILURE;
+        return NULL;
     }
 }
 
@@ -86,23 +87,23 @@ int queue_priority(){
  * @return      Data from the popped node.
  */
 struct node pop(downlink_node **head) {
-    pthread_mutex_lock(&downlink_mutex);
 
     while (is_empty(head)) {
+        //logging(DEBUG, "downlink_queue", "Waiting for item in queue");
         pthread_cond_wait(&queue_non_empty_cond, &downlink_mutex);
     }
+    //logging(DEBUG, "downlink_queue", "Item in queue, starting pop");
 
     downlink_node *temp = *head;
     (*head) = (*head)->next;
     struct node ret;
-    ret.filepath = temp->filepath;
+    strncpy(ret.filepath, temp->filepath, 100);
     ret.flag = temp->flag;
     ret.packets_sent = temp->packets_sent;
     ret.priority = temp->priority;
 
     free(temp);
 
-    pthread_mutex_unlock(&downlink_mutex);
     return ret;
 }
 
@@ -114,8 +115,10 @@ struct node pop(downlink_node **head) {
  * @param p     Priority of the data.
  */
 void push(downlink_node **head, char *f, int p, int flag, unsigned short packets_sent) {
-    pthread_mutex_lock(&downlink_mutex);
+
     downlink_node *start = (*head);
+
+    //printf("Queue: %s\n", f);
 
     if (!is_empty(head)) {
         // Create new node
@@ -140,10 +143,9 @@ void push(downlink_node **head, char *f, int p, int flag, unsigned short packets
             start->next = temp;
         }
     } else {
-        *head = new_node(f, p, flag, packets_sent);
+        *head = new_node(f, p, flag, packets_sent); 
     }
-
-    pthread_mutex_unlock(&downlink_mutex);
+    
     pthread_cond_signal(&queue_non_empty_cond);
 }
 
@@ -159,7 +161,9 @@ void push(downlink_node **head, char *f, int p, int flag, unsigned short packets
  * @return      0
  */
 int send_telemetry_local(char *f, int p, int flag, unsigned short packets_sent) {
+    pthread_mutex_lock(&downlink_mutex);
     push(&downlink_queue, f, p, flag, packets_sent);
+    pthread_mutex_unlock(&downlink_mutex);
     return SUCCESS;
 }
 
@@ -172,6 +176,37 @@ int send_telemetry_local(char *f, int p, int flag, unsigned short packets_sent) 
  * @return      filepath from the first node of the linked list.
  */
 struct node read_downlink_queue() {
+    pthread_mutex_lock(&downlink_mutex);
     struct node temp = pop(&downlink_queue);
+    pthread_mutex_unlock(&downlink_mutex);
     return temp;
+}
+
+void check_downlink_list_local(void){
+
+    pthread_mutex_lock(&downlink_mutex);
+    
+    const struct node *temp = downlink_queue;
+
+    if(temp==NULL){
+        //logging(DEBUG, "downlink_queue", "Queue is empty");
+        printf("Queue is empty\n");
+    } else {
+
+        printf("---Queue---\n");
+        while(temp!=NULL){
+
+            printf("%s\n", (temp)->filepath);
+            printf("prio: %d\n", temp->priority);
+
+            (temp) = (temp)->next;
+        }
+        printf("---End_Queue---\n");
+
+    }
+
+    pthread_mutex_unlock(&downlink_mutex);
+
+
+    return;
 }

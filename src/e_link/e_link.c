@@ -39,7 +39,7 @@ static int ret;
 
 static void* thread_read(void*);
 static void* thread_socket(void*);
-static unsigned short sleep_time = 500;
+static unsigned short sleep_time = 50;
 
 
 int init_elink( void ){
@@ -74,7 +74,7 @@ int init_elink( void ){
         return ret;
     }
 
-    param.sched_priority = 50;
+    param.sched_priority = 16;
     ret = pthread_attr_setschedparam(&thread_attr, &param);
     if( ret != 0 ){
         fprintf(stderr,
@@ -100,7 +100,7 @@ int init_elink( void ){
     }
 
     
-
+/*
     ret = pthread_create(&thread_read_e_link, &thread_attr, thread_read, NULL);
     if( ret != 0 ){
         fprintf(stderr,
@@ -108,6 +108,8 @@ int init_elink( void ){
             "Return value: %d\n", ret);
         return ret;
     } 
+
+*/
 
     return SUCCESS;
 }
@@ -173,7 +175,7 @@ char* read_elink(int bytes){
 
     do{
         ioctl(sockfd, FIONREAD, &bytes_avail);
-        usleep(1);
+        sleep(1);
     } while(bytes_avail < bytes);
 
     n=read(newsockfd, buffer, bytes);

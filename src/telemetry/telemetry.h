@@ -13,3 +13,4 @@ int init_telemetry(void);
 
 /* put data into the downlink queue */
 int send_telemetry(char *filepath, int p, int flag, unsigned short packets_sent);
+void check_downlink_list(void);

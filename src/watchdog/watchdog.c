@@ -72,7 +72,7 @@ int init_watchdog( void ){
         return ret;
     }
 
-    param.sched_priority = 50;
+    param.sched_priority = 10;
     ret = pthread_attr_setschedparam(&thread_attr, &param);
     if( ret != 0 ){
         fprintf(stderr,
