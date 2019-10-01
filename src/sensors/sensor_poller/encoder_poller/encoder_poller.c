@@ -18,6 +18,8 @@
 #include "global_utils.h"
 #include "sensors.h"
 #include "encoder.h"
+#include "encoder_poller.h"
+#include "mode.h"
 
 /* indicies for data arrays */
 #define RA 0
@@ -25,10 +27,12 @@
 
 static int checksum_ctl(unsigned char data[2][2]);
 static int checksum_ctl_enc(unsigned char data[2]);
-static void proc(unsigned char data[2][2]);
+static void proc(unsigned char data[2][2], encoder_t* enc);
 static void* thread_func(void* args);
+static void active_m(void);
 
-static struct timespec wake_time;
+pthread_mutex_t mutex_cond_enc;
+pthread_cond_t cond_enc;
 
 static int fd_spi00, fd_spi01;
 
@@ -51,52 +55,58 @@ int init_encoder_poller(void* args){
     return create_thread("encoder", thread_func, 25);
 }
 
-static void* thread_func(void* args){
+/* fetch a single sample from the encoder */
+int enc_single_samp_ll(encoder_t* enc){
 
     unsigned char data[2][2];
 
-    clock_gettime(CLOCK_MONOTONIC, &wake_time);
-    wake_time.tv_sec += 2;
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
+    read(fd_spi00, data[RA], 2);
+    read(fd_spi01, data[DEC], 2);
+
+    if(checksum_ctl(data)){
+        return FAILURE;
+    }
+
+    proc(data, enc);
+    return SUCCESS;
+}
+
+static void* thread_func(void* args){
+
+    struct timespec wake_time;
+
+    pthread_mutex_lock(&mutex_cond_enc);
 
     while(1){
-        read(fd_spi00, data[RA], 2);
-        read(fd_spi01, data[DEC], 2);
 
-        if(checksum_ctl(data)){
-            encoder_out_of_date();
+        pthread_cond_wait(&cond_enc, &mutex_cond_enc);
+
+        clock_gettime(CLOCK_MONOTONIC, &wake_time);
+
+        while(get_mode() != RESET){
+            active_m();
+
+            wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
+            if(wake_time.tv_nsec >= 1000000000){
+                wake_time.tv_sec++;
+                wake_time.tv_nsec -= 1000000000;
+            }
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
         }
-
-        proc(data);
-
-        wake_time.tv_nsec += ENCODER_SAMPLE_TIME;
-        if(wake_time.tv_nsec >= 1000000000){
-            wake_time.tv_sec++;
-            wake_time.tv_nsec -= 1000000000;
-        }
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
     }
+
     return NULL;
 }
 
-static void proc(unsigned char data[2][2]){
-    unsigned short data_s[2];
-    double ang[2];
+static encoder_t enc;
+static void active_m(void){
 
-    for(int ii=0; ii<2; ++ii){
-        data_s[ii] = (unsigned short)(data[ii][0] & 0x3F) << 8 | (unsigned short)data[ii][1];
-        ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
+    if(enc_single_samp(&enc)){
+        encoder_out_of_date();
     }
-
-    #ifdef ENCODER_DEBUG
-        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
-    #endif
-
-    encoder_t enc;
-    enc.ra = ang[RA];
-    enc.dec = ang[DEC];
-
-    set_encoder(&enc);
+    else{
+        set_encoder(&enc);
+    }
 }
 
 static int checksum_ctl(unsigned char data[2][2]){
@@ -120,7 +130,6 @@ static int checksum_ctl(unsigned char data[2][2]){
     }
     return SUCCESS;
 }
-
 
 static int checksum_ctl_enc(unsigned char data[2]){
 
@@ -147,4 +156,21 @@ static int checksum_ctl_enc(unsigned char data[2]){
         return SUCCESS;
     }
     return FAILURE;
+}
+
+static void proc(unsigned char data[2][2], encoder_t* enc){
+    unsigned short data_s[2];
+    double ang[2];
+
+    for(int ii=0; ii<2; ++ii){
+        data_s[ii] = (unsigned short)(data[ii][0] & 0x3F) << 8 | (unsigned short)data[ii][1];
+        ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
+    }
+
+    #ifdef ENCODER_DEBUG
+        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+    #endif
+
+    enc->ra = ang[RA];
+    enc->dec = ang[DEC];
 }

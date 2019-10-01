@@ -18,6 +18,7 @@
 #include "sensors.h"
 #include "star_tracker.h"
 #include "camera.h"
+#include "mode.h"
 
 #define TETRAPATH "Tetra/tetra.py"
 #define ST_WAIT_TIME 100*1000*1000
@@ -30,23 +31,41 @@ static void irisc_tetra(float st_return[]);
 static int call_tetra(float st_return[]);
 static void* st_poller_thread(void* args);
 static pid_t popen2(char* const * command, int *infp, int *outfp);
-static int capture_image();
+static void active_m(void);
 
-static pthread_mutex_t mutex_st_child;
+#ifndef ST_TEST
+    static int capture_image();
+#endif
+
+pthread_mutex_t mutex_cond_st = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
+
 static pid_t py_pid = -1;
 static char st_running = 0;
 
 static int exp_time = 5*1000*1000, gain = 300;
 
+/* filenames for images */
+static char st_fn[100], out_fp[100];
+static float st_return[4];
+
+#ifndef ST_TEST
+    static char out_fn[100];
+    static int img_cntr = 0;
+#endif
+
+static struct timespec wake;
+
 int init_star_tracker_poller(void* args){
 
-    int ret = pthread_mutex_init(&mutex_st_child, NULL);
-    if(ret){
-        logging(ERROR, "Star Tracker",
-                "The initialisation of the star tracker child "
-                "mutex failed with code %d.\n", ret);
-        return FAILURE;
-    }
+    wake.tv_nsec = ST_WAIT_TIME;
+    wake.tv_sec = 0;
+
+    strcpy(st_fn, get_top_dir());
+    strcat(st_fn, "output/guiding/star_tracker/st_img.fit");
+
+    strcpy(out_fp, get_top_dir());
+    strcat(out_fp, "output/guiding/");
 
     return create_thread("star_tracker_poller", st_poller_thread, 23);
 }
@@ -57,48 +76,51 @@ int init_star_tracker_poller(void* args){
  *       image handling queue)
  */
 static void* st_poller_thread(void* args){
-    sleep(1);
 
-    char st_fn[100], out_fp[100], out_fn[100];
-    float st_return[4];
+    pthread_mutex_lock(&mutex_cond_st);
 
-    struct timespec wake;
-    wake.tv_nsec = ST_WAIT_TIME;
-    wake.tv_sec = 0;
+    while(1){
 
-    strcpy(st_fn, get_top_dir());
-    strcat(st_fn, "output/guiding/star_tracker/st_img.fit");
+        pthread_cond_wait(&cond_st, &mutex_cond_st);
 
-    strcpy(out_fp, get_top_dir());
-    strcat(out_fp, "output/guiding/");
+        while(get_mode() != RESET){
+            active_m();
+        }
+    }
 
-    for(int ii=0; 1; ++ii){
+    return NULL;
+}
 
-        do{
+//TODO queue up image from star tracker
+static void active_m(void){
+
+    do{
+        #ifndef ST_TEST
             /* capture image */
             if(capture_image(st_fn)){
                 break;
             }
+        #endif
 
-            /* star tracker calculations */
-            if(call_tetra(st_return)){
-                st_out_of_date();
-                break;
-            }
+        /* star tracker calculations */
+        if(call_tetra(st_return)){
+            st_out_of_date();
+            break;
+        }
 
+        #ifndef ST_TEST
             /* move image to img queue dir */
-            snprintf(out_fn, 100, "%s%4d.fit", out_fp, ii);
+            snprintf(out_fn, 100, "%s%04d.fit", out_fp, img_cntr++);
             rename(st_fn, out_fn);
+        #endif
+    } while(0);
 
-            /* queue up image */
+    clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
 
-        } while(0);
-
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
-    }
-    return NULL;
+    /* TODO: queue up image */
 }
 
+#ifndef ST_TEST
 /*
  * TODO: error handling from camera
  */
@@ -120,6 +142,7 @@ static int capture_image(char* fn){
 
     return ret;
 }
+#endif
 
 static int call_tetra(float st_return[]){
 
@@ -191,7 +214,6 @@ static void irisc_tetra(float st_return[]) {
 
     int outfp = -1;
 
-    pthread_mutex_lock(&mutex_st_child);
     st_running = 1;
     py_pid = popen2(cmd, NULL, &outfp);
     waitpid(py_pid, NULL, 0);
@@ -218,15 +240,16 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
     int p_stdin[2], p_stdout[2];
     pid_t pid;
 
-    if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0)
-        return -1;
+    if(pipe(p_stdin) != 0 || pipe(p_stdout) != 0){
+        return FAILURE;
+    }
 
     pid = fork();
 
-    if (pid < 0)
+    if(pid < 0){
         return pid;
-    else if (pid == 0)
-    {
+    }
+    else if(pid == 0){
         close(p_stdin[WRITE]);
         dup2(p_stdin[READ], READ);
         close(p_stdout[READ]);
@@ -237,16 +260,19 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         exit(1);
     }
 
-    pthread_mutex_unlock(&mutex_st_child);
-    if (infp == NULL)
+    if(infp == NULL){
         close(p_stdin[WRITE]);
-    else
+    }
+    else{
         *infp = p_stdin[WRITE];
+    }
 
-    if (outfp == NULL)
+    if(outfp == NULL){
         close(p_stdout[READ]);
-    else
+    }
+    else{
         *outfp = p_stdout[READ];
+    }
 
     return pid;
 }

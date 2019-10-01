@@ -13,16 +13,23 @@
 #include "mode.h"
 
 static pthread_mutex_t mutex_mode;
-static enum mode_t mode;
+static char mode;
+
+static const char* modes[] = {
+    "NORMAL",
+    "SLEEP",
+    "RESET",
+    "WAKE"
+};
 
 int init_mode(void* args){
 
-    mode = NORMAL;
+    mode = SLEEP;
 
-    int res = pthread_mutex_init( &mutex_mode, NULL );
+    int res = pthread_mutex_init(&mutex_mode, NULL);
     if( res ){
-        fprintf(stderr,
-            "The initialisation of the mode mutex failed with code %d.\n",
+        logging(ERROR, "MODE",
+            "The initialisation of the mode mutex failed with code %d.",
             res);
         return FAILURE;
     }
@@ -30,15 +37,16 @@ int init_mode(void* args){
     return SUCCESS;
 }
 
-void set_mode( char ch ){
+void set_mode(char ch){
 
     pthread_mutex_lock( &mutex_mode );
     mode = ch;
+    logging(INFO, "MODE", "Entering %s mode", modes[(size_t)ch]);
     pthread_mutex_unlock( &mutex_mode );
 
 }
 
-char get_mode( void ){
+char get_mode(void){
 
     char ch;
 
