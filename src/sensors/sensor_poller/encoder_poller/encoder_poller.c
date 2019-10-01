@@ -53,6 +53,7 @@ int init_encoder_poller(void* args){
         logging(MAIN_LOG, ERROR, "Encoder",
                 "Failed to open encoder log file, (%s)",
                 strerror(errno));
+        return errno;
     }
 
     /* set up spi devices */

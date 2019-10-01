@@ -40,13 +40,14 @@ int init_gyroscope_poller(void* args){
     char log_fn[100];
 
     strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/encoder.log");
+    strcat(log_fn, "output/logs/gyro.log");
 
     gyro_log = fopen(log_fn, "a");
     if(gyro_log == NULL){
         logging(MAIN_LOG, ERROR, "Gyro",
             "Failed to open gyro log file, (%s)",
             strerror(errno));
+        return errno;
     }
 
     /* gpio pin is used for trigger to poll the gyroscope */

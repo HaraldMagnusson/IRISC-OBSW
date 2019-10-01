@@ -47,6 +47,7 @@ static int exp_time = 5*1000*1000, gain = 300;
 /* filenames for images */
 static char st_fn[100], out_fp[100];
 static float st_return[4];
+static FILE* star_tracker_log;
 
 #ifndef ST_TEST
     static char out_fn[100];
@@ -57,6 +58,21 @@ static struct timespec wake;
 
 int init_star_tracker_poller(void* args){
 
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/star_tracker.log");
+
+    star_tracker_log = fopen(log_fn, "a");
+    if(star_tracker_log == NULL){
+        logging(MAIN_LOG, ERROR, "Star Tracker",
+                "Failed to open star tracker log file, (%s)",
+                strerror(errno));
+        return errno;
+    }
+
+    /* star tracker setup */
     wake.tv_nsec = ST_WAIT_TIME;
     wake.tv_sec = 0;
 

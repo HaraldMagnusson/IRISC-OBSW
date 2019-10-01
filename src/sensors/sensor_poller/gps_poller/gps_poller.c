@@ -46,13 +46,14 @@ int init_gps_poller(void* args){
     char log_fn[100];
 
     strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/encoder.log");
+    strcat(log_fn, "output/logs/gps.log");
 
     gps_log = fopen(log_fn, "a");
     if(gps_log == NULL){
         logging(MAIN_LOG, ERROR, "GPS",
             "Failed to open gps log file, (%s)",
             strerror(errno));
+        return errno;
     }
 
     char* spi12 = "/dev/spidev1.2";
