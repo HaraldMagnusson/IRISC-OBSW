@@ -13,6 +13,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <string.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -30,22 +32,74 @@ static void* thread_func(void* args);
 static struct timespec wake_time;
 
 static int fd_spi00, fd_spi01;
+static FILE* encoder_log;
 
 int init_encoder_poller(void* args){
 
+    int ret;
+
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/encoder.log");
+
+    encoder_log = fopen(log_fn, "a");
+
+    /* set up spi devices */
     char* spi00 = "/dev/spidev0.0";
     char* spi01 = "/dev/spidev0.1";
     __u32 spi_mode = SPI_MODE_1;
     __u32 speed = 1000000;
 
     fd_spi00 = open(spi00, O_RDONLY);
+    if(fd_spi00 == -1){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to open spidev0.0, %s",
+                strerror(errno));
+        return errno;
+    }
+
     fd_spi01 = open(spi01, O_RDONLY);
+    if(fd_spi00 == -1){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to open spidev0.1, %s",
+                strerror(errno));
+        return errno;
+    }
 
-    ioctl(fd_spi00, SPI_IOC_WR_MODE, &spi_mode);
-    ioctl(fd_spi01, SPI_IOC_WR_MODE, &spi_mode);
+    ret = ioctl(fd_spi00, SPI_IOC_WR_MODE, &spi_mode);
+    if(ret == -1){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to set spi mode for spidev0.0, %s",
+                strerror(errno));
+        return errno;
+    }
 
-    ioctl(fd_spi00, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-    ioctl(fd_spi01, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    ret = ioctl(fd_spi01, SPI_IOC_WR_MODE, &spi_mode);
+    if(ret == -1){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to set spi mode for spidev0.1, %s",
+                strerror(errno));
+        return errno;
+    }
+
+    ret = ioctl(fd_spi00, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    if(ret == -1){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to set spi speed for spidev0.0, %s",
+                strerror(errno));
+        return errno;
+    }
+
+    ret = ioctl(fd_spi01, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    if(ret == -1){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to set spi speed for spidev0.1, %s",
+                strerror(errno));
+        return errno;
+    }
+    /* done setting up spi devices */
 
     return create_thread("encoder", thread_func, 25);
 }
@@ -90,6 +144,8 @@ static void proc(unsigned char data[2][2]){
     #ifdef ENCODER_DEBUG
         logging(MAIN_LOG, DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
     #endif
+
+    logging(encoder_log, INFO, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
 
     encoder_t enc;
     enc.ra = ang[RA];
