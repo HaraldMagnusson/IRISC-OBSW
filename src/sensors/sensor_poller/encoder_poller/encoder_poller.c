@@ -229,7 +229,7 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
     }
 
     #ifdef ENCODER_DEBUG
-        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+        logging(MAIN_LOG, DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
     #endif
 
     enc->ra = ang[RA];

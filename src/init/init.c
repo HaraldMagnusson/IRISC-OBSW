@@ -227,12 +227,12 @@ static void sleep_m(void){
     get_gps(&gps);
 
     #ifdef SEQ_DEBUG
-        logging(DEBUG, "MODE", "altitude: %f", gps.alt);
+        logging(MAIN_LOG, DEBUG, "MODE", "altitude: %f", gps.alt);
     #endif
 
     if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
         /* rotate telescope */
-        logging(INFO, "MODE", "rotating out telescope");
+        logging(MAIN_LOG, INFO, "MODE", "rotating out telescope");
 
         //TODO: rotate telescope
 
@@ -249,7 +249,7 @@ static void sleep_m(void){
     if(!gps.out_of_date && gps.alt > 14000 && gyro_wake_flag == '0'){
         /* wake gyro */
 
-        logging(INFO, "MODE", "waking gyroscope");
+        logging(MAIN_LOG, INFO, "MODE", "waking gyroscope");
         pthread_mutex_lock(&mutex_cond_gyro);
         pthread_cond_signal(&cond_gyro);
         pthread_mutex_unlock(&mutex_cond_gyro);
@@ -289,7 +289,9 @@ static void sleep_m(void){
             set_mode(WAKE);
         }
         else{
-            logging(INFO, "MODE", "Gondola rotation rate too high to start observation: %lf", ang_rate);
+            logging(MAIN_LOG, INFO,
+                    "MODE", "Gondola rotation rate too high to start observation: %lf",
+                    ang_rate);
         }
     }
 }
@@ -310,12 +312,12 @@ static void normal_m(void){
 
 static void reset_m(void){
     for(int ii=0; ii<20; ++ii){
-        logging(INFO, "MODE", "resetting: %d/%d", ii, 20);
+        logging(MAIN_LOG, INFO, "MODE", "resetting: %d/%d", ii, 20);
         sleep(1);
     }
     set_mode(WAKE);
 
-    logging(INFO, "MODE", "waking gyroscope");
+    logging(MAIN_LOG, INFO, "MODE", "waking gyroscope");
     pthread_mutex_lock(&mutex_cond_gyro);
     pthread_cond_signal(&cond_gyro);
     pthread_mutex_unlock(&mutex_cond_gyro);
@@ -323,12 +325,12 @@ static void reset_m(void){
 
 static void wake_m(void){
 
-    logging(INFO, "MODE", "waking encoder");
+    logging(MAIN_LOG, INFO, "MODE", "waking encoder");
     pthread_mutex_lock(&mutex_cond_enc);
     pthread_cond_signal(&cond_enc);
     pthread_mutex_unlock(&mutex_cond_enc);
 
-    logging(INFO, "MODE", "waking star tracker");
+    logging(MAIN_LOG, INFO, "MODE", "waking star tracker");
     pthread_mutex_lock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
     pthread_mutex_unlock(&mutex_cond_st);

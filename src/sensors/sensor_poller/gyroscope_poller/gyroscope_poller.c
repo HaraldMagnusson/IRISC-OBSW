@@ -11,6 +11,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
+#include <errno.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -27,11 +29,25 @@ static void* thread_func(void* args);
 static void active_m(void);
 
 static FT_HANDLE fd;
+static FILE* gyro_log;
 
 pthread_mutex_t mutex_cond_gyro;
 pthread_cond_t cond_gyro;
 
 int init_gyroscope_poller(void* args){
+
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/encoder.log");
+
+    gyro_log = fopen(log_fn, "a");
+    if(gyro_log == NULL){
+        logging(MAIN_LOG, ERROR, "Gyro",
+            "Failed to open gyro log file, (%s)",
+            strerror(errno));
+    }
 
     /* gpio pin is used for trigger to poll the gyroscope */
     int ret = gpio_export(GYRO_TRIG_PIN);
@@ -150,7 +166,7 @@ static void active_m(void){
     /* read full datagram */
     ret = FT_Read(fd, &data[1], DATAGRAM_SIZE-1, &bytes_read);
     if(ret != FT_OK){
-        logging(WARN, "Gyro", "Reading datagram failed, "
+        logging(MAIN_LOG, WARN, "Gyro", "Reading datagram failed, "
                 "error: %d", ret);
         return;
     }
@@ -159,14 +175,14 @@ static void active_m(void){
     if(     data[DATAGRAM_SIZE-2] != '\r' ||
             data[DATAGRAM_SIZE-1] != '\n'){
 
-        logging(WARN, "Gyro", "Incorrect datagram received");
+        logging(MAIN_LOG, WARN, "Gyro", "Incorrect datagram received");
         return;
     }
 
     /* check gyroscope data quality */
     if(data[10]){
-        logging(WARN, "Gyro", "Bad gyroscope data quality, status byte: %2x",
-                data[10]);
+        logging(MAIN_LOG, WARN, "Gyro",
+                "Bad gyroscope data quality, status byte: %2x", data[10]);
         gyro_out_of_date();
         return;
     }
@@ -187,8 +203,13 @@ static void active_m(void){
 
     set_gyro(&gyro);
 
+    logging(gyro_log, INFO, "Gyro",
+            "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
+            gyro.x, gyro.y, gyro.z);
+
     #if GYRO_DEBUG
-        logging(DEBUG, "Gyro", "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
+        logging(MAIN_LOG, DEBUG, "Gyro",
+                "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
                 gyro.x, gyro.y, gyro.z);
     #endif
 }

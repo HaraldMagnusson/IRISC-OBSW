@@ -27,7 +27,7 @@ int init_mode(void* args){
 
     int res = pthread_mutex_init(&mutex_mode, NULL);
     if( res ){
-        logging(ERROR, "MODE",
+        logging(MAIN_LOG, ERROR, "MODE",
             "The initialisation of the mode mutex failed with code %d.",
             res);
         return FAILURE;
@@ -40,7 +40,7 @@ void set_mode(char ch){
 
     pthread_mutex_lock( &mutex_mode );
     mode = ch;
-    logging(INFO, "MODE", "Entering %s mode", modes[(size_t)ch]);
+    logging(MAIN_LOG, INFO, "MODE", "Entering %s mode", modes[(size_t)ch]);
     pthread_mutex_unlock( &mutex_mode );
 
 }
