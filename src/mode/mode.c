@@ -7,7 +7,6 @@
  */
 
 #include <pthread.h>
-#include <stdio.h>
 
 #include "global_utils.h"
 #include "mode.h"

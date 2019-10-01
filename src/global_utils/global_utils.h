@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <stdio.h>
+
 /* int function return values */
 #define SUCCESS 0
 #define FAILURE -1
@@ -27,6 +29,8 @@
 #define GYRO_SAMPLE_TIME 10000000    /* unit: nanoseconds */
 #define ENCODER_SAMPLE_TIME 10000000 /* unit: nanoseconds */
 
+#define MAIN_LOG stderr
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);
 typedef struct {
@@ -45,7 +49,7 @@ const char* const get_top_dir(void);
 
 int init_submodules(const module_init_t init_sequence[], int module_count);
 
-int logging(int level, char module_name[12],
+int logging(FILE* stream, int level, char module_name[12],
             const char * format, ... );
 
 /* a call to pthread_create with additional thread attributes,

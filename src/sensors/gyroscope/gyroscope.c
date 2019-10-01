@@ -27,7 +27,7 @@ int init_gyroscope(void* args){
 
     int ret = pthread_mutex_init(&mutex_gyro, NULL);
     if( ret ){
-        logging(ERROR, "Gyro",
+        logging(MAIN_LOG, ERROR, "Gyro",
                 "The initialisation of the gyro mutex failed: %d, (%s)",
                 ret, strerror(ret));
         return ret;

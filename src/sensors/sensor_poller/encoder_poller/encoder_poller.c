@@ -13,7 +13,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -89,7 +88,7 @@ static void proc(unsigned char data[2][2]){
     }
 
     #ifdef ENCODER_DEBUG
-        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+        logging(MAIN_LOG, DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
     #endif
 
     encoder_t enc;
@@ -108,14 +107,17 @@ static int checksum_ctl(unsigned char data[2][2]){
 
     if(ctl[RA]){
         if(ctl[DEC]){
-            logging(WARN, "Encoder", "Incorrect checksum from encoders: ra & dec");
+            logging(MAIN_LOG, WARN, "Encoder",
+                    "Incorrect checksum from encoders: ra & dec");
             return FAILURE;
         }
-        logging(WARN, "Encoder", "Incorrect checksum from encoder: ra");
+        logging(MAIN_LOG, WARN, "Encoder",
+                "Incorrect checksum from encoder: ra");
         return FAILURE;
     }
     if(ctl[DEC]){
-        logging(WARN, "Encoder", "Incorrect checksum from encoder: dec");
+        logging(MAIN_LOG, WARN, "Encoder",
+                "Incorrect checksum from encoder: dec");
         return FAILURE;
     }
     return SUCCESS;

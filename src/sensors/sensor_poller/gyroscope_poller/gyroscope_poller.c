@@ -11,7 +11,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -51,29 +50,29 @@ int init_gyroscope_poller(void* args){
 
     stat = FT_OpenEx(SERIAL_NUM, FT_OPEN_BY_SERIAL_NUMBER, &fd);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to initiate UART, error: %d",
-                stat);
+        logging(MAIN_LOG, ERROR, "GYRO",
+                "Failed to initiate UART, error: %d", stat);
         return FAILURE;
     }
 
     stat = FT_SetBaudRate(fd, FTDI_BAUDRATE);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to set baudrate for UART, error: %d",
-                stat);
+        logging(MAIN_LOG, ERROR, "GYRO",
+                "Failed to set baudrate for UART, error: %d", stat);
         return FAILURE;
     }
 
     stat = FT_SetTimeouts(fd, 4, 4);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to set timeout for UART, error: %d",
-                stat);
+        logging(MAIN_LOG, ERROR, "GYRO",
+                "Failed to set timeout for UART, error: %d", stat);
         return FAILURE;
     }
 
     stat = FT_SetLatencyTimer(fd, 2);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to set latency timer for UART, "
-                "error: %d", stat);
+        logging(MAIN_LOG, ERROR, "GYRO",
+                "Failed to set latency timer for UART, error: %d", stat);
         return FAILURE;
     }
 
@@ -97,7 +96,8 @@ static void* thread_func(void* args){
 
     ret = FT_Purge(fd, FT_PURGE_RX);
     if(ret != FT_OK){
-        logging(WARN, "GYRO", "Failed to purge UART receive buffer: %d", ret);
+        logging(MAIN_LOG, WARN, "GYRO",
+                "Failed to purge UART receive buffer: %d", ret);
     }
 
     while(1){
@@ -125,8 +125,8 @@ static void* thread_func(void* args){
             /* read full datagram */
             ret = FT_Read(fd, &data[1], DATAGRAM_SIZE-1, &bytes_read);
             if(ret != FT_OK){
-                logging(WARN, "Gyro", "Reading datagram failed, "
-                        "error: %d", ret);
+                logging(MAIN_LOG, WARN, "Gyro",
+                        "Reading datagram failed, error: %d", ret);
                 break;
             }
 
@@ -134,14 +134,14 @@ static void* thread_func(void* args){
             if(     data[DATAGRAM_SIZE-2] != '\r' ||
                     data[DATAGRAM_SIZE-1] != '\n'){
 
-                logging(WARN, "Gyro", "Incorrect datagram received");
+                logging(MAIN_LOG, WARN, "Gyro", "Incorrect datagram received");
                 break;
             }
 
             /* check gyroscope data quality */
             if(data[10]){
-                logging(WARN, "Gyro", "Bad gyroscope data quality, status byte: %2x",
-                        data[10]);
+                logging(MAIN_LOG, WARN, "Gyro",
+                        "Bad gyroscope data quality, status byte: %2x", data[10]);
                 gyro_out_of_date();
                 break;
             }
@@ -163,7 +163,8 @@ static void* thread_func(void* args){
             set_gyro(&gyro);
 
             #if GYRO_DEBUG
-                logging(DEBUG, "Gyro", "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
+                logging(MAIN_LOG, DEBUG, "Gyro",
+                        "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
                         gyro.x, gyro.y, gyro.z);
             #endif
 

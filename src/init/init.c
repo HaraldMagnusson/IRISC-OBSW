@@ -6,7 +6,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -89,7 +88,7 @@ int main(int argc, char* const argv[]){
 
     ret = mlockall(MCL_CURRENT|MCL_FUTURE);
     if( ret != 0 ){
-        logging(ERROR, "INIT",
+        logging(MAIN_LOG, ERROR, "INIT",
             "init: Failed mlockall. Return value: %d, %s", errno, strerror(errno));
         //return FAILURE;
     }
@@ -104,20 +103,23 @@ int main(int argc, char* const argv[]){
         }
 
         if( ret == SUCCESS ){
-            logging(INFO, "INIT", "Module \"%s\" initialised successfully.",
-                init_sequence[i].name);
+            logging(MAIN_LOG, INFO, "INIT",
+                    "Module \"%s\" initialised successfully.",
+                    init_sequence[i].name);
         } else if( ret == FAILURE ){
-            logging(ERROR, "INIT", "Module \"%s\" FAILED TO INITIALISE, return value: %d",
-                init_sequence[i].name, ret);
+            logging(MAIN_LOG, ERROR, "INIT",
+                    "Module \"%s\" FAILED TO INITIALISE, return value: %d",
+                    init_sequence[i].name, ret);
             ++count;
         } else {
-            logging(ERROR, "INIT", "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
-                init_sequence[i].name, ret, strerror(ret));
+            logging(MAIN_LOG, ERROR, "INIT",
+                    "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
+                    init_sequence[i].name, ret, strerror(ret));
             ++count;
         }
     }
 
-    logging(INFO, "INIT",
+    logging(MAIN_LOG, INFO, "INIT",
         "A total of %d modules initialised successfully and %d failed.",
         MODULE_COUNT-count, count);
 

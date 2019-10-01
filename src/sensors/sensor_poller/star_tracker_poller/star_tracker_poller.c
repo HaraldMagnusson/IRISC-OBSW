@@ -9,7 +9,6 @@
 
 #include <pthread.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -42,7 +41,7 @@ int init_star_tracker_poller(void* args){
 
     int ret = pthread_mutex_init(&mutex_st_child, NULL);
     if(ret){
-        logging(ERROR, "Star Tracker",
+        logging(MAIN_LOG, ERROR, "Star Tracker",
                 "The initialisation of the star tracker child "
                 "mutex failed with code %d.\n", ret);
         return FAILURE;
@@ -141,16 +140,17 @@ static int call_tetra(float st_return[]){
             diff.tv_nsec += 1000000000;
         }
 
-        logging(DEBUG, "Star Tracker", "Star tracker sample time: %ld.%09ld s",
+        logging(MAIN_LOG, DEBUG, "Star Tracker",
+                "Star tracker sample time: %ld.%09ld s",
                 diff.tv_sec, diff.tv_nsec);
-        logging(DEBUG, "Star Tracker", "Output: %f, %f, %f, %f",
+        logging(MAIN_LOG, DEBUG, "Star Tracker", "Output: %f, %f, %f, %f",
                 st_return[0], st_return[1], st_return[2], st_return[3]);
     #else
         irisc_tetra(st_return);
     #endif
 
     if(st_return[3] == 0){
-        logging(WARN, "Star Tracker", "FoV = 0, lost in space failed");
+        logging(MAIN_LOG, WARN, "Star Tracker", "FoV = 0, lost in space failed");
         return FAILURE;
     }
 

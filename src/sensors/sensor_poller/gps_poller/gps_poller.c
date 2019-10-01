@@ -13,7 +13,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -44,7 +43,8 @@ int init_gps_poller(void* args){
     fd_spi12 = open(spi12, O_RDONLY);
 
     if(fd_spi12 < 0){
-        logging(ERROR, "GPS", "Failed to open spi device: %s", strerror(errno));
+        logging(MAIN_LOG, ERROR, "GPS",
+                "Failed to open spi device: %s", strerror(errno));
     }
 
     __u32 speed = 200000;
@@ -80,7 +80,7 @@ static void* gps_thread_func(void* args){
                     buffer[5] == 'A'){
 
                 #if GPS_DEBUG
-                    logging(DEBUG, "GPS", "%s", buffer);
+                    logging(MAIN_LOG, DEBUG, "GPS", "%s", buffer);
                 #endif
 
                 ret = process_gps(buffer);
@@ -110,7 +110,7 @@ static void* gps_thread_func(void* args){
  */
 static int process_gps(const unsigned char str[BUFFER_S]){
     if( check_chksum(str) ){
-        logging(WARN, "GPS", "Incorrect checksum in GPS data.");
+        logging(MAIN_LOG, WARN, "GPS", "Incorrect checksum in GPS data.");
         return FAILURE;
     }
 
@@ -119,7 +119,7 @@ static int process_gps(const unsigned char str[BUFFER_S]){
 
     /* Check data quality */
     if( NMEA_str_arr[6][0] == '0' ){
-        logging(WARN, "GPS", "Bad GPS data quality.");
+        logging(MAIN_LOG, WARN, "GPS", "Bad GPS data quality.");
         return FAILURE;
     }
 
@@ -132,7 +132,7 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     set_gps(&gps);
 
     #if GPS_DEBUG
-        logging(DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",
+        logging(MAIN_LOG, DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",
                 gps.lat, gps.lon, gps.alt);
     #endif
 
