@@ -49,6 +49,11 @@ int init_encoder_poller(void* args){
     strcat(log_fn, "output/logs/encoder.log");
 
     encoder_log = fopen(log_fn, "a");
+    if(encoder_log == NULL){
+        logging(MAIN_LOG, ERROR, "Encoder",
+                "Failed to open encoder log file, (%s)",
+                strerror(errno));
+    }
 
     /* set up spi devices */
     char* spi00 = "/dev/spidev0.0";

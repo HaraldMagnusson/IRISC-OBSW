@@ -34,6 +34,7 @@ static unsigned char ch = 0xFF;
 static unsigned char buffer[BUFFER_S];
 static struct timespec wake_time;
 static int fd_spi12;
+static FILE* gps_log;
 
 #ifdef SEQ_TEST
     static float altitude = 1;
@@ -41,17 +42,37 @@ static int fd_spi12;
 
 int init_gps_poller(void* args){
 
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/encoder.log");
+
+    gps_log = fopen(log_fn, "a");
+    if(gps_log == NULL){
+        logging(MAIN_LOG, ERROR, "GPS",
+            "Failed to open gps log file, (%s)",
+            strerror(errno));
+    }
+
     char* spi12 = "/dev/spidev1.2";
 
     fd_spi12 = open(spi12, O_RDONLY);
 
     if(fd_spi12 < 0){
         logging(MAIN_LOG, ERROR, "GPS",
-                "Failed to open spi device: %s", strerror(errno));
+                "Failed to open spi device, (%s)", strerror(errno));
+        return errno;
     }
 
     __u32 speed = 200000;
-    ioctl(fd_spi12, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    int ret = ioctl(fd_spi12, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    if(ret == -1){
+        logging(MAIN_LOG, ERROR, "GPS",
+                "Failed to set spi speed for spidev1.2, (%s)",
+                strerror(errno));
+        return errno;
+    }
 
     buffer[0] = '$';
 
@@ -85,6 +106,8 @@ static void* gps_thread_func(void* args){
                 #if GPS_DEBUG
                     logging(MAIN_LOG, DEBUG, "GPS", "%s", buffer);
                 #endif
+
+                logging(gps_log, INFO, "GPS", "%s", buffer);
 
                 ret = process_gps(buffer);
 
