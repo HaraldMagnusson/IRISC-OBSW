@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Global Utils
- * Author(s): 
+ * Author(s): Adam Śmiałek, Harald Magnusson
  * Purpose: Define utilities and constants available to all components.
  *
  * -----------------------------------------------------------------------------

@@ -35,6 +35,9 @@ static unsigned char buffer[BUFFER_S];
 static struct timespec wake_time;
 static int fd_spi12;
 
+#ifdef SEQ_TEST
+    static float altitude = 1;
+#endif
 
 int init_gps_poller(void* args){
 
@@ -94,6 +97,7 @@ static void* gps_thread_func(void* args){
             }
         }
     }
+    return NULL;
 }
 
 /* process_gps:
@@ -127,7 +131,15 @@ static int process_gps(const unsigned char str[BUFFER_S]){
 
     gps.lat = coord_conv(NMEA_str_arr[2], 0);
     gps.lon = coord_conv(NMEA_str_arr[4], 1);
-    gps.alt = strtof((char*)NMEA_str_arr[9], NULL);
+    #ifndef SEQ_TEST
+        gps.alt = strtof((char*)NMEA_str_arr[9], NULL);
+    #else
+        if(altitude < 26000){
+            altitude += 1000;
+        }
+
+        gps.alt = altitude;
+    #endif
 
     set_gps(&gps);
 
