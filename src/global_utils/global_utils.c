@@ -125,27 +125,32 @@ int logging(int level, char module_name[12],
     switch (level) {
         case 0 :
         case 1 :
-            fprintf(stderr, "\033[0m");
+            dprintf(STDERR_FILENO, "\033[0m");
             break;
         case 2 :
-            fprintf(stderr, "\033[0;93m");
+            dprintf(STDERR_FILENO, "\033[0;93m");
             break;
         case 3 :
-            fprintf(stderr, "\033[0;91m");
+            dprintf(STDERR_FILENO, "\033[0;91m");
             break;
         case 4 :
-            fprintf(stderr, "\033[1;37;101m");
+            dprintf(STDERR_FILENO, "\033[1;37;101m");
             break;
     }
 
     char buffer[256];
     va_list args;
     va_start (args, format);
-    vsprintf (buffer, format, args);
+    int size = vsnprintf (buffer, 256, format, args);
     // perror (buffer);
     va_end (args);
 
-    fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
+    /* mussolini bug on steroids:
+     * Apparently using fprintf to write to stderr here can sometimes
+     * cause segfaults. dprintf seems to fix this.
+     */
+    /* fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n", */
+    dprintf(STDERR_FILENO, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds,
             logging_levels[level], module_name, buffer);
 
@@ -155,7 +160,7 @@ int logging(int level, char module_name[12],
 /* a call to pthread_create with additional thread attributes,
  * specifically priority
  */
-int create_thread(char* comp_name, void *(*thread_func)(void *), int prio){
+int create_thread(char* comp_name, void* (*thread_func)(void*), int prio){
 
     pthread_attr_t attr;
     pthread_t tid;

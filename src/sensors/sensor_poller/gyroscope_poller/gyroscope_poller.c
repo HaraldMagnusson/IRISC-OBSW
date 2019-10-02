@@ -87,8 +87,6 @@ int init_gyroscope_poller(void* args){
 
 static void* thread_func(void* args){
 
-    FT_HANDLE fd = *(FT_HANDLE*)args;
-
     struct timespec wake_time;
     int ret;
 

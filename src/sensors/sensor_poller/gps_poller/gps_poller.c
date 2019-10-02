@@ -48,6 +48,7 @@ int init_gps_poller(void* args){
 
     if(fd_spi12 < 0){
         logging(ERROR, "GPS", "Failed to open spi device: %s", strerror(errno));
+        return errno;
     }
 
     __u32 speed = 200000;
