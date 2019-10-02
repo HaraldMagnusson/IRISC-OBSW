@@ -19,6 +19,7 @@
 
 void *stabilization_main_loop();
 double saturate_output(double given_output);
+int change_pid_values(int motor_id, double new_p, double new_i, double new_d);
 int change_stabilization_mode(int on_off);
 double motor_control_step(pid_values_t* current_pid_values,
                           pthread_mutex_t* pid_values_mutex,
@@ -30,7 +31,7 @@ static pid_values_t current_alt_pid_values;
 
 /* Stabilization parameters */
 static pid_values_t stab_az_pid_values = {
-        .kp = 0.5
+        .kp = 100
        ,.ki = 0
        ,.kd = 0
 };
@@ -59,6 +60,7 @@ static control_variables_t az_prev_control_vars, az_current_control_vars,
 
 static double stabilization_timestep = 0.001;
 static double sim_time = 0;
+static int changer = 0;
 
 // TODO: put it in the proper place
 static double rate = 0;
@@ -73,11 +75,7 @@ static double az_motor_input, alt_motor_input;
 FILE *simdata;
 
 int init_stabilization(void* args){
-//    stabilization_output_angle = 0;
     simdata = fopen("/home/alarm/irisc-obsw/output/simdata.txt","w+");
-//    char cwd[150];
-//    getcwd(cwd, sizeof(cwd));
-//    printf("Current working dir: %s\n", cwd);
     az_prev_control_vars.current_position = 0;
     az_prev_control_vars.target_position = 0;
     az_prev_control_vars.position_error = 0;
@@ -85,25 +83,24 @@ int init_stabilization(void* args){
     az_prev_control_vars.integral = 0;
     az_prev_control_vars.pid_output = 0;
 
-//    simdata = fopen("./src/control_sys/stabilization/simdata.txt","w+");
     change_stabilization_mode(0);
     pthread_t main_loop;
-    pthread_create(&main_loop, NULL,
-                   stabilization_main_loop, NULL);
-//    fclose(simdata);
+    pthread_create(&main_loop, NULL, stabilization_main_loop, NULL);
+
     return SUCCESS;
 }
 
 // TODO: Add watining for desired frequency
 void *stabilization_main_loop() {
     while(1) {
-        usleep(100);
-        /* getting values from kalman filter and tracking subsystem */
+        usleep(10);
+
+        // Getting values from kalman filter and tracking subsystem
         get_telescope_att(&current_telescope_att);
 //        az_current_control_vars.current_position = az_prev_control_vars.current_position;
 //        az_current_control_vars.current_position = current_telescope_att.az; // todo: uncomment this for final
         alt_current_control_vars.current_position = current_telescope_att.alt;
-//        get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position);
+//        get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position); // todo: uncomment this for final
         az_current_control_vars.target_position = 20; // TODO: Delet this
         alt_current_control_vars.target_position = 20; // TODO: Delet this
 
@@ -113,25 +110,28 @@ void *stabilization_main_loop() {
                            &alt_prev_control_vars, &alt_current_control_vars);
         // todo: remove this for final
 
-        logging(DEBUG, "Stabil", "--- az ---");
-        logging(DEBUG, "Stabil", "Sim time\t %.10f", sim_time);
-        logging(DEBUG, "Stabil", "Current poz:\t %.10f", az_current_control_vars.current_position);
-        logging(DEBUG, "Stabil", "Target poz:\t %.10f", az_current_control_vars.target_position);
-        logging(DEBUG, "Stabil", "Poz error:\t %.10f", az_current_control_vars.position_error);
-        logging(DEBUG, "Stabil", "Integral:\t %.10f", az_current_control_vars.integral);
-        logging(DEBUG, "Stabil", "Derivative:\t %.10f", az_current_control_vars.derivative);
-        logging(DEBUG, "Stabil", "PID Output:\t %.10f", az_current_control_vars.pid_output);
+        // For simulation and testing
+//        logging(DEBUG, "Stabil", "--- az ---");
+//        logging(DEBUG, "Stabil", "Sim time\t %.10f", sim_time);
+//        logging(DEBUG, "Stabil", "Current poz:\t %.10f", az_current_control_vars.current_position);
+//        logging(DEBUG, "Stabil", "Target poz:\t %.10f", az_current_control_vars.target_position);
+//        logging(DEBUG, "Stabil", "Poz error:\t %.10f", az_current_control_vars.position_error);
+//        logging(DEBUG, "Stabil", "Integral:\t %.10f", az_current_control_vars.integral);
+//        logging(DEBUG, "Stabil", "Derivative:\t %.10f", az_current_control_vars.derivative);
+//        logging(DEBUG, "Stabil", "PID Output:\t %.10f", az_current_control_vars.pid_output);
 
-//        stabilization_output_angle = output;
-//        rate += output * stabilization_timestep;
-//        filter_current_position = current_position + rate * stabilization_timestep;
+        // For simulation and testing
+        az_current_control_vars.angular_rate += az_current_control_vars.pid_output * stabilization_timestep;
+        az_current_control_vars.current_position = az_current_control_vars.current_position + az_current_control_vars.angular_rate*stabilization_timestep;
+        alt_current_control_vars.angular_rate += alt_current_control_vars.pid_output * stabilization_timestep;
+        alt_current_control_vars.current_position = alt_current_control_vars.current_position + alt_current_control_vars.angular_rate*stabilization_timestep;
 
-        rate += az_current_control_vars.pid_output * stabilization_timestep;
-        az_current_control_vars.current_position = az_current_control_vars.current_position + rate*stabilization_timestep;
+        if(sim_time >= 10) change_pid_values(3, 0,0,0);
+
         if(sim_time >= 20) exit(0); // TODO: Delete this after testing
         sim_time = sim_time + stabilization_timestep;
-        logging(DEBUG, "Stabil", "Next poz:\t %.10f", az_current_control_vars.current_position);
-        fprintf(stderr, "\033[22D\033[9A");
+
+//        fprintf(stderr, "\033[22D\033[8A");
 
         fprintf(simdata, "%.4f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
                 sim_time, az_current_control_vars.current_position,
@@ -169,25 +169,6 @@ double motor_control_step(pid_values_t* current_pid_values,
     return current_vars->pid_output;
 }
 
-
-//void *stabilization_main_loop() {
-//        logging(DEBUG, "STABILIZATION", "current time: %.10f", sim_time);
-//        logging(DEBUG, "STABILIZATION", "current pos: %.10f", current_position);
-//        logging(DEBUG, "STABILIZATION", "target pos: %.10f", target_position);
-//        logging(DEBUG, "STABILIZATION", "integral: %.10f", integral);
-//        logging(DEBUG, "STABILIZATION", "derivative: %.10f", derivative);
-//        logging(DEBUG, "STABILIZATION", "before saturation: %.10f", output);
-//        //        output = saturate_output(output);
-//        logging(DEBUG, "STABILIZATION", "after saturation: %.10f", output);
-//        fprintf(simdata, "%.10f,%.10f\n", sim_time, current_position);
-//        fprintf(simdata, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
-//                sim_time, current_position, position_error, target_position,
-//                i_value*integral, d_value*derivative, p_value*position_error);
-//        fprintf(simdata, "Hello!!!");
-//        fflush(simdata);
-//        fprintf(stderr, "\033[22D\033[7A");
-//}
-
 //double saturate_output(double given_output){
 //    if (given_output >= MOTOR_ANG_RATE_THRS) return MOTOR_ANG_RATE_THRS;
 //    else if (given_output <= -MOTOR_ANG_RATE_THRS) return -MOTOR_ANG_RATE_THRS;
@@ -215,7 +196,10 @@ int change_pid_values(int motor_id, double new_p, double new_i, double new_d){
         current_alt_pid_values.kd = new_d;
         pthread_mutex_unlock(&alt_pid_values_mutex);
         return 0;
-    } else return 1;
+    } else {
+        logging(ERROR, "Stabil", "change_pid_values: Wrong motor id.");
+        return 1;
+    }
 }
 
 /* Changes chosen mode pid parameters forever
@@ -224,25 +208,51 @@ int change_pid_values(int motor_id, double new_p, double new_i, double new_d){
  * 1 for azimuth control
  * 2 for altitude angle control.
  *
+ * Second argument has to be stabilization mode, that is:
+ * 1 for target acquisition
+ * 2 for stabilization.
+ *
  * Second argument is mode - either
  */
-// TODO: This
-int change_mode_pid_values(int motor_id, double new_p, double new_i, double new_d){
+int change_mode_pid_values(int motor_id, int mode_id, double new_p, double new_i, double new_d){
     if (motor_id == 1) {
         pthread_mutex_lock(&az_pid_values_mutex);
-        current_az_pid_values.kp = new_p;
-        current_az_pid_values.ki = new_i;
-        current_az_pid_values.kd = new_d;
+        if (mode_id == 1) {
+            track_az_pid_values.kp = new_p;
+            track_az_pid_values.ki = new_i;
+            track_az_pid_values.kd = new_d;
+        } else if (mode_id == 2) {
+            stab_az_pid_values.kp = new_p;
+            stab_az_pid_values.ki = new_i;
+            stab_az_pid_values.kd = new_d;
+        } else {
+            logging(ERROR, "Stabil", "change_mode_pid_values: Wrong mode id.");
+            pthread_mutex_unlock(&az_pid_values_mutex);
+            return 1;
+        }
         pthread_mutex_unlock(&az_pid_values_mutex);
         return 0;
     } else if (motor_id == 2) {
         pthread_mutex_lock(&alt_pid_values_mutex);
-        current_alt_pid_values.kp = new_p;
-        current_alt_pid_values.ki = new_i;
-        current_alt_pid_values.kd = new_d;
+        if (mode_id == 1) {
+            track_alt_pid_values.kp = new_p;
+            track_alt_pid_values.ki = new_i;
+            track_alt_pid_values.kd = new_d;
+        } else if (mode_id == 2) {
+            stab_alt_pid_values.kp = new_p;
+            stab_alt_pid_values.ki = new_i;
+            stab_alt_pid_values.kd = new_d;
+        } else {
+            logging(ERROR, "Stabil", "change_mode_pid_values: Wrong mode id.");
+            pthread_mutex_unlock(&az_pid_values_mutex);
+            return 1;
+        }
         pthread_mutex_unlock(&alt_pid_values_mutex);
         return 0;
-    } else return 1;
+    } else {
+        logging(ERROR, "Stabil", "change_mode_pid_values: Wrong motor id.");
+        return 1;
+    }
 }
 
 /* Sets pid parameters to and from stabilization mode
@@ -253,27 +263,23 @@ int change_mode_pid_values(int motor_id, double new_p, double new_i, double new_
 int change_stabilization_mode(int on_off){
     if (on_off == 1) {
         pthread_mutex_lock(&az_pid_values_mutex);
-        current_az_pid_values.kp = stab_az_pid_values.kp;
-        current_az_pid_values.ki = stab_az_pid_values.ki;
-        current_az_pid_values.kd = stab_az_pid_values.kd;
+        current_az_pid_values = stab_az_pid_values;
         pthread_mutex_unlock(&az_pid_values_mutex);
+
         pthread_mutex_lock(&alt_pid_values_mutex);
-        current_alt_pid_values.kp = stab_alt_pid_values.kp;
-        current_alt_pid_values.ki = stab_alt_pid_values.ki;
-        current_alt_pid_values.kd = stab_alt_pid_values.kd;
+        current_alt_pid_values = stab_alt_pid_values;
         pthread_mutex_unlock(&alt_pid_values_mutex);
+
         return 0;
     } else if (on_off == 0) {
         pthread_mutex_lock(&az_pid_values_mutex);
-        current_az_pid_values.kp = track_az_pid_values.kp;
-        current_az_pid_values.ki = track_az_pid_values.ki;
-        current_az_pid_values.kd = track_az_pid_values.kd;
+        current_az_pid_values = track_az_pid_values;
         pthread_mutex_unlock(&az_pid_values_mutex);
+
         pthread_mutex_lock(&alt_pid_values_mutex);
-        current_alt_pid_values.kp = track_alt_pid_values.kp;
-        current_alt_pid_values.ki = track_alt_pid_values.ki;
-        current_alt_pid_values.kd = track_alt_pid_values.kd;
+        current_alt_pid_values = track_alt_pid_values;
         pthread_mutex_unlock(&alt_pid_values_mutex);
+
         return 0;
     } else return 1;
 }

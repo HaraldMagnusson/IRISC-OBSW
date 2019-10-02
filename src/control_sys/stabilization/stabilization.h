@@ -23,7 +23,8 @@ typedef struct{
            position_error,
            derivative,
            integral,
-           pid_output;
+           pid_output,
+           angular_rate;
 } control_variables_t;
 
 /* initialise the stabilization component */
