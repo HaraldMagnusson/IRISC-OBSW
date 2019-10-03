@@ -42,7 +42,7 @@ static void* thread_socket(void*);
 static unsigned short sleep_time = 50;
 
 
-int init_elink( void ){
+int init_elink(void* args){
 
     /*
      *  --Thread

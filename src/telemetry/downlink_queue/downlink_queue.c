@@ -30,7 +30,7 @@ pthread_cond_t queue_non_empty_cond = PTHREAD_COND_INITIALIZER;
 
 static downlink_node *downlink_queue = NULL;
 
-int init_downlink_queue(void) {
+int init_downlink_queue(void* args) {
     return SUCCESS;
 }
 

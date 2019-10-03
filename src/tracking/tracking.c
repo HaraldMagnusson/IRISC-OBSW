@@ -27,7 +27,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"target_selecting", &init_target_selecting}
 };
 
-int init_tracking( void ){
+int init_tracking(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

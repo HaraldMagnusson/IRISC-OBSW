@@ -21,7 +21,7 @@ pthread_cond_t data_queue_non_empty_cond = PTHREAD_COND_INITIALIZER;
 
 static data_node *data_queue = NULL;
 
-int init_data_queue(void) {
+int init_data_queue(void* args) {
     return SUCCESS;
 }
 

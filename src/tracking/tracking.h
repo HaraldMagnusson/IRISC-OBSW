@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the tracking component */
-int init_tracking( void );
+int init_tracking(void* args);
 
 /* return the current target to be tracked */
 void get_target( void );

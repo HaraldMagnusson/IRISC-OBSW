@@ -8,4 +8,4 @@
 
 #pragma once
 
-int init_temperature_poller( void );
+int init_temperature_poller(void* args);

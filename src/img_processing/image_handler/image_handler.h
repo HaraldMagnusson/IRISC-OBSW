@@ -10,7 +10,7 @@
 #pragma once
 
 /* initialise the image handler component */
-int init_image_handler( void );
+int init_image_handler(void* args);
 
 /* Compress and store a file */
 int compression_stream(const char* in_filename, const char* out_filename);

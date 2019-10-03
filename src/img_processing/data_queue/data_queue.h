@@ -21,7 +21,7 @@ typedef struct node {
 } data_node;
 
 /* initialise the data queue component */
-int init_data_queue(void);
+int init_data_queue(void* args);
 
 /* Compress and store file, for type use IMAGE_MAIN or IMAGE_STARTRACKER */
 int store_data_local(char *f, int p, int type);

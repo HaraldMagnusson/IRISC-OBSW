@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_current_target( void ){
+int init_current_target(void* args){
     return SUCCESS;
 }

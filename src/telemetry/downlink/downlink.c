@@ -27,7 +27,7 @@ static int ret;
 static void* thread_func(void*);
 static unsigned short send_file(char *filepath, unsigned short packets_sent, int priority);
 
-int init_downlink(void) {
+int init_downlink(void* args) {
 
    /*
      *  --Thread

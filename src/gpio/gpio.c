@@ -6,7 +6,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include <wiringPi.h>
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
@@ -28,7 +27,7 @@ static pthread_mutex_t mutex_direction;
 static pthread_mutex_t mutex_read;
 static pthread_mutex_t mutex_write;
 
-int init_gpio(void){
+int init_gpio(void* args){
 
     int ret = pthread_mutex_init(&mutex_export, NULL);
     if( ret ){

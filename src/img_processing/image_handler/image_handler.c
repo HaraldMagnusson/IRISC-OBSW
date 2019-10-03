@@ -131,7 +131,7 @@ int compression_stream(const char* in_filename, const char* out_filename) {
 
 }
 
-int init_image_handler(void) {
+int init_image_handler(void* args) {
 
     /*
      *  --Thread

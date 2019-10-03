@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_sanity_camera( void ){
+int init_sanity_camera(void* args){
     return SUCCESS;
 }

@@ -29,7 +29,7 @@ static int ret;
 static void* thread_command(void* param);
 static int handle_command(unsigned short command);
 
-int init_command( void ){
+int init_command(void* args){
 
 ret = pthread_attr_init(&thread_attr);
     if( ret != 0 ){

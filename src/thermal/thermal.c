@@ -8,6 +8,6 @@
 
 #include "global_utils.h"
 
-int init_thermal( void ){
+int init_thermal(void* args){
     return SUCCESS;
 }

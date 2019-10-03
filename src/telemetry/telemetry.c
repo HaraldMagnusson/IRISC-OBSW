@@ -32,7 +32,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
         {"downlink_", &init_downlink}
 };
 
-int init_telemetry(void) {
+int init_telemetry(void* args){
 
     /* init whatever in this module */
     int ret = init_submodules(init_sequence, MODULE_COUNT);

@@ -9,6 +9,6 @@
 
 #include "global_utils.h"
 
-int init_temperature( void ){
+int init_temperature(void* args){
     return SUCCESS;
 }

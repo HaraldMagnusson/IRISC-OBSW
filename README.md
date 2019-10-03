@@ -9,3 +9,9 @@ After you have done that you can just run `make` like normal.
 
 It will also detect if the `CmakeList.txt` file has changed and regenerate the cmake files if needed."
 _- The Man himself._
+
+## Required Libraries
+
+`cfitsio` - library to handle .fit files
+
+`ftd2xx` - drivers for rs422 to usb converter, download from: https://www.ftdichip.com/Drivers/D2XX.htm

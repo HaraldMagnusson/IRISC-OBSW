@@ -9,10 +9,7 @@
 
 #pragma once
 
-int init_encoder( void );
-
-/* initialise the orientation component */
-int init_encoder(void);
+int init_encoder(void* args);
 
 /* fetch the latest encoder data */
 void get_encoder_local(encoder_t* encoder);
