@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <math.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -82,7 +83,7 @@ int init_star_tracker_poller(void* args){
     strcpy(out_fp, get_top_dir());
     strcat(out_fp, "output/guiding/");
 
-    return create_thread("star_tracker_poller", st_poller_thread, 23);
+    return create_thread("st_poller", st_poller_thread, 23);
 }
 
 /*
@@ -188,7 +189,7 @@ static int call_tetra(float st_return[]){
         irisc_tetra(st_return);
     #endif
 
-    if(st_return[3] == 0){
+    if(fabs(st_return[3]) < 0.001){
         logging(MAIN_LOG, WARN, "Star Tracker", "FoV = 0, lost in space failed");
         return FAILURE;
     }
