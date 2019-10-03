@@ -35,7 +35,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 13
+#define MODULE_COUNT 11
 
 static int init_func(char* const argv[]);
 static void check_flags(void);
@@ -57,7 +57,7 @@ static char stderr_buf[4096];
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"watchdog", &init_watchdog},
+    //{"watchdog", &init_watchdog},
     {"mode", &init_mode},
     {"gpio", &init_gpio},
     {"camera", &init_camera},
@@ -66,7 +66,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"e_link", &init_elink},
     {"global_utils", &init_global_utils},
     {"img_processing", &init_img_processing},
-    {"sensors", &init_sensors},
+    //{"sensors", &init_sensors},
     {"telemetry", &init_telemetry},
     {"thermal", &init_thermal},
     {"tracking", &init_tracking}
