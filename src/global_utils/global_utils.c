@@ -125,32 +125,27 @@ int logging(int level, char module_name[12],
     switch (level) {
         case 0 :
         case 1 :
-            dprintf(STDERR_FILENO, "\033[0m");
+            fprintf(stderr, "\033[0m");
             break;
         case 2 :
-            dprintf(STDERR_FILENO, "\033[0;93m");
+            fprintf(stderr, "\033[0;93m");
             break;
         case 3 :
-            dprintf(STDERR_FILENO, "\033[0;91m");
+            fprintf(stderr, "\033[0;91m");
             break;
         case 4 :
-            dprintf(STDERR_FILENO, "\033[1;37;101m");
+            fprintf(stderr, "\033[1;37;101m");
             break;
     }
 
     char buffer[256];
     va_list args;
     va_start (args, format);
-    int size = vsnprintf (buffer, 256, format, args);
+    vsnprintf (buffer, 256, format, args);
     // perror (buffer);
     va_end (args);
 
-    /* mussolini bug on steroids:
-     * Apparently using fprintf to write to stderr here can sometimes
-     * cause segfaults. dprintf seems to fix this.
-     */
-    /* fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n", */
-    dprintf(STDERR_FILENO, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
+    fprintf(stderr, "%02d:%02d:%02d | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds,
             logging_levels[level], module_name, buffer);
 
