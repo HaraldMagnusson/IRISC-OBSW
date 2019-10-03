@@ -144,7 +144,7 @@ int logging(FILE* stream, int level, char module_name[12],
     char buffer[256];
     va_list args;
     va_start (args, format);
-    vsprintf (buffer, format, args);
+    vsnprintf (buffer, 256, format, args);
     // perror (buffer);
     va_end (args);
 
@@ -158,7 +158,7 @@ int logging(FILE* stream, int level, char module_name[12],
 /* a call to pthread_create with additional thread attributes,
  * specifically priority
  */
-int create_thread(char* comp_name, void *(*thread_func)(void *), int prio){
+int create_thread(char* comp_name, void* (*thread_func)(void*), int prio){
 
     pthread_attr_t attr;
     pthread_t tid;

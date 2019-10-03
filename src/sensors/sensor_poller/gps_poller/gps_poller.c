@@ -61,8 +61,7 @@ int init_gps_poller(void* args){
     fd_spi12 = open(spi12, O_RDONLY);
 
     if(fd_spi12 < 0){
-        logging(MAIN_LOG, ERROR, "GPS",
-                "Failed to open spi device, (%s)", strerror(errno));
+        logging(MAIN_LOG, ERROR, "GPS", "Failed to open spi device, %m");
         return errno;
     }
 

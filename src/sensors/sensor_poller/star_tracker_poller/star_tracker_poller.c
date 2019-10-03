@@ -12,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -67,8 +68,7 @@ int init_star_tracker_poller(void* args){
     star_tracker_log = fopen(log_fn, "a");
     if(star_tracker_log == NULL){
         logging(MAIN_LOG, ERROR, "Star Tracker",
-                "Failed to open star tracker log file, (%s)",
-                strerror(errno));
+                "Failed to open star tracker log file, %m");
         return errno;
     }
 

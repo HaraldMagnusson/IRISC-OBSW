@@ -52,6 +52,7 @@ static struct sigaction sa;
 
 static char gyro_wake_flag = '0', rotate_flag, float_flag;
 static char rotate_flag_fn[100], float_flag_fn[100];
+static char stderr_buf[4096];
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
@@ -102,6 +103,11 @@ int main(int argc, char* const argv[]){
 
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */
+
+    /* add buffer to stderr */
+    if(setvbuf(stderr, stderr_buf, _IOLBF, 4096)){
+        logging(MAIN_LOG, ERROR, "INIT", "Failed to set buffer for stderr");
+    }
 
     ret = mlockall(MCL_CURRENT|MCL_FUTURE);
     if( ret != 0 ){
