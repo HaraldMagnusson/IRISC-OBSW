@@ -194,12 +194,12 @@ static int call_tetra(float st_return[]){
         return FAILURE;
     }
 
-    logging_csv(star_tracker_log, "%010.6f,%010.7f,%010.6f,%06.3f",
-            st_return[0], st_return[1], st_return[2], st_return[3]);
-
     st.ra = st_return[0];
     st.dec = st_return[1];
     st.roll = st_return[2];
+
+    logging_csv(star_tracker_log, "%010.6f,%010.7f,%010.6f",
+            st.ra, st.dec, st.roll);
 
     set_star_tracker(&st);
 
