@@ -89,10 +89,10 @@ int queue_priority(){
 struct node pop(downlink_node **head) {
 
     while (is_empty(head)) {
-        //logging(DEBUG, "downlink_queue", "Waiting for item in queue");
+        logging(DEBUG, "downlink_queue", "Waiting for item in queue");
         pthread_cond_wait(&queue_non_empty_cond, &downlink_mutex);
     }
-    //logging(DEBUG, "downlink_queue", "Item in queue, starting pop");
+    logging(DEBUG, "downlink_queue", "Item in queue, starting pop");
 
     downlink_node *temp = *head;
     (*head) = (*head)->next;
@@ -117,8 +117,6 @@ struct node pop(downlink_node **head) {
 void push(downlink_node **head, char *f, int p, int flag, unsigned short packets_sent) {
 
     downlink_node *start = (*head);
-
-    //printf("Queue: %s\n", f);
 
     if (!is_empty(head)) {
         // Create new node
@@ -189,19 +187,18 @@ void check_downlink_list_local(void){
     const struct node *temp = downlink_queue;
 
     if(temp==NULL){
-        //logging(DEBUG, "downlink_queue", "Queue is empty");
-        printf("Queue is empty\n");
+        logging(DEBUG, "downlink_queue", "Queue is empty");
     } else {
 
-        printf("---Queue---\n");
+        logging(DEBUG, "downlink_queue", "---Queue---");
         while(temp!=NULL){
 
-            printf("%s\n", (temp)->filepath);
-            printf("prio: %d\n", temp->priority);
+            logging(DEBUG, "downlink_queue", "%s", (temp)->filepath);
+            logging(DEBUG, "downlink_queue", "prio: %d", temp->priority);
 
             (temp) = (temp)->next;
         }
-        printf("---End_Queue---\n");
+        logging(DEBUG, "downlink_queue", "---End Queue---");
 
     }
 

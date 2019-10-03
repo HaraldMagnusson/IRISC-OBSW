@@ -21,66 +21,12 @@
 #define COMMAND_CAMERA_SETTINGS 14
 #define COMMAND_CAMERA_CAPTURE 15
 
-static pthread_t thread_command_t;
-static pthread_attr_t thread_attr;
-static struct sched_param param;
-static int ret;
-
 static void* thread_command(void* param);
 static int handle_command(unsigned short command);
 
 int init_command(void* args){
 
-ret = pthread_attr_init(&thread_attr);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_init for e_link component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_attr_setstacksize(&thread_attr, PTHREAD_STACK_MIN);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setstacksize of e_link component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setschedpolicy of e_link component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    param.sched_priority = 30;
-    ret = pthread_attr_setschedparam(&thread_attr, &param);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setschedparam of e_link component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setinheritsched of e_link component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_create(&thread_command_t, &thread_attr, thread_command, NULL);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_create of socket component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    return SUCCESS;
+    return create_thread("command", thread_command, 30);
 }
 
 static void* thread_command(void* param){
@@ -136,7 +82,7 @@ static int handle_command(unsigned short command){
             break;
 
         default : /*  Default  */
-            printf("Error command\n");
+            logging(ERROR, "downlink", "Unknown command");
 
     }
 
