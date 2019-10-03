@@ -55,6 +55,8 @@ int init_submodules(const module_init_t init_sequence[], int module_count);
 int logging(FILE* stream, int level, char module_name[12],
             const char * format, ... );
 
+void logging_csv(FILE* stream, const char* format, ...);
+
 /* a call to pthread_create with additional thread attributes,
  * specifically priority
  */

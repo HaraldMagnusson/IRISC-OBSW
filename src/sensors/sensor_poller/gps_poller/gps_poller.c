@@ -107,8 +107,6 @@ static void* gps_thread_func(void* args){
                     logging(MAIN_LOG, DEBUG, "GPS", "%s", buffer);
                 #endif
 
-                logging(gps_log, INFO, "GPS", "%s", buffer);
-
                 ret = process_gps(buffer);
 
                 if(ret != SUCCESS){
@@ -165,6 +163,8 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     #endif
 
     set_gps(&gps);
+
+    logging_csv(gps_log, "%010.7f,%010.6f,%07.1f", gps.lat, gps.lon, gps.alt);
 
     #if GPS_DEBUG
         logging(MAIN_LOG, DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",

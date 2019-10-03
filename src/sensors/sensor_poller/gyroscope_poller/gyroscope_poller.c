@@ -202,8 +202,7 @@ static void active_m(void){
 
     set_gyro(&gyro);
 
-    logging(gyro_log, INFO, "Gyro",
-            "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
+    logging_csv(gyro_log, "%+09.4lf,%+09.4lf,%+09.4lf",
             gyro.x, gyro.y, gyro.z);
 
     #if GYRO_DEBUG

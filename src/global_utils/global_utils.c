@@ -151,8 +151,28 @@ int logging(FILE* stream, int level, char module_name[12],
     fprintf(stream, "%02d:%02d:%02d.%03ld | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds, now.tv_nsec / 1000000,
             logging_levels[level], module_name, buffer);
+    fflush(stream);
 
     return SUCCESS;
+}
+
+void logging_csv(FILE* stream, const char* format, ...){
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    struct tm *local = localtime(&now.tv_sec);
+    int hours = local->tm_hour;
+    int minutes = local->tm_min;
+    int seconds = local->tm_sec;
+
+    char buffer[256];
+    va_list args;
+    va_start (args, format);
+    vsnprintf (buffer, 256, format, args);
+    va_end (args);
+
+    fprintf(stream, "%02d:%02d:%02d.%03ld,%s\n",
+            hours, minutes, seconds, now.tv_nsec / 1000000, buffer);
+    fflush(stream);
 }
 
 /* a call to pthread_create with additional thread attributes,

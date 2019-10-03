@@ -229,6 +229,8 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
         ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
     }
 
+    logging_csv(encoder_log, "%010.6lf,%010.6lf", ang[RA], ang[DEC]);
+
     #ifdef ENCODER_DEBUG
         logging(MAIN_LOG, DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
     #endif
