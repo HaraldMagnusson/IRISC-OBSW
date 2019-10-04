@@ -70,7 +70,6 @@ struct node pop_data(data_node **head) {
     pthread_mutex_lock(&data_mutex);
 
     while (is_empty_data(head)) {
-        //logging(DEBUG, "data_queue", "no data in data_queue");
         pthread_cond_wait(&data_queue_non_empty_cond, &data_mutex);
     }
 

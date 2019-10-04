@@ -88,7 +88,9 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
     current_packet = 0;
 
     FILE *fp;
+    #ifdef DOWNLINK_DEBUG
     logging(DEBUG, "downlink", "Starting to send file: %s", filepath);
+    #endif
     fp=fopen(filepath, "rb");
     if(fp == NULL){
         return FAILURE;
@@ -101,7 +103,9 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
     if(buff_size == -1){
         logging(ERROR, "downlink", "ftell");
     }
+    #ifdef DOWNLINK_DEBUG
     logging(DEBUG, "downlink", "Filesize is: %ld", buff_size);
+    #endif
 
     if(fseek(fp, 0L, SEEK_SET) != 0){
         logging(ERROR, "downlink", "fseek");
@@ -189,11 +193,15 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
 
         if(i%10==0){
             if(priority>queue_priority()){
+                fclose(fp);
+                free(total);
                 return current_packet;
             }            
         }
     }
+    #ifdef DOWNLINK_DEBUG
     logging(DEBUG, "downlink", "Done sending file: %s", filepath);
+    #endif
 
     fclose(fp);
     free(total);

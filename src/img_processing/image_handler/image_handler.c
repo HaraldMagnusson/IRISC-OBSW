@@ -157,7 +157,6 @@ static void* thread_func(void* param){
 
             sprintf(out_name, "/tmp/IMG_START/IMG_START_%02d:%02d:%02d_.fit.zst",
                     date_time.tm_hour, date_time.tm_min, date_time.tm_sec);
-
         }
 
         if(compression_stream(temp.filepath, out_name)){

@@ -89,10 +89,14 @@ int queue_priority(){
 struct node pop(downlink_node **head) {
 
     while (is_empty(head)) {
+        #ifdef DOWNLINK_DEBUG
         logging(DEBUG, "downlink_queue", "Waiting for item in queue");
+        #endif
         pthread_cond_wait(&queue_non_empty_cond, &downlink_mutex);
     }
+    #ifdef DOWNLINK_DEBUG
     logging(DEBUG, "downlink_queue", "Item in queue, starting pop");
+    #endif
 
     downlink_node *temp = *head;
     (*head) = (*head)->next;
@@ -187,18 +191,25 @@ void check_downlink_list_local(void){
     const struct node *temp = downlink_queue;
 
     if(temp==NULL){
+        #ifdef DOWNLINK_DEBUG
         logging(DEBUG, "downlink_queue", "Queue is empty");
+        #endif
     } else {
-
+        #ifdef DOWNLINK_DEBUG
         logging(DEBUG, "downlink_queue", "---Queue---");
+        #endif
         while(temp!=NULL){
 
+            #ifdef DOWNLINK_DEBUG
             logging(DEBUG, "downlink_queue", "%s", (temp)->filepath);
             logging(DEBUG, "downlink_queue", "prio: %d", temp->priority);
+            #endif
 
             (temp) = (temp)->next;
         }
+        #ifdef DOWNLINK_DEBUG
         logging(DEBUG, "downlink_queue", "---End Queue---");
+        #endif
 
     }
 

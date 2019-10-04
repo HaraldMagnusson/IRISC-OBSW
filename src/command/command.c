@@ -36,7 +36,9 @@ static void* thread_command(void* param){
     unsigned short command;
 
     while(1){
-        read_elink(buffer, 2);
+        if(read_elink(buffer, 2)){
+            continue;
+        }
         command = *(unsigned short*)&buffer[0];
 
         ret = handle_command(command);  

@@ -29,7 +29,7 @@ static int sockfd, newsockfd, init_flag = 0;
 pthread_mutex_t e_link_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void* thread_socket(void*);
-static unsigned short sleep_time = 50;
+static unsigned short sleep_time = 100;
 
 
 int init_elink(void* args){
@@ -74,11 +74,14 @@ int read_elink(char *buffer, int bytes){
     } while(bytes_avail < bytes);
 
     n=read(newsockfd, buffer, bytes);
-    fflush(stdout);
+
     if (n<0){
         logging(ERROR, "e_link", "ERROR reading from socket: %s\n", strerror(errno));
+        return FAILURE;
     } else if(n>0){
+        #ifdef E_LINK_DEBUG
         logging(DEBUG, "e_link", "Message read from GS: %s", buffer);
+        #endif
     }
 
     return SUCCESS;
@@ -119,7 +122,11 @@ static void* thread_socket(void* param){
 
     listen(sockfd, 5);
 
+    #ifdef E_LINK_DEBUG
     logging(DEBUG, "e_link", "Listening for groundstation");
+    #endif
+
+
     clilen = sizeof(cli_addr);
 
     while(1){    
