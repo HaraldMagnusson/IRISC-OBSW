@@ -35,7 +35,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 11
+#define MODULE_COUNT 13
 
 static int init_func(char* const argv[]);
 static void check_flags(void);
