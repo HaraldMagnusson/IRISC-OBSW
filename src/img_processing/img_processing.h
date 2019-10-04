@@ -17,7 +17,7 @@ int init_img_processing(void* args);
 /* enqueue an image with meta data in the queue to be processed. 
  *p is the priority. Type should be IMAGE_STARTRACKER or IMAGE_MAIN 
  */
-void queue_image( const char *filepath, int type);
+int queue_image( char *filepath, int type);
 
 /* Give the next startracker image a higher priority */
 void send_st(void);

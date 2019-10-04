@@ -156,7 +156,7 @@ static void* thread_func(void* param){
         }
 
         if(compression_stream(temp.filepath, out_name)){
-            queue_image(temp.filepath, temp.priority , temp.type);
+            queue_image(temp.filepath, temp.type);
         } else {
             remove(temp.filepath);
             send_telemetry(out_name, temp.priority, 1, 0);

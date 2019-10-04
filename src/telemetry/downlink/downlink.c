@@ -43,16 +43,17 @@ static void* thread_func(void* param){
         temp = read_downlink_queue();
         if(temp.flag==0){
             msg[0]=0;
+            msg[1]=0;
             data = temp.filepath;
             len = strlen(data);
 
             /* ID for string */
             char* bytes = (char*)&len;
-            msg[1] = bytes[0];
-            msg[2] = bytes[1];
+            msg[2] = bytes[0];
+            msg[3] = bytes[1];
 
             for(int ii=0; ii<len+1; ++ii){
-                msg[ii+3] = data[ii];
+                msg[ii+4] = data[ii];
             }
 
             write_elink(msg, strlen(data)+4);
@@ -67,7 +68,7 @@ static void* thread_func(void* param){
                 msg[3]=0;
                 msg[4]=0;
                 msg[5]=0;
-                write_elink(msg, 6); /* Telling GS a file is inc */
+                write_elink(msg, 6); /* Telling GS a file transfer is aborted */
                 send_telemetry_local(temp.filepath, (temp.priority)-1, temp.flag, ret);
             }
         }
