@@ -26,7 +26,7 @@ static int handle_command(unsigned short command);
 
 int init_command(void* args){
 
-    return create_thread("command", thread_command, 30);
+    return create_thread("command", thread_command, 35);
 }
 
 static void* thread_command(void* param){
