@@ -68,7 +68,7 @@ int init_star_tracker_poller(void* args){
 
     star_tracker_log = fopen(log_fn, "a");
     if(star_tracker_log == NULL){
-        logging(MAIN_LOG, ERROR, "Star Tracker",
+        logging(ERROR, "Star Tracker",
                 "Failed to open star tracker log file, %m");
         return errno;
     }
@@ -180,17 +180,17 @@ static int call_tetra(float st_return[]){
             diff.tv_nsec += 1000000000;
         }
 
-        logging(MAIN_LOG, DEBUG, "Star Tracker",
+        logging(DEBUG, "Star Tracker",
                 "Star tracker sample time: %ld.%09ld s",
                 diff.tv_sec, diff.tv_nsec);
-        logging(MAIN_LOG, DEBUG, "Star Tracker", "Output: %f, %f, %f, %f",
+        logging(DEBUG, "Star Tracker", "Output: %f, %f, %f, %f",
                 st_return[0], st_return[1], st_return[2], st_return[3]);
     #else
         irisc_tetra(st_return);
     #endif
 
     if(fabs(st_return[3]) < 0.001){
-        logging(MAIN_LOG, WARN, "Star Tracker", "FoV = 0, lost in space failed");
+        logging(WARN, "Star Tracker", "FoV = 0, lost in space failed");
         return FAILURE;
     }
 

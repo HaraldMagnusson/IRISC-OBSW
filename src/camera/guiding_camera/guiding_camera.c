@@ -26,7 +26,7 @@ int init_guiding_camera(void* args){
 
     int ret = cam_setup(&cam_info, 'g');
     if(ret == ENODEV){
-        logging(MAIN_LOG, ERROR, "INIT", "Guiding camera not connected");
+        logging(ERROR, "INIT", "Guiding camera not connected");
     } else if(ret != SUCCESS){
         return FAILURE;
     }

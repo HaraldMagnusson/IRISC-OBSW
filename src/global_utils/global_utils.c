@@ -35,7 +35,7 @@ int init_global_utils(void* args){
     size_t dir_len = strlen(launch_dir);
 
     if(dir_len >= TOP_DIR_S){
-        logging(MAIN_LOG, ERROR, "INIT", "path to binary too long");
+        logging(ERROR, "INIT", "path to binary too long");
         return FAILURE;
     }
 
@@ -46,7 +46,7 @@ int init_global_utils(void* args){
     /* relative path */
     else if(launch_arg[0] == '.'){
         if(getcwd(top_dir, TOP_DIR_S) == NULL){
-            logging(MAIN_LOG, ERROR, "INIT",
+            logging(ERROR, "INIT",
                     "Failed to fetch working directory, %d (%s)",
                     errno, strerror(errno));
             return FAILURE;
@@ -54,7 +54,7 @@ int init_global_utils(void* args){
 
         dir_len += strlen(top_dir);
         if(dir_len >= TOP_DIR_S){
-            logging(MAIN_LOG, ERROR, "INIT", "path to binary too long");
+            logging(ERROR, "INIT", "path to binary too long");
             return FAILURE;
         }
         strcat(top_dir, &launch_dir[1]);
@@ -89,16 +89,16 @@ int init_submodules(const module_init_t *init_sequence, int module_count) {
     for(int i=0; i<module_count; ++i){
         ret = init_sequence[i].init(NULL);
         if( ret == SUCCESS ){
-            logging(MAIN_LOG, INFO,
+            logging(INFO,
                     "INIT", " - Sub module \"%s\" initialised successfully.",
                     init_sequence[i].name);
         } else if( ret == FAILURE ){
-            logging(MAIN_LOG, ERROR, "INIT",
+            logging(ERROR, "INIT",
                     " - Sub module \"%s\" FAILED TO INITIALISE, return value: %d",
                     init_sequence[i].name, ret);
             return ret;
         } else {
-            logging(MAIN_LOG, ERROR, "INIT",
+            logging(ERROR, "INIT",
                     " - Sub module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
                     init_sequence[i].name, ret, strerror(ret));
             return ret;
@@ -116,7 +116,7 @@ char logging_levels[5][7] =
           "CRIT"
         };
 
-int logging(FILE* stream, int level, char module_name[12],
+int logging(int level, char module_name[12],
             const char * format, ... ) {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
@@ -128,16 +128,16 @@ int logging(FILE* stream, int level, char module_name[12],
     switch (level) {
         case 0 :
         case 1 :
-            fprintf(stream, "\033[0m");
+            fprintf(stderr, "\033[0m");
             break;
         case 2 :
-            fprintf(stream, "\033[0;93m");
+            fprintf(stderr, "\033[0;93m");
             break;
         case 3 :
-            fprintf(stream, "\033[0;91m");
+            fprintf(stderr, "\033[0;91m");
             break;
         case 4 :
-            fprintf(stream, "\033[1;37;101m");
+            fprintf(stderr, "\033[1;37;101m");
             break;
     }
 
@@ -148,10 +148,10 @@ int logging(FILE* stream, int level, char module_name[12],
     // perror (buffer);
     va_end (args);
 
-    fprintf(stream, "%02d:%02d:%02d.%03ld | %5.5s | %10.10s | %s\033[0m\n",
+    fprintf(stderr, "%02d:%02d:%02d.%03ld | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds, now.tv_nsec / 1000000,
             logging_levels[level], module_name, buffer);
-    fflush(stream);
+    fflush(stderr);
 
     return SUCCESS;
 }

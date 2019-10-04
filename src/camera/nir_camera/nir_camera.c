@@ -26,7 +26,7 @@ int init_nir_camera(void* args){
 
     int ret = cam_setup(&cam_info, 'n');
     if(ret == ENODEV){
-        logging(MAIN_LOG, ERROR, "INIT", "NIR camera not connected");
+        logging(ERROR, "INIT", "NIR camera not connected");
     }
     else if(ret != SUCCESS){
         return FAILURE;

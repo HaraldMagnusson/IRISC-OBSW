@@ -101,18 +101,18 @@ int main(int argc, char* const argv[]){
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
+    /* add buffer to stderr */
+    if(setvbuf(stderr, stderr_buf, _IOLBF, 4096)){
+        logging(ERROR, "INIT", "Failed to set buffer for stderr");
+    }
+
     /* redirect stderr to a log file */
     /* freopen("../test.log", "w", stderr); */
 
-    /* add buffer to stderr */
-    if(setvbuf(stderr, stderr_buf, _IOLBF, 4096)){
-        logging(MAIN_LOG, ERROR, "INIT", "Failed to set buffer for stderr");
-    }
-
     ret = mlockall(MCL_CURRENT|MCL_FUTURE);
     if( ret != 0 ){
-        logging(MAIN_LOG, ERROR, "INIT",
-            "init: Failed mlockall. Return value: %d, %s", errno, strerror(errno));
+        logging(ERROR, "INIT",
+            "init: Failed mlockall. Return value: %m");
         //return FAILURE;
     }
 
@@ -145,23 +145,23 @@ static int init_func(char* const argv[]){
         }
 
         if( ret == SUCCESS ){
-            logging(MAIN_LOG, INFO, "INIT",
+            logging(INFO, "INIT",
                     "Module \"%s\" initialised successfully.",
                     init_sequence[i].name);
         } else if( ret == FAILURE ){
-            logging(MAIN_LOG, ERROR, "INIT",
+            logging(ERROR, "INIT",
                     "Module \"%s\" FAILED TO INITIALISE, return value: %d",
                     init_sequence[i].name, ret);
             ++count;
         } else {
-            logging(MAIN_LOG, ERROR, "INIT",
+            logging(ERROR, "INIT",
                     "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
                     init_sequence[i].name, ret, strerror(ret));
             ++count;
         }
     }
 
-    logging(MAIN_LOG, INFO, "INIT",
+    logging(INFO, "INIT",
         "A total of %d modules initialised successfully and %d failed.",
         MODULE_COUNT-count, count);
 
@@ -233,12 +233,12 @@ static void sleep_m(void){
     get_gps(&gps);
 
     #ifdef SEQ_DEBUG
-        logging(MAIN_LOG, DEBUG, "MODE", "altitude: %f", gps.alt);
+        logging(DEBUG, "MODE", "altitude: %f", gps.alt);
     #endif
 
     if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
         /* rotate telescope */
-        logging(MAIN_LOG, INFO, "MODE", "rotating out telescope");
+        logging(INFO, "MODE", "rotating out telescope");
 
         //TODO: rotate telescope
 
@@ -255,7 +255,7 @@ static void sleep_m(void){
     if(!gps.out_of_date && gps.alt > 14000 && gyro_wake_flag == '0'){
         /* wake gyro */
 
-        logging(MAIN_LOG, INFO, "MODE", "waking gyroscope");
+        logging(INFO, "MODE", "waking gyroscope");
         pthread_mutex_lock(&mutex_cond_gyro);
         pthread_cond_signal(&cond_gyro);
         pthread_mutex_unlock(&mutex_cond_gyro);
@@ -295,7 +295,7 @@ static void sleep_m(void){
             set_mode(WAKE);
         }
         else{
-            logging(MAIN_LOG, INFO,
+            logging(INFO,
                     "MODE", "Gondola rotation rate too high to start observation: %lf",
                     ang_rate);
         }
@@ -318,12 +318,12 @@ static void normal_m(void){
 
 static void reset_m(void){
     for(int ii=0; ii<20; ++ii){
-        logging(MAIN_LOG, INFO, "MODE", "resetting: %d/%d", ii, 20);
+        logging(INFO, "MODE", "resetting: %d/%d", ii, 20);
         sleep(1);
     }
     set_mode(WAKE);
 
-    logging(MAIN_LOG, INFO, "MODE", "waking gyroscope");
+    logging(INFO, "MODE", "waking gyroscope");
     pthread_mutex_lock(&mutex_cond_gyro);
     pthread_cond_signal(&cond_gyro);
     pthread_mutex_unlock(&mutex_cond_gyro);
@@ -331,12 +331,12 @@ static void reset_m(void){
 
 static void wake_m(void){
 
-    logging(MAIN_LOG, INFO, "MODE", "waking encoder");
+    logging(INFO, "MODE", "waking encoder");
     pthread_mutex_lock(&mutex_cond_enc);
     pthread_cond_signal(&cond_enc);
     pthread_mutex_unlock(&mutex_cond_enc);
 
-    logging(MAIN_LOG, INFO, "MODE", "waking star tracker");
+    logging(INFO, "MODE", "waking star tracker");
     pthread_mutex_lock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
     pthread_mutex_unlock(&mutex_cond_st);

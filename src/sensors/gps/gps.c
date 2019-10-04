@@ -25,7 +25,7 @@ int init_gps(void* args){
 
     int ret = pthread_mutex_init( &mutex_gps, NULL );
     if( ret ){
-        logging(MAIN_LOG, ERROR, "GPS",
+        logging(ERROR, "GPS",
                 "The initialisation of the gps mutex failed with code %d.\n",
                 ret);
         return FAILURE;

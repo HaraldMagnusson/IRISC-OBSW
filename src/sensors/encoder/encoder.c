@@ -24,7 +24,7 @@ int init_encoder(void* args){
 
     int ret = pthread_mutex_init( &mutex_encoder, NULL );
     if( ret ){
-        logging(MAIN_LOG, ERROR, "INIT",
+        logging(ERROR, "INIT",
                 "The initialisation of the encoder mutex failed with code %d.\n",
                 ret);
         return FAILURE;

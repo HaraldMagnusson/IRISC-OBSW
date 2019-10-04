@@ -31,7 +31,7 @@ int init_gpio(void* args){
 
     int ret = pthread_mutex_init(&mutex_export, NULL);
     if( ret ){
-        logging(MAIN_LOG, ERROR, "GPIO",
+        logging(ERROR, "GPIO",
                 "The initialisation of the gpio export mutex failed: %d, (%s)",
                 ret, strerror(ret));
         return ret;
@@ -39,7 +39,7 @@ int init_gpio(void* args){
 
     ret = pthread_mutex_init(&mutex_unexport, NULL);
     if( ret ){
-        logging(MAIN_LOG, ERROR, "GPIO",
+        logging(ERROR, "GPIO",
                 "The initialisation of the gpio unexport mutex failed: %d, (%s)",
                 ret, strerror(ret));
         return ret;
@@ -47,7 +47,7 @@ int init_gpio(void* args){
 
     ret = pthread_mutex_init(&mutex_direction, NULL);
     if( ret ){
-        logging(MAIN_LOG, ERROR, "GPIO",
+        logging(ERROR, "GPIO",
                 "The initialisation of the gpio direction mutex failed: %d, (%s)",
                 ret, strerror(ret));
         return ret;
@@ -55,7 +55,7 @@ int init_gpio(void* args){
 
     ret = pthread_mutex_init(&mutex_read, NULL);
     if( ret ){
-        logging(MAIN_LOG, ERROR, "GPIO",
+        logging(ERROR, "GPIO",
                 "The initialisation of the gpio read mutex failed: %d, (%s)",
                 ret, strerror(ret));
         return ret;
@@ -63,7 +63,7 @@ int init_gpio(void* args){
 
     ret = pthread_mutex_init(&mutex_write, NULL);
     if( ret ){
-        logging(MAIN_LOG, ERROR, "GPIO",
+        logging(ERROR, "GPIO",
                 "The initialisation of the gpio write mutex failed: %d, (%s)",
                 ret, strerror(ret));
         return ret;
@@ -79,11 +79,11 @@ int gpio_export(int pin){
     int fd = open("/sys/class/gpio/export", O_WRONLY);
     if(fd == -1){
         if(errno == EBUSY){
-            logging(MAIN_LOG, WARN, "GPIO", "Pin %d already exported", pin);
+            logging(WARN, "GPIO", "Pin %d already exported", pin);
             pthread_mutex_unlock(&mutex_export);
             return SUCCESS;
         }
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to export pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to export pin: %d, (%s)",
                 pin, strerror(errno));
         pthread_mutex_unlock(&mutex_export);
         return errno;
@@ -94,17 +94,17 @@ int gpio_export(int pin){
     int ret = write(fd, buffer, count);
     if(ret == -1){
         if(errno == EBUSY){
-            logging(MAIN_LOG, WARN, "GPIO", "Pin %d already exported", pin);
+            logging(WARN, "GPIO", "Pin %d already exported", pin);
             pthread_mutex_unlock(&mutex_export);
             return SUCCESS;
         }
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to export pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to export pin: %d, (%s)",
                 pin, strerror(errno));
         close_unlock(fd, &mutex_export);
         return errno;
     }
     else if(ret != count){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to export pin: %d", pin);
+        logging(ERROR, "GPIO", "Failed to export pin: %d", pin);
         close_unlock(fd, &mutex_export);
         return FAILURE;
     }
@@ -119,7 +119,7 @@ int gpio_unexport(int pin){
 
     int fd = open("/sys/class/gpio/unexport", O_WRONLY);
     if(fd == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to unexport pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to unexport pin: %d, (%s)",
                 pin, strerror(errno));
         pthread_mutex_unlock(&mutex_unexport);
         return errno;
@@ -129,13 +129,13 @@ int gpio_unexport(int pin){
     size_t count = snprintf(buffer, 3, "%d", pin);
     int ret = write(fd, buffer, count);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to unexport pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to unexport pin: %d, (%s)",
                 pin, strerror(errno));
         close_unlock(fd, &mutex_unexport);
         return errno;
     }
     else if(ret != count){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to unexport pin: %d", pin);
+        logging(ERROR, "GPIO", "Failed to unexport pin: %d", pin);
         close_unlock(fd, &mutex_unexport);
         return FAILURE;
     }
@@ -154,7 +154,7 @@ int gpio_direction(int pin, int dir){
 
     int fd = open(path, O_WRONLY);
     if(fd == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to set direction of pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to set direction of pin: %d, (%s)",
                 pin, strerror(errno));
         pthread_mutex_unlock(&mutex_direction);
         return errno;
@@ -163,13 +163,13 @@ int gpio_direction(int pin, int dir){
     int count = IN == dir ? 2 : 3;
     int ret = write(fd, &directions[IN == dir ? 0 : 3], count);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to set direction of pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to set direction of pin: %d, (%s)",
                 pin, strerror(errno));
         close_unlock(fd, &mutex_direction);
         return errno;
     }
     else if(ret != count){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to set direction of pin: %d", pin);
+        logging(ERROR, "GPIO", "Failed to set direction of pin: %d", pin);
         close_unlock(fd, &mutex_direction);
         return FAILURE;
     }
@@ -187,7 +187,7 @@ int gpio_read(int pin, int* val){
 
     int fd = open(path, O_RDONLY);
     if(fd == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to read pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to read pin: %d, (%s)",
                 pin, strerror(errno));
         pthread_mutex_unlock(&mutex_read);
         return errno;
@@ -195,7 +195,7 @@ int gpio_read(int pin, int* val){
 
     int ret = read(fd, &value, 2);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to read pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to read pin: %d, (%s)",
                 pin, strerror(errno));
         close_unlock(fd, &mutex_read);
         return errno;
@@ -216,7 +216,7 @@ int gpio_write(int pin, int val){
 
     int fd = open(path, O_WRONLY);
     if(fd == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to write to pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to write to pin: %d, (%s)",
                 pin, strerror(errno));
         pthread_mutex_unlock(&mutex_write);
         return errno;
@@ -228,7 +228,7 @@ int gpio_write(int pin, int val){
         return SUCCESS;
     }
     else if(ret == -1){
-        logging(MAIN_LOG, ERROR, "GPIO", "Failed to write to pin: %d, (%s)",
+        logging(ERROR, "GPIO", "Failed to write to pin: %d, (%s)",
                 pin, strerror(errno));
         close_unlock(fd, &mutex_read);
         return errno;

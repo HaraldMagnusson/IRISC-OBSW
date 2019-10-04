@@ -25,7 +25,7 @@ int init_star_tracker(void* args){
 
     int ret = pthread_mutex_init( &mutex_st, NULL );
     if( ret ){
-        logging(MAIN_LOG, ERROR, "INIT",
+        logging(ERROR, "INIT",
                 "The initialisation of the star tracker"
                 " mutex failed with code %d.\n", ret);
         return FAILURE;

@@ -50,7 +50,7 @@ int init_encoder_poller(void* args){
 
     encoder_log = fopen(log_fn, "a");
     if(encoder_log == NULL){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to open encoder log file, (%s)",
                 strerror(errno));
         return errno;
@@ -64,7 +64,7 @@ int init_encoder_poller(void* args){
 
     fd_spi00 = open(spi00, O_RDONLY);
     if(fd_spi00 == -1){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to open spidev0.0, %s",
                 strerror(errno));
         return errno;
@@ -72,7 +72,7 @@ int init_encoder_poller(void* args){
 
     fd_spi01 = open(spi01, O_RDONLY);
     if(fd_spi00 == -1){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to open spidev0.1, %s",
                 strerror(errno));
         return errno;
@@ -80,7 +80,7 @@ int init_encoder_poller(void* args){
 
     ret = ioctl(fd_spi00, SPI_IOC_WR_MODE, &spi_mode);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to set spi mode for spidev0.0, %s",
                 strerror(errno));
         return errno;
@@ -88,7 +88,7 @@ int init_encoder_poller(void* args){
 
     ret = ioctl(fd_spi01, SPI_IOC_WR_MODE, &spi_mode);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to set spi mode for spidev0.1, %s",
                 strerror(errno));
         return errno;
@@ -96,7 +96,7 @@ int init_encoder_poller(void* args){
 
     ret = ioctl(fd_spi00, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to set spi speed for spidev0.0, %s",
                 strerror(errno));
         return errno;
@@ -104,7 +104,7 @@ int init_encoder_poller(void* args){
 
     ret = ioctl(fd_spi01, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "Encoder",
+        logging(ERROR, "Encoder",
                 "Failed to set spi speed for spidev0.1, %s",
                 strerror(errno));
         return errno;
@@ -177,16 +177,16 @@ static int checksum_ctl(unsigned char data[2][2]){
 
     if(ctl[RA]){
         if(ctl[DEC]){
-            logging(MAIN_LOG, WARN, "Encoder",
+            logging(WARN, "Encoder",
                     "Incorrect checksum from encoders: ra & dec");
             return FAILURE;
         }
-        logging(MAIN_LOG, WARN, "Encoder",
+        logging(WARN, "Encoder",
                 "Incorrect checksum from encoder: ra");
         return FAILURE;
     }
     if(ctl[DEC]){
-        logging(MAIN_LOG, WARN, "Encoder",
+        logging(WARN, "Encoder",
                 "Incorrect checksum from encoder: dec");
         return FAILURE;
     }
@@ -232,7 +232,7 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
     logging_csv(encoder_log, "%010.6lf,%010.6lf", ang[RA], ang[DEC]);
 
     #ifdef ENCODER_DEBUG
-        logging(MAIN_LOG, DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
     #endif
 
     enc->ra = ang[RA];

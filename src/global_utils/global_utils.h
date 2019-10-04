@@ -29,8 +29,6 @@
 #define GYRO_SAMPLE_TIME 10000000    /* unit: nanoseconds */
 #define ENCODER_SAMPLE_TIME 10000000 /* unit: nanoseconds */
 
-#define MAIN_LOG stderr
-
 /* the threshold for the acceptable angular rate of the gondola to start observation phase */
 #define GON_ROT_THRESHOLD 1.0 /* unit: degree per second */
 
@@ -52,7 +50,7 @@ const char* const get_top_dir(void);
 
 int init_submodules(const module_init_t init_sequence[], int module_count);
 
-int logging(FILE* stream, int level, char module_name[12],
+int logging(int level, char module_name[12],
             const char * format, ... );
 
 void logging_csv(FILE* stream, const char* format, ...);

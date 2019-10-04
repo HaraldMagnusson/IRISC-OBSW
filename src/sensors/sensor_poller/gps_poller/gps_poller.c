@@ -50,7 +50,7 @@ int init_gps_poller(void* args){
 
     gps_log = fopen(log_fn, "a");
     if(gps_log == NULL){
-        logging(MAIN_LOG, ERROR, "GPS",
+        logging(ERROR, "GPS",
             "Failed to open gps log file, (%s)",
             strerror(errno));
         return errno;
@@ -61,14 +61,14 @@ int init_gps_poller(void* args){
     fd_spi12 = open(spi12, O_RDONLY);
 
     if(fd_spi12 < 0){
-        logging(MAIN_LOG, ERROR, "GPS", "Failed to open spi device, %m");
+        logging(ERROR, "GPS", "Failed to open spi device, %m");
         return errno;
     }
 
     __u32 speed = 200000;
     int ret = ioctl(fd_spi12, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
     if(ret == -1){
-        logging(MAIN_LOG, ERROR, "GPS",
+        logging(ERROR, "GPS",
                 "Failed to set spi speed for spidev1.2, (%s)",
                 strerror(errno));
         return errno;
@@ -104,7 +104,7 @@ static void* gps_thread_func(void* args){
                     buffer[5] == 'A'){
 
                 #if GPS_DEBUG
-                    logging(MAIN_LOG, DEBUG, "GPS", "%s", buffer);
+                    logging(DEBUG, "GPS", "%s", buffer);
                 #endif
 
                 ret = process_gps(buffer);
@@ -135,7 +135,7 @@ static void* gps_thread_func(void* args){
  */
 static int process_gps(const unsigned char str[BUFFER_S]){
     if( check_chksum(str) ){
-        logging(MAIN_LOG, WARN, "GPS", "Incorrect checksum in GPS data.");
+        logging(WARN, "GPS", "Incorrect checksum in GPS data.");
         return FAILURE;
     }
 
@@ -144,7 +144,7 @@ static int process_gps(const unsigned char str[BUFFER_S]){
 
     /* Check data quality */
     if( NMEA_str_arr[6][0] == '0' ){
-        logging(MAIN_LOG, WARN, "GPS", "Bad GPS data quality.");
+        logging(WARN, "GPS", "Bad GPS data quality.");
         return FAILURE;
     }
 
@@ -167,7 +167,7 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     logging_csv(gps_log, "%010.7f,%010.6f,%07.1f", gps.lat, gps.lon, gps.alt);
 
     #if GPS_DEBUG
-        logging(MAIN_LOG, DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",
+        logging(DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",
                 gps.lat, gps.lon, gps.alt);
     #endif
 
