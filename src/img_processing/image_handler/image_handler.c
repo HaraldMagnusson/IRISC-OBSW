@@ -119,11 +119,7 @@ static int compress_file(const char* file_name_in, const char* file_name_out, in
  */
 int compression_stream(const char* in_filename, const char* out_filename) {
 
-    if(compress_file(in_filename, out_filename, COMPRESSION_LEVEL)){
-        return SUCCESS;
-    } else {
-        return FAILURE;
-    }
+    return compress_file(in_filename, out_filename, COMPRESSION_LEVEL);
 
 }
 
