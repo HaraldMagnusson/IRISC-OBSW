@@ -35,20 +35,23 @@ static size_t fread_return_size(void* buffer, size_t sizeToRead, FILE* file)
     size_t const readSize = fread(buffer, 1, sizeToRead, file);
     if (readSize == sizeToRead) return readSize;
     if (feof(file)) return readSize;
-    exit(ERROR);
+    logging(ERROR, "image_handler", "fread_return_size failed");
+    return FAILURE;
 }
 
-static void compress_file(const char* file_name_in, const char* file_name_out, int c_level) {
+static int compress_file(const char* file_name_in, const char* file_name_out, int c_level) {
 
     size_t ret;
 
     FILE* file_in = fopen(file_name_in, "rb");
     if(file_in==NULL){
         logging(ERROR, "image_handler", "Could not open in file");
+        return FAILURE;
     }
     FILE* file_out = fopen(file_name_out, "wb");
     if(file_out==NULL){
         logging(ERROR, "image_handler", "Could not open out file");
+        return FAILURE;
     }
 
     
@@ -70,6 +73,9 @@ static void compress_file(const char* file_name_in, const char* file_name_out, i
     size_t read;
     
     while ((read = fread_return_size(buff_in, to_read, file_in))) {
+        if(read==-1){
+            return FAILURE;
+        }
 
         int const last_chunk = (read < to_read);
         
@@ -83,6 +89,7 @@ static void compress_file(const char* file_name_in, const char* file_name_out, i
 
             if(ZSTD_isError(remaining)){
                 logging(ERROR, "Img Handler", "compressStream2 failed, %d", remaining);
+                return FAILURE;
             }
 
             fwrite(buff_out, 1, output.pos, file_out);
@@ -99,6 +106,8 @@ static void compress_file(const char* file_name_in, const char* file_name_out, i
     free(buff_in);
     free(buff_out);
 
+    return SUCCESS;
+
 }
 
 /* compression_stream:
@@ -110,9 +119,11 @@ static void compress_file(const char* file_name_in, const char* file_name_out, i
  */
 int compression_stream(const char* in_filename, const char* out_filename) {
 
-    compress_file(in_filename, out_filename, 3);
-
-    return SUCCESS;
+    if(compress_file(in_filename, out_filename, COMPRESSION_LEVEL)){
+        return SUCCESS;
+    } else {
+        return FAILURE;
+    }
 
 }
 
@@ -135,7 +146,7 @@ static void* thread_func(void* param){
         temp = read_data_queue();
 
         time(&epoch_time);
-        gmtime_r(&epoch_time, &date_time);
+        localtime_r(&epoch_time, &date_time);
 
         if(temp.type==IMAGE_MAIN){
             
@@ -149,9 +160,12 @@ static void* thread_func(void* param){
 
         }
 
-        compression_stream(temp.filepath, out_name);
-        remove(temp.filepath);
-        send_telemetry(out_name, temp.priority, 1, 0);
+        if(compression_stream(temp.filepath, out_name)){
+            remove(temp.filepath);
+            send_telemetry(out_name, temp.priority, 1, 0);
+        } else {
+            queue_image(temp.filepath, temp.priority , temp.type);
+        }
 
         sleep(10);
 

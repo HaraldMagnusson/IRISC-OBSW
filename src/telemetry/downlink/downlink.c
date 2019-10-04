@@ -46,6 +46,7 @@ static void* thread_func(void* param){
             data = temp.filepath;
             len = strlen(data);
 
+            /* ID for string */
             char* bytes = (char*)&len;
             msg[1] = bytes[0];
             msg[2] = bytes[1];
@@ -66,7 +67,7 @@ static void* thread_func(void* param){
                 msg[3]=0;
                 msg[4]=0;
                 msg[5]=0;
-                write_elink(msg, 6);
+                write_elink(msg, 6); /* Telling GS a file is inc */
                 send_telemetry_local(temp.filepath, (temp.priority)-1, temp.flag, ret);
             }
         }
@@ -117,18 +118,21 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
         packets=n;
     }
     
+    /* ID for file info */
     msg[0]=1;
     msg[1]=0;
     
-
+    /* How many packets that have already been sent */
     char* current_packet_num = (char*)&current_packet;
     msg[2] = current_packet_num[0];
     msg[3] = current_packet_num[1];
 
+    /* Total packets for file */
     char* packet_num = (char*)&packets;
     msg[4] = packet_num[0];
     msg[5] = packet_num[1];
 
+    /* filepath */
     char* fn = &filepath[strlen(filepath)];
     while(*--fn!='/'){}
     fn++;
@@ -137,6 +141,7 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
         msg[ii+8] = fn[ii];
     }
 
+    /* Length of filepath */
     char* bytes_num = (char*)&len;
     msg[6] = bytes_num[0];
     msg[7] = bytes_num[1];
@@ -154,16 +159,19 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
     }
 
     for(int i = 0; i<n;i++){
-
+        
+        /* ID for file data */
         temp[0]=1;
         temp[1]=1;
 
+        /* What packet is being sent */
         char* current_packet_num = (char*)&current_packet;
         temp[2] = current_packet_num[0];
         temp[3] = current_packet_num[1];
 
         read_bytes = fread(buffer, sizeof(char), max_packet_size, fp);
         
+        /* Bytes in packet */
         char* bytes_num = (char*)&read_bytes;
         temp[4] = bytes_num[0];
         temp[5] = bytes_num[1];
@@ -188,6 +196,7 @@ static unsigned short send_file(char *filepath, unsigned short packets_sent, int
     logging(DEBUG, "downlink", "Done sending file: %s", filepath);
 
     fclose(fp);
+    free(total);
 
     return 0;
 }

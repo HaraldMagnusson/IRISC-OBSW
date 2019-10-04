@@ -16,8 +16,10 @@
 #define EXP_FAILED 3
 
 /* definitions for socket creation */
-#define DOWNLINK_SERVER_PORT 8888
-#define DOWNLINK_SERVER_IP   "127.0.0.1"
+#define SERVER_PORT 1337
+#define SERVER_PORT_BACKUP 420
+
+#define COMPRESSION_LEVEL 3
 
 #define DEBUG   0
 #define INFO    1

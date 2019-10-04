@@ -24,10 +24,6 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-
-#define SERVER_PORT 1337
-#define SERVER_PORT_BACKUP 420
-
 static int sockfd, newsockfd, init_flag = 0;
 
 pthread_mutex_t e_link_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -69,9 +65,8 @@ int write_elink(char *buffer, int bytes){
     return SUCCESS;
 }
 
-char* read_elink(int bytes){
+int read_elink(char *buffer, int bytes){
     int n, bytes_avail;
-    char *buffer = malloc(bytes);
 
     do{
         ioctl(sockfd, FIONREAD, &bytes_avail);
@@ -86,12 +81,11 @@ char* read_elink(int bytes){
         logging(DEBUG, "e_link", "Message read from GS: %s", buffer);
     }
 
-    return buffer;
+    return SUCCESS;
 }
 
 static void* thread_socket(void* param){
 
-    int portno;
     socklen_t clilen;
     struct sockaddr_in serv_addr, cli_addr;
 
@@ -105,18 +99,21 @@ static void* thread_socket(void* param){
     logging(INFO, "e_link", "Socket open");
 
     bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = SERVER_PORT;
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
-        logging(ERROR, "e_link", "Can't bind socket: %s", strerror(errno));
-        sleep(1);
-        serv_addr.sin_port = htons(SERVER_PORT_BACKUP);
+    while (1){
+        serv_addr.sin_port = htons(SERVER_PORT);
         if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
             logging(ERROR, "e_link", "Can't bind socket: %s", strerror(errno));
+            sleep(1);
+            serv_addr.sin_port = htons(SERVER_PORT_BACKUP);
+            if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
+                logging(ERROR, "e_link", "Can't bind socket: %s", strerror(errno));
+                continue;
+            }
         }
+        break;
     }
     logging(INFO, "e_link", "Binded to socket");
 
@@ -129,10 +126,10 @@ static void* thread_socket(void* param){
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         if(newsockfd < 0){
             logging(ERROR, "e_link", "Error when accepting GS");
+            continue;
         }
         logging(INFO, "e_link", "Accepted connection to GS");
         pthread_mutex_unlock( &e_link_mutex );
-
         init_flag = 1;
     }
 

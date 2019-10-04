@@ -14,5 +14,5 @@
 /* initialise the img processing component */
 int init_img_processing(void* args);
 
-/* enqueue an image with meta data in the queue to be processed */
-void queue_image( const char *filepath, int p , int type);
+/* enqueue an image with meta data in the queue to be processed. p is the priority */
+void queue_image( const char *filepath, int p);

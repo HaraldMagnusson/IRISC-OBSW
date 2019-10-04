@@ -33,9 +33,9 @@ int init_img_processing(void* args){
     return SUCCESS;
 }
 
-int queue_image(char *filepath, int p, int type){
+int queue_image(char *filepath, int p){
 
-    store_data_local(filepath, p, type);
+    store_data_local(filepath, p, 1);
 
     return SUCCESS;
 }

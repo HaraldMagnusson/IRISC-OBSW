@@ -15,7 +15,7 @@ int init_elink(void* args);
 int write_elink( char *buffer, int bytes);
 
 /* Reads TC sent over elink*/
-char* read_elink(int bytes);
+int read_elink(char *buffer, int bytes);
 
 void close_socket( void );
 

@@ -29,7 +29,7 @@
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
         {"downlink_queue",       &init_downlink_queue},
-        {"downlink_", &init_downlink}
+        {"downlink", &init_downlink}
 };
 
 int init_telemetry(void* args){

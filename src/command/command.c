@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define COMMAND_REBOOT 10
 #define COMMAND_UPDATE_TARGET 11
@@ -30,12 +31,12 @@ int init_command(void* args){
 }
 
 static void* thread_command(void* param){
-    char *buffer;
+    char buffer[1400];
     int ret;
     unsigned short command;
 
     while(1){
-        buffer = read_elink(2);
+        read_elink(buffer, 2);
         command = *(unsigned short*)&buffer[0];
 
         ret = handle_command(command);  
@@ -46,7 +47,7 @@ static void* thread_command(void* param){
 
 static int handle_command(unsigned short command){
 
-    char *buffer = malloc(1394);
+    char buffer[1400];
 
     switch(command){
 
@@ -61,15 +62,15 @@ static int handle_command(unsigned short command){
 
         case COMMAND_DOWNLINK_DATARATE:
 
-            buffer = read_elink(2);
+            read_elink(buffer, 2);
             unsigned short datarate = *(unsigned short*)&buffer[0];
             set_datarate(datarate);
-            buffer = "Datarate set to: ";
+            strncpy(buffer, "Datarate set to: ", 1400);
 
             char* temp_char = (char*)&datarate;
             buffer[17] = temp_char[0];
             buffer[18] = temp_char[1];
-            buffer[19] = '0';
+            buffer[19] = '\0';
 
             send_telemetry_local(buffer, 1, 0, 0);
 
