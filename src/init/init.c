@@ -85,6 +85,9 @@ static void sigint_handler(int signum){
     #endif
     write(STDOUT_FILENO, "gpio pin unexported\n", 20);
 
+    close_socket();
+    write(STDOUT_FILENO, "elink socket closed\n", 20);
+
     pid_t st_pid = get_star_tracker_pid();
     if(st_pid != FAILURE){
         kill(st_pid, SIGKILL);
@@ -163,7 +166,7 @@ static int init_func(char* const argv[]){
         "A total of %d modules initialised successfully and %d failed.",
         MODULE_COUNT-count, count);
 
-    if(count != 0){
+    if (count != 0) {
         return FAILURE;
     }
 

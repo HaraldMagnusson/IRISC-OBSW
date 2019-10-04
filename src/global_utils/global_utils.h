@@ -15,6 +15,12 @@
 #define EXP_NOT_READY 1
 #define EXP_FAILED 3
 
+/* definitions for socket creation */
+#define SERVER_PORT 1337
+#define SERVER_PORT_BACKUP 420
+
+#define COMPRESSION_LEVEL 3
+
 #define DEBUG   0
 #define INFO    1
 #define WARN    2
@@ -33,7 +39,7 @@
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);
 typedef struct {
-    const char*   name;
+    const char *name;
     init_function init;
 } module_init_t;
 
