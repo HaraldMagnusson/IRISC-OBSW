@@ -13,12 +13,12 @@ if plot1 is 1:
 	print('1st plot:\n')
 
 	with open('simdata.txt','r') as csvfile:
-		plots = csv.reader(csvfile, delimiter=',')
+		plots = csv.DictReader(csvfile, delimiter=',')
 		for row in plots:
-			x.append(float(row[0]))
-			y.append(float(row[1]))
-			y_err.append(float(row[2]))
-			y_target.append(float(row[3]))
+			x.append(float(row["sim time"]))
+			y.append(float(row["current pos"]))
+			y_err.append(float(row["pos error"]))
+			y_target.append(float(row["target pos"]))
 
 	plt.figure(1)
 	plt.plot(x,y, label='position')
@@ -39,12 +39,12 @@ if plot2 is 1:
 	print('2nd plot:\n')
 
 	with open('simdata.txt','r') as csvfile:
-		plots = csv.reader(csvfile, delimiter=',')
+		plots = csv.DictReader(csvfile, delimiter=',')
 		for row in plots:
-			x2.append(float(row[0]))
-			y2.append(float(row[4]))
-			y3.append(float(row[5]))
-			y4.append(float(row[6]))
+			x2.append(float(row["sim time"]))
+			y2.append(float(row["integral"]))
+			y3.append(float(row["derivative"]))
+			y4.append(float(row["proportional"]))
 
 
 	plt.figure(2)
