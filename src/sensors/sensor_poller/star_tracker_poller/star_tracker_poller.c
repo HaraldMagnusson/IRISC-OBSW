@@ -9,10 +9,11 @@
 
 #include <pthread.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include <math.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -48,6 +49,7 @@ static int exp_time = 5*1000*1000, gain = 300;
 /* filenames for images */
 static char st_fn[100], out_fp[100];
 static float st_return[4];
+static FILE* star_tracker_log;
 
 #ifndef ST_TEST
     static char out_fn[100];
@@ -58,6 +60,20 @@ static struct timespec wake;
 
 int init_star_tracker_poller(void* args){
 
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/star_tracker.log");
+
+    star_tracker_log = fopen(log_fn, "a");
+    if(star_tracker_log == NULL){
+        logging(ERROR, "Star Tracker",
+                "Failed to open star tracker log file, %m");
+        return errno;
+    }
+
+    /* star tracker setup */
     wake.tv_nsec = ST_WAIT_TIME;
     wake.tv_sec = 0;
 
@@ -67,7 +83,7 @@ int init_star_tracker_poller(void* args){
     strcpy(out_fp, get_top_dir());
     strcat(out_fp, "output/guiding/");
 
-    return create_thread("star_tracker_poller", st_poller_thread, 23);
+    return create_thread("st_poller", st_poller_thread, 23);
 }
 
 /*
@@ -164,7 +180,8 @@ static int call_tetra(float st_return[]){
             diff.tv_nsec += 1000000000;
         }
 
-        logging(DEBUG, "Star Tracker", "Star tracker sample time: %ld.%09ld s",
+        logging(DEBUG, "Star Tracker",
+                "Star tracker sample time: %ld.%09ld s",
                 diff.tv_sec, diff.tv_nsec);
         logging(DEBUG, "Star Tracker", "Output: %f, %f, %f, %f",
                 st_return[0], st_return[1], st_return[2], st_return[3]);
@@ -172,7 +189,7 @@ static int call_tetra(float st_return[]){
         irisc_tetra(st_return);
     #endif
 
-    if(st_return[3] == 0){
+    if(fabs(st_return[3]) < 0.001){
         logging(WARN, "Star Tracker", "FoV = 0, lost in space failed");
         return FAILURE;
     }
@@ -180,6 +197,9 @@ static int call_tetra(float st_return[]){
     st.ra = st_return[0];
     st.dec = st_return[1];
     st.roll = st_return[2];
+
+    logging_csv(star_tracker_log, "%010.6f,%010.7f,%010.6f",
+            st.ra, st.dec, st.roll);
 
     set_star_tracker(&st);
 
@@ -206,7 +226,7 @@ static void irisc_tetra(float st_return[]) {
     char* cmd[6] = {
         "chrt",
         "-f",
-        "30",
+        "23",
         "python",
         TETRAPATH,
         NULL

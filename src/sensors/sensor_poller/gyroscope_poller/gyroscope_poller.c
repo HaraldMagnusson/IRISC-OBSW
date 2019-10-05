@@ -11,7 +11,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -28,11 +29,26 @@ static void* thread_func(void* args);
 static void active_m(void);
 
 static FT_HANDLE fd;
+static FILE* gyro_log;
 
 pthread_mutex_t mutex_cond_gyro;
 pthread_cond_t cond_gyro;
 
 int init_gyroscope_poller(void* args){
+
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/gyro.log");
+
+    gyro_log = fopen(log_fn, "a");
+    if(gyro_log == NULL){
+        logging(ERROR, "Gyro",
+            "Failed to open gyro log file, (%s)",
+            strerror(errno));
+        return errno;
+    }
 
     /* gpio pin is used for trigger to poll the gyroscope */
     int ret = gpio_export(GYRO_TRIG_PIN);
@@ -56,29 +72,29 @@ int init_gyroscope_poller(void* args){
 
     stat = FT_OpenEx(SERIAL_NUM, FT_OPEN_BY_SERIAL_NUMBER, &fd);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to initiate UART, error: %d",
-                stat);
+        logging(ERROR, "GYRO",
+                "Failed to initiate UART, error: %d", stat);
         return FAILURE;
     }
 
     stat = FT_SetBaudRate(fd, FTDI_BAUDRATE);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to set baudrate for UART, error: %d",
-                stat);
+        logging(ERROR, "GYRO",
+                "Failed to set baudrate for UART, error: %d", stat);
         return FAILURE;
     }
 
     stat = FT_SetTimeouts(fd, 4, 4);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to set timeout for UART, error: %d",
-                stat);
+        logging(ERROR, "GYRO",
+                "Failed to set timeout for UART, error: %d", stat);
         return FAILURE;
     }
 
     stat = FT_SetLatencyTimer(fd, 2);
     if(stat != FT_OK){
-        logging(ERROR, "GYRO", "Failed to set latency timer for UART, "
-                "error: %d", stat);
+        logging(ERROR, "GYRO",
+                "Failed to set latency timer for UART, error: %d", stat);
         return FAILURE;
     }
 
@@ -92,7 +108,8 @@ static void* thread_func(void* args){
 
     ret = FT_Purge(fd, FT_PURGE_RX);
     if(ret != FT_OK){
-        logging(WARN, "GYRO", "Failed to purge UART receive buffer: %d", ret);
+        logging(WARN, "GYRO",
+                "Failed to purge UART receive buffer: %d", ret);
     }
 
     pthread_mutex_lock(&mutex_cond_gyro);
@@ -163,8 +180,8 @@ static void active_m(void){
 
     /* check gyroscope data quality */
     if(data[10]){
-        logging(WARN, "Gyro", "Bad gyroscope data quality, status byte: %2x",
-                data[10]);
+        logging(WARN, "Gyro",
+                "Bad gyroscope data quality, status byte: %2x", data[10]);
         gyro_out_of_date();
         return;
     }
@@ -185,8 +202,12 @@ static void active_m(void){
 
     set_gyro(&gyro);
 
+    logging_csv(gyro_log, "%+011.6lf,%+011.6lf,%+011.6lf",
+            gyro.x, gyro.y, gyro.z);
+
     #if GYRO_DEBUG
-        logging(DEBUG, "Gyro", "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
+        logging(DEBUG, "Gyro",
+                "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
                 gyro.x, gyro.y, gyro.z);
     #endif
 }

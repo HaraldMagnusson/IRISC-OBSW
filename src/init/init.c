@@ -7,7 +7,6 @@
  */
 #define _GNU_SOURCE
 
-#include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -105,18 +104,18 @@ int main(int argc, char* const argv[]){
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
-    /* redirect stderr to a log file */
-    /* freopen("../test.log", "w", stderr); */
-
     /* add buffer to stderr */
     if(setvbuf(stderr, stderr_buf, _IOLBF, 4096)){
         logging(ERROR, "INIT", "Failed to set buffer for stderr");
     }
 
+    /* redirect stderr to a log file */
+    /* freopen("../test.log", "w", stderr); */
+
     ret = mlockall(MCL_CURRENT|MCL_FUTURE);
     if( ret != 0 ){
         logging(ERROR, "INIT",
-            "init: Failed mlockall. Return value: %d, %s", errno, strerror(errno));
+            "init: Failed mlockall. Return value: %m");
         //return FAILURE;
     }
 
@@ -149,15 +148,18 @@ static int init_func(char* const argv[]){
         }
 
         if( ret == SUCCESS ){
-            logging(INFO, "INIT", "Module \"%s\" initialised successfully.",
-                init_sequence[i].name);
+            logging(INFO, "INIT",
+                    "Module \"%s\" initialised successfully.",
+                    init_sequence[i].name);
         } else if( ret == FAILURE ){
-            logging(ERROR, "INIT", "Module \"%s\" FAILED TO INITIALISE, return value: %d",
-                init_sequence[i].name, ret);
+            logging(ERROR, "INIT",
+                    "Module \"%s\" FAILED TO INITIALISE, return value: %d",
+                    init_sequence[i].name, ret);
             ++count;
         } else {
-            logging(ERROR, "INIT", "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
-                init_sequence[i].name, ret, strerror(ret));
+            logging(ERROR, "INIT",
+                    "Module \"%s\" FAILED TO INITIALISE, return value: %d, %s",
+                    init_sequence[i].name, ret, strerror(ret));
             ++count;
         }
     }
@@ -296,7 +298,9 @@ static void sleep_m(void){
             set_mode(WAKE);
         }
         else{
-            logging(INFO, "MODE", "Gondola rotation rate too high to start observation: %lf", ang_rate);
+            logging(INFO,
+                    "MODE", "Gondola rotation rate too high to start observation: %lf",
+                    ang_rate);
         }
     }
 }

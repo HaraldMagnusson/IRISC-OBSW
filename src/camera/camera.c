@@ -5,7 +5,7 @@
  *          an interface to each camera.
  * -----------------------------------------------------------------------------
  */
-#include <stdio.h>
+
 #include <string.h>
 
 #include "global_utils.h"
@@ -26,12 +26,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 int init_camera(void* args){
 
     /* init whatever in this module */
-    int ret = init_submodules(init_sequence, MODULE_COUNT);
-    if( ret != SUCCESS ){
-        return ret;
-    }
-
-    return SUCCESS;
+    return init_submodules(init_sequence, MODULE_COUNT);
 }
 
 /* expose_guiding:

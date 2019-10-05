@@ -7,24 +7,11 @@
  * -----------------------------------------------------------------------------
  */
 
-/**
- * Module which has a responsibility of initialising downlink stream and
- * adding checksum to the sent info.
- *
- * @TODO Define the data types for the telemetry.
- * @TODO Define priority values for the possible telemetry types.
- */
-
-#include <stdio.h>
-#include <pthread.h>
-
 #include "global_utils.h"
-
 #include "downlink.h"
 #include "downlink_queue.h"
 
 #define MODULE_COUNT 2
-
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
@@ -35,12 +22,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 int init_telemetry(void* args){
 
     /* init whatever in this module */
-    int ret = init_submodules(init_sequence, MODULE_COUNT);
-    if (ret != SUCCESS) {
-        return ret;
-    }
-
-    return SUCCESS;
+    return init_submodules(init_sequence, MODULE_COUNT);
 }
 
 /**
@@ -54,7 +36,6 @@ int init_telemetry(void* args){
  * @return      0
  */
 int send_telemetry(char *filepath, int p, int flag, unsigned short packets_sent) {
-        //check_downlink_list();
     return send_telemetry_local(filepath, p, flag, packets_sent);
 }
 
