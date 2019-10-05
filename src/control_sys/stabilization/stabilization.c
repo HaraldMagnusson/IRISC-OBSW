@@ -54,9 +54,9 @@ static pid_values_t stab_alt_pid_values = {
 
 /* Tracking parameters */
 static pid_values_t track_az_pid_values = {
-        .kp = 1
-       ,.ki = 0
-       ,.kd = 0
+        .kp = 0.1
+       ,.ki = 0.01
+       ,.kd = 1
 };
 static pid_values_t track_alt_pid_values = {
         .kp = 1
@@ -166,14 +166,14 @@ void *stabilization_main_loop() {
         az_expected_rate = (az_current_control_vars.pid_output - az_current_control_vars.current_position);
         alt_expected_rate = (alt_current_control_vars.pid_output - alt_current_control_vars.current_position);
 
-        // Output saturation
-//        if(az_expected_rate > motor_rate_threshold*stabilization_timestep){
-//            fprintf(stderr, "> ^ saturation upward\n");
-//            az_current_control_vars.pid_output = az_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
-//        } else if (az_expected_rate < -motor_rate_threshold*stabilization_timestep) {
-//            fprintf(stderr, "> v saturation downward\n");
-//            az_current_control_vars.pid_output = az_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
-//        }
+//         Output saturation
+        if(az_expected_rate > motor_rate_threshold*stabilization_timestep){
+            fprintf(stderr, "> ^ saturation upward\n");
+            az_current_control_vars.pid_output = az_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
+        } else if (az_expected_rate < -motor_rate_threshold*stabilization_timestep) {
+            fprintf(stderr, "> v saturation downward\n");
+            az_current_control_vars.pid_output = az_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
+        }
 //
 //        if(alt_expected_rate > motor_rate_threshold*stabilization_timestep){
 //            alt_current_control_vars.pid_output = alt_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
