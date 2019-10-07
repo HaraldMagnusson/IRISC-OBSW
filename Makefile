@@ -10,3 +10,6 @@ clean:
 
 degen:
 	rm build/* -rf
+
+regen:
+	$(MAKE) degen && $(MAKE) gen

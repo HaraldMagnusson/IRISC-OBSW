@@ -17,9 +17,6 @@
 #define GUIDE_WIDTH 1936
 #define GUIDE_HEIGHT 1096
 
-/* camera debug messages */
-#define CAMERA_DEBUG 0
-
 /* cam_setup:
  * Set up and initialize a given ZWO ASI camera.
  *

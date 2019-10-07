@@ -192,7 +192,7 @@ int create_thread(char* comp_name, void* (*thread_func)(void*), int prio){
         return ret;
     }
 
-    ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
+    ret = pthread_attr_setstacksize(&attr, 10000000);
     if(ret != 0){
         fprintf(stderr,
             "Failed pthread_attr_setstacksize of %s component. "

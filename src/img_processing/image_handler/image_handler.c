@@ -45,7 +45,7 @@ static int compress_file(const char* file_name_in, const char* file_name_out, in
 
     FILE* file_in = fopen(file_name_in, "rb");
     if(file_in==NULL){
-        logging(ERROR, "image_handler", "Could not open in file");
+        logging(ERROR, "image_handler", "Could not open in file: %m");
         return FAILURE;
     }
     FILE* file_out = fopen(file_name_out, "wb");
@@ -123,7 +123,16 @@ int compression_stream(const char* in_filename, const char* out_filename) {
 
 }
 
+char st_fp[100];
+char nir_fp[100];
+
 int init_image_handler(void* args) {
+
+    strcpy(st_fp, get_top_dir());
+    strcat(st_fp, "output/guiding/");
+
+    strcpy(nir_fp, get_top_dir());
+    strcat(nir_fp, "output/nir/");
 
     return create_thread("image_handler", thread_func, 19);
 
@@ -136,7 +145,7 @@ static void* thread_func(void* param){
 
     struct tm date_time;
     time_t epoch_time;
-    
+
     while(1){
 
         temp = read_data_queue();
@@ -145,26 +154,22 @@ static void* thread_func(void* param){
         localtime_r(&epoch_time, &date_time);
 
         if(temp.type==IMAGE_MAIN){
-            
-            sprintf(out_name, "/tmp/IMG_MAIN/IMG_MAIN_%02d:%02d:%02d_.fit.zst",
+
+            sprintf(out_name, "%sIMG_MAIN_%02d:%02d:%02d.fit.zst", nir_fp,
                     date_time.tm_hour, date_time.tm_min, date_time.tm_sec);
 
         } else if (temp.type==IMAGE_STARTRACKER){
 
-            sprintf(out_name, "/tmp/IMG_START/IMG_START_%02d:%02d:%02d_.fit.zst",
+            sprintf(out_name, "%sIMG_ST_%02d:%02d:%02d.fit.zst", st_fp,
                     date_time.tm_hour, date_time.tm_min, date_time.tm_sec);
         }
 
         if(compression_stream(temp.filepath, out_name)){
             queue_image(temp.filepath, temp.type);
         } else {
-            remove(temp.filepath);
             send_telemetry(out_name, temp.priority, 1, 0);
+            remove(temp.filepath);
         }
-
-        sleep(10);
-
-
     }
 
     return SUCCESS;

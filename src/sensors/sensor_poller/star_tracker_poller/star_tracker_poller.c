@@ -20,6 +20,7 @@
 #include "star_tracker.h"
 #include "camera.h"
 #include "mode.h"
+#include "img_processing.h"
 
 #define TETRAPATH "Tetra/tetra.py"
 #define ST_WAIT_TIME 100*1000*1000
@@ -44,7 +45,7 @@ pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
 static pid_t py_pid = -1;
 static char st_running = 0;
 
-static int exp_time = 5*1000*1000, gain = 300;
+static int exp_time = 2*1000*1000, gain = 300;
 
 /* filenames for images */
 static char st_fn[100], out_fp[100];
@@ -79,9 +80,10 @@ int init_star_tracker_poller(void* args){
 
     strcpy(st_fn, get_top_dir());
     strcat(st_fn, "output/guiding/star_tracker/st_img.fit");
+    /* strcat(st_fn, "output/guiding/tmp/st_img.fit"); */
 
     strcpy(out_fp, get_top_dir());
-    strcat(out_fp, "output/guiding/");
+    strcat(out_fp, "output/compression/");
 
     return create_thread("st_poller", st_poller_thread, 23);
 }
@@ -126,8 +128,10 @@ static void active_m(void){
 
         #ifndef ST_TEST
             /* move image to img queue dir */
-            snprintf(out_fn, 100, "%s%04d.fit", out_fp, img_cntr++);
+            snprintf(out_fn, 100, "%sst%04d.fit", out_fp, img_cntr++);
             rename(st_fn, out_fn);
+
+            queue_image(out_fn, IMAGE_STARTRACKER);
         #endif
     } while(0);
 
@@ -152,7 +156,7 @@ static int capture_image(char* fn){
     usleep(0.95 * exp_time);
 
     do{
-        usleep(1);
+        usleep(10000);
         ret = save_img_guiding(fn);
     } while(ret == EXP_NOT_READY);
 

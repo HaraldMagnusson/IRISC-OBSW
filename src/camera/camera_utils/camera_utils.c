@@ -274,7 +274,7 @@ static int write_img(unsigned short* buffer,
         fn_f[ii+1] = fn[ii];
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "saving image, filename: %s", fn_f);
         logging(DEBUG, "Camera", "creating file");
     #endif
@@ -285,7 +285,7 @@ static int write_img(unsigned short* buffer,
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "creating img");
     #endif
 
@@ -295,14 +295,14 @@ static int write_img(unsigned short* buffer,
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "updating header");
     #endif
     long exposure, gain;
     ASI_BOOL pb_auto = ASI_FALSE;
     if(exp_time != NULL){
         exposure = exp_time->tv_sec * 1000000 + exp_time->tv_nsec / 1000;
-        #if CAMERA_DEBUG
+        #ifdef CAMERA_DEBUG
             logging(DEBUG, "Camera",
                     "aborted after exposing for %ld microseconds", exposure);
         #endif
@@ -325,7 +325,7 @@ static int write_img(unsigned short* buffer,
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "writing image");
     #endif
     fits_write_img(fptr, TSHORT, fpixel, nelements, buffer, &ret);
@@ -334,7 +334,7 @@ static int write_img(unsigned short* buffer,
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "writing data");
     #endif
     fits_update_key(fptr, TSTRING, "DATE", exp_start_datetime[cam_info->CameraID],
@@ -344,7 +344,7 @@ static int write_img(unsigned short* buffer,
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "writing checksum");
     #endif
     fits_write_chksum(fptr, &ret);
@@ -353,7 +353,7 @@ static int write_img(unsigned short* buffer,
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "closing file");
     #endif
     fits_close_file(fptr, &ret);
