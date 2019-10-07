@@ -21,7 +21,6 @@
 
 #include "camera.h"
 #include "command.h"
-#include "data_storage.h"
 #include "e_link.h"
 #include "global_utils.h"
 #include "gpio.h"
@@ -34,7 +33,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 13
+#define MODULE_COUNT 12
 
 static int init_func(char* const argv[]);
 static void check_flags(void);
@@ -61,7 +60,6 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"gpio", &init_gpio},
     {"camera", &init_camera},
     {"command", &init_command},
-    {"data_storage", &init_data_storage},
     {"e_link", &init_elink},
     {"global_utils", &init_global_utils},
     {"img_processing", &init_img_processing},

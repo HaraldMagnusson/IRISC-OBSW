@@ -29,7 +29,6 @@ set(SOURCES
 	${SCR_DIR}/camera/nir_camera/nir_camera.c
 	${SCR_DIR}/camera/sanity_camera/sanity_camera.c
 	${SCR_DIR}/command/command.c
-	${SCR_DIR}/data_storage/data_storage.c
 	${SCR_DIR}/e_link/e_link.c
 	${SCR_DIR}/global_utils/global_utils.c
 	${SCR_DIR}/gpio/gpio.c
