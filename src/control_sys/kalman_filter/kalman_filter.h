@@ -11,4 +11,4 @@
 
 int init_kalman_filter(void* args);
 
-int kf_update(void);
+int kf_update(double az_alt[2]);

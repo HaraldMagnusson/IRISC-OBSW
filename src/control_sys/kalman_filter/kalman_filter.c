@@ -1,11 +1,13 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Kalman Filter
  * Parent Component: Control System
- * Author(s): Anja Möslinger
+ * Author(s): Anja Möslinger, Harald Magnusson
  * Purpose: Provide the calculations required for the Kalman Filter.
  *
  * -----------------------------------------------------------------------------
  */
+
+#define _GNU_SOURCE
 
 #include <errno.h>
 #include <pthread.h>
@@ -18,7 +20,15 @@
 #include "global_utils.h"
 #include "mode.h"
 #include "kalman_filter.h"
+#include "sensors.h"
 
+/* Kalman filter
+ *  double x_prev[2][1], x_upd[2][1], x_next[2][1];
+ *  double w_meas[1][1];
+ *  double Phi[2][2], Gamma[2][1], Upsilon[2][1], Upsilon2[2][1], H[1][2];
+ *  double Q[1][1], Q2[1][1], R[1][1];
+ *  double P_prev[2][2], P_upd[2][2], P_next[2][2], nu_next[1][1], S_next[1][1], K[2][1];
+ */
 #define X_PREV_ROWS 2
 #define X_PREV_COLS 1
 #define X_UPD_ROWS 2
@@ -56,7 +66,41 @@
 #define K_ROWS 2
 #define K_COLS 1
 
+#define AZ_AXIS_FLAG 0
+#define ALT_AXIS_FLAG 1
+
+typedef struct{
+    double*** var;
+    int rows;
+    int cols;
+} arr_t;
+
+typedef struct{
+    arr_t mem[18];
+    char axis_flag;
+
+    double **x_prev;
+    double **x_upd;
+    double **x_next;
+    double **w_meas;
+    double **Phi;
+    double **Gamma;
+    double **Upsilon;
+    double **Upsilon2;
+    double **H;
+    double **Q;
+    double **R;
+    double **Q2;
+    double **P_prev;
+    double **P_upd;
+    double **P_next;
+    double **nu_next;
+    double **S_next;
+    double **K;
+} axis_context_t;
+
 static int open_logs(void);
+static int kf_axis(axis_context_t axis, double gyro_data, double* st_data);
 
 static void eye(int m, double** mat);
 static void madd(double** matA, double** matB, double** matC, int rows, int cols);
@@ -67,32 +111,61 @@ static void mmult(double** matA, double** matB, double** matC, int rows1, int co
 
 static void printarray2D(double** array, int rows, int cols);
 
-static void prop_state_vec(void);
-static void prop_p_next(void);
-static void innovate_nu_next(void);
-static void update_s_next(void);
-static void comp_k_gain(void);
-static void update_state(void);
-static void update_covar(void);
+static void prop_state_vec(axis_context_t axis);
+static void prop_p_next(axis_context_t axis);
+static void innovate_nu_next(axis_context_t axis, double* st_data);
+static void update_s_next(axis_context_t axis);
+static void comp_k_gain(axis_context_t axis);
+static void update_state(axis_context_t axis);
+static void update_covar(axis_context_t axis);
 
-static double **x_prev;
-static double **x_upd;
-static double **x_next;
-static double **w_meas;
-static double **Phi;
-static double **Gamma;
-static double **Upsilon;
-static double **Upsilon2;
-static double **H;
-static double **Q;
-static double **R;
-static double **Q2;
-static double **P_prev;
-static double **P_upd;
-static double **P_next;
-static double **nu_next;
-static double **S_next;
-static double **K;
+static axis_context_t az_c = {
+    {
+        {&az_c.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&az_c.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&az_c.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&az_c.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&az_c.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&az_c.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&az_c.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&az_c.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&az_c.H,            H_ROWS,         H_COLS          },
+        {&az_c.Q,            Q_ROWS,         Q_COLS          },
+        {&az_c.R,            R_ROWS,         R_COLS          },
+        {&az_c.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&az_c.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&az_c.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&az_c.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&az_c.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&az_c.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&az_c.K,            K_ROWS,         K_COLS          }
+    },
+    AZ_AXIS_FLAG
+};
+
+static axis_context_t alt_c = {
+    {
+        {&alt_c.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&alt_c.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&alt_c.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&alt_c.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&alt_c.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&alt_c.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&alt_c.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&alt_c.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&alt_c.H,            H_ROWS,         H_COLS          },
+        {&alt_c.Q,            Q_ROWS,         Q_COLS          },
+        {&alt_c.R,            R_ROWS,         R_COLS          },
+        {&alt_c.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&alt_c.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&alt_c.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&alt_c.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&alt_c.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&alt_c.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&alt_c.K,            K_ROWS,         K_COLS          }
+    },
+    ALT_AXIS_FLAG
+};
 
 // TODO: replace when ST stuff is available
 //initial mode position
@@ -100,46 +173,13 @@ static double ang_init = 1;
 // steps used for initial innovation
 static int init_steps;
 
-typedef struct{
-    double*** var;
-    int rows;
-    int cols;
-} arr_t;
-
-/* Kalman filter
- *  double x_prev[2][1], x_upd[2][1], x_next[2][1];
- *  double w_meas[1][1];
- *  double Phi[2][2], Gamma[2][1], Upsilon[2][1], Upsilon2[2][1], H[1][2];
- *  double Q[1][1], Q2[1][1], R[1][1];
- *  double P_prev[2][2], P_upd[2][2], P_next[2][2], nu_next[1][1], S_next[1][1], K[2][1];
- */
-static arr_t vars[18] = {
-    {&x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
-    {&x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
-    {&x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
-    {&w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
-    {&Phi,          PHI_ROWS,       PHI_COLS        },
-    {&Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
-    {&Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
-    {&Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
-    {&H,            H_ROWS,         H_COLS          },
-    {&Q,            Q_ROWS,         Q_COLS          },
-    {&R,            R_ROWS,         R_COLS          },
-    {&Q2,           Q2_ROWS,        Q2_COLS         },
-    {&P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
-    {&P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
-    {&P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
-    {&nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
-    {&S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
-    {&K,            K_ROWS,         K_COLS          }
-};
-
 static FILE* x_prev_log;
 static FILE* p_prev_log;
 static FILE* nu_next_log;
 static FILE* s_next_log;
 
 int init_kalman_filter(void* args){
+
     // initialisation parameters
     double dt;
     dt = (double)GYRO_SAMPLE_TIME/1000000000; // sampling time of the system
@@ -163,7 +203,10 @@ int init_kalman_filter(void* args){
     double s_init = 0.1/180*M_PI;
     init_steps = init_time/dt;
 
+
+
     // allocate memory
+    #if 0
     for(int ii = 0; ii < 18; ++ii){
         *vars[ii].var = malloc(vars[ii].rows * sizeof **vars[ii].var);
         if(*vars[ii].var == NULL){
@@ -176,41 +219,68 @@ int init_kalman_filter(void* args){
             }
         }
     }
+    #endif
+    axis_context_t* arr[2] = {&az_c, &alt_c};
+    for(int ii=0; ii<2; ++ii){
+        for(int jj=0; jj<18; ++jj){
+            int rows = arr[ii]->mem[jj].rows;
+            int cols = arr[ii]->mem[jj].cols;
+
+            *arr[ii]->mem[jj].var = malloc(rows * sizeof **arr[ii]->mem[jj].var);
+
+            if(*arr[ii]->mem[jj].var == NULL){
+                logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+                return ENOMEM;
+            }
+
+            for(int kk=0; kk < rows; ++kk){
+                (*arr[ii]->mem[jj].var)[kk] = malloc(cols * **arr[ii]->mem[jj].var[kk]);
+
+                if(*arr[ii]->mem[jj].var == NULL){
+                    logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+                    return ENOMEM;
+                }
+            }
+        }
+    }
 
     // initialise Kalman filter
 
     //TODO: Replace with first ST measurement
-    x_prev[0][0] = ang_init;  // starting position
-    x_prev[1][0] = 0;
+    az_c.x_prev[0][0] = ang_init;  // starting position
+    alt_c.x_prev[0][0] = ang_init;
 
-    P_prev[0][0] = s_init*s_init;
-    P_prev[0][1] = 0;
-    P_prev[1][0] = 0;
-    P_prev[1][1] = gyro_bias_0*gyro_bias_0;
+    for(int ii=0; ii<2; ++ii){
+        arr[ii]->x_prev[1][0] = 0;
 
-    // propagation matrices
-    Phi[0][0] = 1;
-    Phi[0][1] = -dt;
-    Phi[1][0] = 0;
-    Phi[1][1] = 1;
+        arr[ii]->P_prev[0][0] = s_init*s_init;
+        arr[ii]->P_prev[0][1] = 0;
+        arr[ii]->P_prev[1][0] = 0;
+        arr[ii]->P_prev[1][1] = gyro_bias_0*gyro_bias_0;
 
-    Gamma[0][0] = dt;
-    Gamma[1][0] = 0;
+        // propagation matrices
+        arr[ii]->Phi[0][0] = 1;
+        arr[ii]->Phi[0][1] = -dt;
+        arr[ii]->Phi[1][0] = 0;
+        arr[ii]->Phi[1][1] = 1;
 
-    Upsilon[0][0] = dt;
-    Upsilon[1][0] = 0;
-    Upsilon2[0][0] = 0;
-    Upsilon2[1][0] = dt;
+        arr[ii]->Gamma[0][0] = dt;
+        arr[ii]->Gamma[1][0] = 0;
 
-    // measurement matrix
-    H[0][0] = 1;
-    H[0][1] = 0;
+        arr[ii]->Upsilon[0][0] = dt;
+        arr[ii]->Upsilon[1][0] = 0;
+        arr[ii]->Upsilon2[0][0] = 0;
+        arr[ii]->Upsilon2[1][0] = dt;
 
-    // tuning values
-    Q[0][0] = ARW/dt;
-    Q2[0][0] = RRW/dt;
-    R[0][0] = s_init*s_init;
+        // measurement matrix
+        arr[ii]->H[0][0] = 1;
+        arr[ii]->H[0][1] = 0;
 
+        // tuning values
+        arr[ii]->Q[0][0] = ARW/dt;
+        arr[ii]->Q2[0][0] = RRW/dt;
+        arr[ii]->R[0][0] = s_init*s_init;
+    }
     return SUCCESS;
 }
 
@@ -257,38 +327,65 @@ static int open_logs(void){
     return SUCCESS;
 }
 
-int kf_update(void){
+int kf_update(double az_alt[2]){
+    
+    /* TODO: get_st */
+
+    /* get gyro */
+    gyro_t gyro;
+    get_gyro(&gyro);
+    if(gyro.out_of_date){
+    }
+
+    kf_axis(alt_c, gyro.z, NULL);
+
+    double gyro_az = 0, sin_az = 0, cos_alt = 0;
+    sincos(alt_c.x_prev[0][0] * M_PI / 180, &sin_az, &cos_alt);
+    gyro_az = gyro.y * sin_az - gyro.x * cos_alt;
+
+    kf_axis(az_c, gyro_az, NULL);
+
+    // should we use x_prev or x_next?
+    az_alt[0] = az_c.x_prev[0][0];
+    az_alt[1] = alt_c.x_prev[0][0];
+
+    return SUCCESS;
+}
+
+
+static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
     // TODO: not necessary anymore when ST data is incorporated
     static int l = 0;
 
     // get the gyro measurement
     // TODO: Replace with gyro data
-    w_meas[0][0] = 0.001;
+    axis.w_meas[0][0] = gyro_data;
 
     // propagate state vector
-    prop_state_vec();
+    prop_state_vec(axis);
 
-    prop_p_next();
+    prop_p_next(axis);
 
     // TODO: replace with check for if new ST data is available
+    // if (st_data != NULL){
     if (l < init_steps) { // update only for the first measurements where pointing is known (no motion)
         
         // innovation
-        innovate_nu_next();
-        update_s_next();
+        innovate_nu_next(axis, st_data);
+        update_s_next(axis);
 
         // compute the Kalman gain
-        comp_k_gain();
+        comp_k_gain(axis);
 
         // update of states and covariance
-        update_state();
-        update_covar();
+        update_state(axis);
+        update_covar(axis);
 
         // save estimates (and log)
         //x_prev = x_upd;
         for(int i = 0; i < X_PREV_ROWS; i++) {
             for(int j = 0; j < X_PREV_COLS; j++) {
-                x_prev[i][j] = x_upd[i][j];
+                axis.x_prev[i][j] = axis.x_upd[i][j];
             }
         }
 
@@ -296,7 +393,7 @@ int kf_update(void){
         //P_prev = P_upd;
         for(int i = 0; i < P_PREV_ROWS; i++) {
             for(int j = 0; j < P_PREV_COLS; j++) {
-                P_prev[i][j] = P_upd[i][j];
+                axis.P_prev[i][j] = axis.P_upd[i][j];
             }
         }
 
@@ -304,35 +401,35 @@ int kf_update(void){
         //          log(P_upd);
         //          log(nu_next);
         //          log(S_next);
-        logging_csv(x_prev_log, "%+.10e,%+.10e", x_prev[0][0], x_prev[1][0]);
+        logging_csv(x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
         logging_csv(p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
-                P_prev[0][0], P_prev[0][1], P_prev[1][0], P_prev[1][1]);
+                axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
 
-        logging_csv(nu_next_log, "%+.10e", **nu_next);
-        logging_csv(s_next_log, "%+.10e", **S_next);
+        logging_csv(nu_next_log, "%+.10e", **axis.nu_next);
+        logging_csv(s_next_log, "%+.10e", **axis.S_next);
 
         #ifdef KF_DEBUG
             logging(DEBUG, "Kalman F", "step number: %d", l);
             logging(DEBUG, "Kalman F", "x_upd:");
-            logging(DEBUG, "Kalman F", "%+.6e", x_upd[0][0]);
-            logging(DEBUG, "Kalman F", "%+.6e", x_upd[1][0]);
+            logging(DEBUG, "Kalman F", "%+.6e", axis.x_upd[0][0]);
+            logging(DEBUG, "Kalman F", "%+.6e", axis.x_upd[1][0]);
 
             logging(DEBUG, "Kalman F", "P_upd:");
             logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
-                    P_upd[0][0], P_upd[0][1]);
+                    axis.P_upd[0][0], axis.P_upd[0][1]);
             logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
-                    P_upd[1][0], P_upd[1][1]);
+                    axis.P_upd[1][0], axis.P_upd[1][1]);
 
             logging(DEBUG, "Kalman F", "nu_next:");
-            logging(DEBUG, "Kalman F", "%+.6e", nu_next[0][0]);
+            logging(DEBUG, "Kalman F", "%+.6e", axis.nu_next[0][0]);
 
             logging(DEBUG, "Kalman F", "S_next:");
-            logging(DEBUG, "Kalman F", "%+.6e", S_next[0][0]);
+            logging(DEBUG, "Kalman F", "%+.6e", axis.S_next[0][0]);
 
         #endif
         
-        prop_p_next();
+        prop_p_next(axis);
 
     }
     // new ST data not available
@@ -346,31 +443,31 @@ int kf_update(void){
         //x_prev = x_next;
         for(int i = 0; i < X_PREV_ROWS; i++) {
             for(int j = 0; j < X_PREV_COLS; j++) {
-                x_prev[i][j] = x_next[i][j];
+                axis.x_prev[i][j] = axis.x_next[i][j];
             }
         }
         //P_prev = P_next;
         for(int i = 0; i < P_PREV_ROWS; i++) {
             for(int j = 0; j < P_PREV_COLS; j++) {
-                P_prev[i][j] = P_next[i][j];
+                axis.P_prev[i][j] = axis.P_next[i][j];
             }
         }
 
         // save estimates
         //          log(x_next);
         //          log(P_next);
-        logging_csv(x_prev_log, "%+.10e,%+.10e", x_prev[0][0], x_prev[1][0]);
+        logging_csv(x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
         logging_csv(p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
-                P_prev[0][0], P_prev[0][1], P_prev[1][0], P_prev[1][1]);
+                axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
 
         //          printf("x_prev for i = %d", l);
         //          printarray2D(x_prev, X_PREV_ROWS, X_PREV_COLS);
         // x_next = Phi * x_prev + Gamma * w_meas;
         printf("x_next for i = %d", l);
-        printarray2D(x_next, X_NEXT_ROWS, X_NEXT_COLS);
+        printarray2D(axis.x_next, X_NEXT_ROWS, X_NEXT_COLS);
         printf("P_next for i = %d", l);
-        printarray2D(P_next, P_NEXT_ROWS, P_NEXT_COLS);
+        printarray2D(axis.P_next, P_NEXT_ROWS, P_NEXT_COLS);
 
     }
 
@@ -387,7 +484,7 @@ int kf_update(void){
 
 
 /* x_next = Phi * x_prev + Gamma * w_meas; */
-static void prop_state_vec(void){
+static void prop_state_vec(axis_context_t axis){
 
     // definition of mmult1[PHI_ROWS][X_PREV_COLS]
     double **mmult1;
@@ -398,7 +495,7 @@ static void prop_state_vec(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(Phi, x_prev, mmult1, PHI_ROWS, PHI_COLS, X_PREV_ROWS, X_PREV_COLS);
+    mmult(axis.Phi, axis.x_prev, mmult1, PHI_ROWS, PHI_COLS, X_PREV_ROWS, X_PREV_COLS);
 
     //      printf("x_prev for i = %d", l);
     //      printarray2D(x_prev, X_PREV_ROWS, X_PREV_COLS);
@@ -411,9 +508,9 @@ static void prop_state_vec(void){
     for (int i = 0; i < mmult2_rows; i++) {
         mmult2[i] = malloc(mmult2_cols * sizeof *mmult2[i]);
     }
-    mmult(Gamma, w_meas, mmult2, GAMMA_ROWS, GAMMA_COLS, W_MEAS_ROWS, W_MEAS_COLS);
+    mmult(axis.Gamma, axis.w_meas, mmult2, GAMMA_ROWS, GAMMA_COLS, W_MEAS_ROWS, W_MEAS_COLS);
 
-    madd(mmult1, mmult2, x_next, mmult1_rows, mmult1_cols);
+    madd(mmult1, mmult2, axis.x_next, mmult1_rows, mmult1_cols);
     // x_next = Phi * x_prev + Gamma * w_meas;
     //      printf("x_next for i = %d", l);
     //      printarray2D(x_next, X_NEXT_ROWS, X_NEXT_COLS);
@@ -432,7 +529,7 @@ static void prop_state_vec(void){
 }
 
 /* P_next = Phi*P_prev*Phi' + Upsilon*Q*Upsilon' + Upsilon2*Q2*Upsilon2'; */
-static void prop_p_next(void){
+static void prop_p_next(axis_context_t axis){
 
     // propagate P_next
     // re-definition of mmult1[length(Phi)][length(P_prev[1])];
@@ -444,7 +541,7 @@ static void prop_p_next(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(Phi, P_prev, mmult1, PHI_ROWS, PHI_COLS, P_PREV_ROWS, P_PREV_COLS);
+    mmult(axis.Phi, axis.P_prev, mmult1, PHI_ROWS, PHI_COLS, P_PREV_ROWS, P_PREV_COLS);
     // definition of trans[length(Phi[0])][length(Phi)];
     double **trans;
     int trans_rows = PHI_COLS;
@@ -454,7 +551,7 @@ static void prop_p_next(void){
     for (int i = 0; i < trans_rows; i++) {
         trans[i] = malloc(trans_cols * sizeof *trans[i]);
     }
-    transpose(Phi, trans, PHI_ROWS, PHI_COLS);
+    transpose(axis.Phi, trans, PHI_ROWS, PHI_COLS);
 
     // re-definition of mmult2[length(mmult1)][length(Phi)];
     double **mmult2;
@@ -491,7 +588,7 @@ static void prop_p_next(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(Upsilon, Q, mmult1, UPSILON_ROWS, UPSILON_COLS, Q_ROWS, Q_COLS);
+    mmult(axis.Upsilon, axis.Q, mmult1, UPSILON_ROWS, UPSILON_COLS, Q_ROWS, Q_COLS);
     // re-definition of trans[length(Upsilon[0])][length(Upsilon)];
     trans_rows = UPSILON_COLS;
     trans_cols = UPSILON_ROWS;
@@ -500,7 +597,7 @@ static void prop_p_next(void){
     for (int i = 0; i < trans_rows; i++) {
         trans[i] = malloc(trans_cols * sizeof *trans[i]);
     }
-    transpose(Upsilon, trans, UPSILON_ROWS, UPSILON_COLS);
+    transpose(axis.Upsilon, trans, UPSILON_ROWS, UPSILON_COLS);
 
     // definition of mmult3[length(mmult1)][length(Q)];
     double **mmult3;
@@ -533,7 +630,7 @@ static void prop_p_next(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(Upsilon2, Q2, mmult1, UPSILON2_ROWS, UPSILON2_COLS, Q2_ROWS, Q2_COLS);
+    mmult(axis.Upsilon2, axis.Q2, mmult1, UPSILON2_ROWS, UPSILON2_COLS, Q2_ROWS, Q2_COLS);
 
     // re-definition of trans[length(Upsilon2[0])][length(Upsilon2)];
     trans_rows = UPSILON2_COLS;
@@ -543,7 +640,7 @@ static void prop_p_next(void){
     for (int i = 0; i < trans_rows; i++) {
         trans[i] = malloc(trans_cols * sizeof *trans[i]);
     }
-    transpose(Upsilon2, trans, UPSILON2_ROWS, UPSILON2_COLS);
+    transpose(axis.Upsilon2, trans, UPSILON2_ROWS, UPSILON2_COLS);
 
     // definition of mmult4[length(mmult1)][length(Q2)];
     double **mmult4;
@@ -579,7 +676,7 @@ static void prop_p_next(void){
     }
     madd(mmult2, mmult3, madd1, mmult2_rows, mmult2_cols);
 
-    madd(madd1, mmult4, P_next, madd1_rows, madd1_cols);
+    madd(madd1, mmult4, axis.P_next, madd1_rows, madd1_cols);
 
 
     // free mmult2
@@ -611,7 +708,7 @@ static void prop_p_next(void){
 }
 
 /* nu_next = t_meas - H*x_est_next; */
-static void innovate_nu_next(void){
+static void innovate_nu_next(axis_context_t axis, double* st_data){
 
     // re-definition of mmult1[length(H)][length(x_next[1])];
     double** mmult1;
@@ -622,7 +719,7 @@ static void innovate_nu_next(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(H, x_next, mmult1, H_ROWS, H_COLS, X_NEXT_ROWS, X_NEXT_COLS);
+    mmult(axis.H, axis.x_next, mmult1, H_ROWS, H_COLS, X_NEXT_ROWS, X_NEXT_COLS);
     // definition of ang as pointer
     double **ang;
     int ang_rows = 1;
@@ -633,9 +730,10 @@ static void innovate_nu_next(void){
         ang[i] = malloc(ang_cols * sizeof *ang[i]);
     }
     // TODO: fetch ST data
+    // ang[0][0] = *st_data;
     ang[0][0] = ang_init;
 
-    msub(ang, mmult1, nu_next, ang_rows, ang_cols);
+    msub(ang, mmult1, axis.nu_next, ang_rows, ang_cols);
 
     // free mmult1
     for (int i = 0; i < mmult1_rows; i++) {
@@ -653,7 +751,7 @@ static void innovate_nu_next(void){
 }
 
 /* S_next = H*P_next*H' + R; */
-static void update_s_next(void){
+static void update_s_next(axis_context_t axis){
 
     // re-definition of mmult1[length(H)][length(P_next[1])];
     double** mmult1;
@@ -664,7 +762,7 @@ static void update_s_next(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(H, P_next, mmult1, H_ROWS, H_COLS, P_NEXT_ROWS, P_NEXT_COLS);
+    mmult(axis.H, axis.P_next, mmult1, H_ROWS, H_COLS, P_NEXT_ROWS, P_NEXT_COLS);
 
     // definition of trans[length(H[0])][length(H)];
     double** trans;
@@ -675,7 +773,7 @@ static void update_s_next(void){
     for (int i = 0; i < trans_rows; i++) {
         trans[i] = malloc(trans_cols * sizeof *trans[i]);
     }
-    transpose(H, trans, H_ROWS, H_COLS);
+    transpose(axis.H, trans, H_ROWS, H_COLS);
 
     // re-definition of mmult2[length(mmult1)][length(H)];
     double** mmult2;
@@ -688,7 +786,7 @@ static void update_s_next(void){
     }
     mmult(mmult1, trans, mmult2, mmult1_rows, mmult1_cols, trans_rows, trans_cols);
 
-    madd(mmult2, R, S_next, mmult2_rows, mmult2_cols);
+    madd(mmult2, axis.R, axis.S_next, mmult2_rows, mmult2_cols);
     //          printf("S_next for i = %d", l);
     //          printarray2D(S_next, S_NEXT_ROWS, S_NEXT_COLS);
 
@@ -713,7 +811,7 @@ static void update_s_next(void){
 }
 
 /* K = P_next*H'/S_next; */
-static void comp_k_gain(void){
+static void comp_k_gain(axis_context_t axis){
     // re-definition of trans[length(H[0])][length(H)];
     double** trans;
     int trans_rows = H_COLS;
@@ -723,7 +821,7 @@ static void comp_k_gain(void){
     for (int i = 0; i < trans_rows; i++) {
         trans[i] = malloc(trans_cols * sizeof *trans[i]);
     }
-    transpose(H, trans, H_ROWS, H_COLS);
+    transpose(axis.H, trans, H_ROWS, H_COLS);
 
     // re-definition of mmult1[length(P_next)][length(H)];
     double** mmult1;
@@ -734,8 +832,8 @@ static void comp_k_gain(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(P_next, trans, mmult1, P_NEXT_ROWS, P_NEXT_COLS, trans_rows, trans_cols);
-    mdiv(mmult1, S_next[0][0], K, mmult1_rows, mmult1_cols);
+    mmult(axis.P_next, trans, mmult1, P_NEXT_ROWS, P_NEXT_COLS, trans_rows, trans_cols);
+    mdiv(mmult1, axis.S_next[0][0], axis.K, mmult1_rows, mmult1_cols);
 
 
     // free mmult1
@@ -756,7 +854,7 @@ static void comp_k_gain(void){
 }
 
 /* x_upd = x_est_next + K*nu_next; */
-static void update_state(void){
+static void update_state(axis_context_t axis){
     //double mmult1[length(K)][length(nu_next[1])];
     // re-definition of mmult1[length(K)][length(nu_next[1])];
     double** mmult1;
@@ -767,8 +865,8 @@ static void update_state(void){
     for (int i = 0; i < mmult1_rows; i++) {
         mmult1[i] = malloc(mmult1_cols * sizeof *mmult1[i]);
     }
-    mmult(K, nu_next, mmult1, K_ROWS, K_COLS, NU_NEXT_ROWS, NU_NEXT_COLS);
-    madd(x_next, mmult1, x_upd, X_NEXT_ROWS, X_NEXT_COLS);
+    mmult(axis.K, axis.nu_next, mmult1, K_ROWS, K_COLS, NU_NEXT_ROWS, NU_NEXT_COLS);
+    madd(axis.x_next, mmult1, axis.x_upd, X_NEXT_ROWS, X_NEXT_COLS);
 
     // free mmult1
     for (int i = 0; i < mmult1_rows; i++) {
@@ -782,7 +880,7 @@ static void update_state(void){
 }
 
 /* P_upd = (eye(2)-K*H)*P_next; */
-static void update_covar(void){
+static void update_covar(axis_context_t axis){
     // re-definition of mmult1[length(K)][length(H[1])];
     double** mmult1;
     int mmult1_rows = K_ROWS;
@@ -798,7 +896,7 @@ static void update_covar(void){
             logging(ERROR, "Kalman F", "malloc: %m");
         }
     }
-    mmult(K, H, mmult1, K_ROWS, K_COLS, H_ROWS, H_COLS);
+    mmult(axis.K, axis.H, mmult1, K_ROWS, K_COLS, H_ROWS, H_COLS);
     //printarray2D(mmult1, mmult1_rows, mmult1_cols);
     // definition of eye2[2][2];
     double **eye2;
@@ -836,7 +934,7 @@ static void update_covar(void){
     }
     msub(eye2, mmult1, msub1, eye2_rows, eye2_cols);
     //printarray2D(msub1, msub1_rows, msub1_cols);
-    mmult(msub1, P_next, P_upd, msub1_rows, msub1_cols, P_NEXT_ROWS, P_NEXT_COLS);
+    mmult(msub1, axis.P_next, axis.P_upd, msub1_rows, msub1_cols, P_NEXT_ROWS, P_NEXT_COLS);
 
     // free mmult1
     for (int i = 0; i < mmult1_rows; i++) {
