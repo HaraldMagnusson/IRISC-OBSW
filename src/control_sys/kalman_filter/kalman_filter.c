@@ -185,7 +185,7 @@ int init_kalman_filter(void* args){
     dt = (double)GYRO_SAMPLE_TIME/1000000000; // sampling time of the system
 
     /* TODO: remove for non testing */
-    dt = 0.1; // for testing uses
+    //dt = 0.1; // for testing uses
 
     if(open_logs()){
         return errno;
@@ -199,7 +199,7 @@ int init_kalman_filter(void* args){
     RRW = (1./180*M_PI/3600/sqrt(3600))*(1./180*M_PI/3600/sqrt(3600));      // rate random walk of gyro
 
     // initialisation mode parameters
-    double init_time = 30;
+    double init_time = 300;
     double s_init = 0.1/180*M_PI;
     init_steps = init_time/dt;
 
@@ -469,6 +469,10 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         printf("P_next for i = %d", l);
         printarray2D(axis.P_next, P_NEXT_ROWS, P_NEXT_COLS);
 
+    }
+
+    if(l == 100000){
+        return FAILURE;
     }
 
     l++;
