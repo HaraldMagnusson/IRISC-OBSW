@@ -18,6 +18,7 @@ typedef struct{
 } telescope_angles_t;
 
 typedef struct{
+    float time_in_seconds;
     double current_position,
            target_position,
            position_error,

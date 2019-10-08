@@ -17,17 +17,17 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <pthread.h>
-
 #include <unistd.h>
+
 #include <current_target/current_target.h>
+#include <sys/time.h>
 
 #include "global_utils.h"
 #include "stabilization.h"
 
 void *stabilization_main_loop();
-double saturate_output(double given_output);
+float get_current_time();
 int change_pid_values(int motor_id, double new_p, double new_i, double new_d);
 int change_stabilization_mode(int on_off);
 double motor_control_step(pid_values_t* current_pid_values,
@@ -40,7 +40,7 @@ static pid_values_t current_alt_pid_values;
 
 static double motor_rate_threshold = 0.227;
 
-static struct timespec wake_time;
+//static struct timespec wake_time;
 
 /* Stabilization parameters */
 static pid_values_t stab_az_pid_values = {
@@ -73,18 +73,15 @@ static control_variables_t az_prev_control_vars, az_current_control_vars,
 
 static double az_expected_rate, alt_expected_rate;
 
-static double stabilization_timestep = 0.001;
+static double stabilization_timestep = 0.01;
 static double sim_time = 0;
-
-// TODO: put it in the proper place
-//static double rate = 0;
 
 static telescope_att_t current_telescope_att;
 static double az_motor_input, alt_motor_input;
 
-//static double target_position = 0;
-//static double current_position = 0;
-//static double position_error = 0;
+static struct timeval tv;
+static unsigned long time_in_micros = 0;
+static float time_in_seconds = 0;
 
 FILE *simdata;
 
@@ -115,89 +112,74 @@ int init_stabilization(void* args){
 
 // TODO: Add watining for desired frequency
 void *stabilization_main_loop() {
-    clock_gettime(CLOCK_MONOTONIC, &wake_time);
-    wake_time.tv_sec += 2;
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
-
+    usleep(3000000); //3 sec
     int i = 0;
     while(1) {
-        // Getting values from kalman filter and tracking subsystem
-        // todo: uncomment this for final
+        usleep(1000000); //1 sec
+        // Getting values from Kalman filter and tracking subsystem
 //        get_telescope_att(&current_telescope_att);
-//        az_current_control_vars.current_position = current_telescope_att.az;
+//        az_current_control_vars.current_position = current_telescope_att.az; // todo: uncomment this for final
 //        alt_current_control_vars.current_position = current_telescope_att.alt;
-//        get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position);
-        // todo: end of uncomment
+//        get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position); // todo: uncomment this for final
 
-        // todo: simulation only
+        // TODO: This is for simulation only
         az_current_control_vars.current_position = az_prev_control_vars.pid_output;
         alt_current_control_vars.current_position = alt_prev_control_vars.pid_output;
         if(sim_time >= 1) az_current_control_vars.target_position = 20;
         else az_current_control_vars.target_position = 0;
-//        az_current_control_vars.target_position = 20;
-        alt_current_control_vars.target_position = 20;
-        // todo: end of sim
+        alt_current_control_vars.target_position = 20; // TODO: Delet this
+        // End of the sim block
 
+        // Further initialization
         if(i == 0){
+            az_prev_control_vars.time_in_seconds = get_current_time();
+            alt_prev_control_vars.time_in_seconds = get_current_time();
             az_prev_control_vars.position_error =  az_current_control_vars.target_position -  az_current_control_vars.current_position;
+            alt_prev_control_vars.position_error =  alt_current_control_vars.target_position -  alt_current_control_vars.current_position;
         }
 
-        // Azimuth motor control step
+        az_current_control_vars.time_in_seconds = get_current_time();
+        alt_current_control_vars.time_in_seconds = get_current_time();
+
+        // Main algorithm
         motor_control_step(&current_az_pid_values, &az_pid_values_mutex,
                            &az_prev_control_vars, &az_current_control_vars);
-
-        // Altitude motor control step
         motor_control_step(&current_alt_pid_values, &alt_pid_values_mutex,
                            &alt_prev_control_vars, &alt_current_control_vars);
 
-
         // Azimuth output saturation
-        az_expected_rate = (alt_current_control_vars.pid_output - az_current_control_vars.current_position);
+        az_expected_rate = (az_current_control_vars.pid_output - az_current_control_vars.current_position);
         if(az_expected_rate > motor_rate_threshold*stabilization_timestep){
-//            fprintf(stderr, "> ^ saturation upward\n");
-            az_current_control_vars.pid_output = az_current_control_vars.current_position
-                                                 + motor_rate_threshold*stabilization_timestep;
-        }
-        else if (az_expected_rate < -motor_rate_threshold*stabilization_timestep) {
-//            fprintf(stderr, "> v saturation downward\n");
-            az_current_control_vars.pid_output = az_current_control_vars.current_position
-                                                 - motor_rate_threshold*stabilization_timestep;
+            az_current_control_vars.pid_output = az_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
+        } else if (az_expected_rate < -motor_rate_threshold*stabilization_timestep) {
+            az_current_control_vars.pid_output = az_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
         }
 
-        // Attitude output saturation
+        // Altitude output saturation
         alt_expected_rate = (alt_current_control_vars.pid_output - alt_current_control_vars.current_position);
         if(alt_expected_rate > motor_rate_threshold*stabilization_timestep){
-//            fprintf(stderr, "> ^ saturation upward\n");
-            alt_current_control_vars.pid_output = alt_current_control_vars.current_position
-                                                  + motor_rate_threshold*stabilization_timestep;
-        }
-        else if (alt_expected_rate < -motor_rate_threshold*stabilization_timestep) {
-//            fprintf(stderr, "> v saturation downward\n");
-            alt_current_control_vars.pid_output = alt_current_control_vars.current_position
-                                                  - motor_rate_threshold*stabilization_timestep;
+            alt_current_control_vars.pid_output = alt_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
+        } else if (alt_expected_rate < -motor_rate_threshold*stabilization_timestep) {
+            alt_current_control_vars.pid_output = alt_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
         }
 
         // todo: remove this for final
         // For simulation and testing
-        logging(DEBUG, "Stabil", "--- az ---");
+//        logging(DEBUG, "Stabil", "--- az ---");
         logging(DEBUG, "Stabil", "Sim time\t %.10f", sim_time);
-        logging(DEBUG, "Stabil", "Current poz:\t %.10f", az_current_control_vars.current_position);
-        logging(DEBUG, "Stabil", "Target poz:\t %.10f", az_current_control_vars.target_position);
-        logging(DEBUG, "Stabil", "Poz error:\t %.10f", az_current_control_vars.position_error);
-        logging(DEBUG, "Stabil", "Integral:\t %.10f", az_current_control_vars.integral*current_az_pid_values.ki);
-        logging(DEBUG, "Stabil", "Derivative:\t %.10f", az_current_control_vars.derivative*current_az_pid_values.kd);
-        logging(DEBUG, "Stabil", "PID Output:\t %.10f", az_current_control_vars.pid_output);
-        fprintf(stderr, "er: %.10f\n", az_expected_rate);
-        fprintf(stderr, "PID: %.10f\n", az_current_control_vars.pid_output);
+//        logging(DEBUG, "Stabil", "Current poz:\t %.10f", az_current_control_vars.current_position);
+//        logging(DEBUG, "Stabil", "Target poz:\t %.10f", az_current_cont   rol_vars.target_position);
+//        logging(DEBUG, "Stabil", "Poz error:\t %.10f", az_current_control_vars.position_error);
+//        logging(DEBUG, "Stabil", "Integral:\t %.10f", az_current_control_vars.integral*current_az_pid_values.ki);
+//        logging(DEBUG, "Stabil", "Derivative:\t %.10f", az_current_control_vars.derivative*current_az_pid_values.kd);
+//        logging(DEBUG, "Stabil", "PID Output:\t %.10f", az_current_control_vars.pid_output);
 //        fprintf(stderr, "\033[22D\033[8A");
 
-        // todo: remove this for final
-        // For simulation and testing
 //        if(sim_time >= 10) change_pid_values(1, 0,0,0);
 //        if(sim_time >= 43.82) exit(0); // TODO: Delete this after testing
-        if(sim_time >= 100) exit(0); // TODO: Delete this after testing
+//        if(sim_time >= 100) exit(0); // TODO: Delete this after testing
 
-
+        // TODO: Convert it into `logging_csv`, once merged
         fprintf(simdata, "%.4f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f\n",
                 sim_time,
                 az_current_control_vars.current_position,
@@ -208,26 +190,30 @@ void *stabilization_main_loop() {
                 az_current_control_vars.position_error*current_az_pid_values.kp,
                 az_current_control_vars.pid_output);
         fflush(simdata);
-        // TODO: here add some actual motor controlA
 
+        // TODO: here add some actual motor control.
+        //  Pass `az_current_control_vars.pid_output` to the motor controller
+        //  as the angle input value.
 
         az_prev_control_vars = az_current_control_vars;
         alt_prev_control_vars = alt_current_control_vars;
-        fprintf(stderr, "PID end current: %.10f\n", az_current_control_vars.pid_output);
-        fprintf(stderr, "PID end prev: %.10f\n", az_prev_control_vars.pid_output);
 
         sim_time = sim_time + stabilization_timestep;
         i++;
-
-        wake_time.tv_nsec += STABILIZATION_UPDATE_TIME;
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
     }
 }
 
+float get_current_time(){
+    gettimeofday(&tv,NULL);
+    time_in_micros = 1000000 * tv.tv_sec + tv.tv_usec;
+    return (float)time_in_micros/(float)1000000;
+}
+
+/* PID mathematical algorithm */
 double motor_control_step(pid_values_t* current_pid_values,
                         pthread_mutex_t* pid_values_mutex,
                         control_variables_t* prev_vars,
-                        control_variables_t* current_vars){
+                        control_variables_t* current_vars) {
     current_vars->position_error = current_vars->target_position - current_vars->current_position;
     current_vars->integral = prev_vars->integral + current_vars->position_error * stabilization_timestep;
     current_vars->derivative = (current_vars->position_error - prev_vars->position_error) / stabilization_timestep;
