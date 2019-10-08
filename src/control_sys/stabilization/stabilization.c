@@ -348,3 +348,39 @@ int change_stabilization_mode(int on_off){
         return 0;
     } else return 1;
 }
+
+#if 0
+// structure for control system thread with KF + PID
+pthread_mutex_t mutex_cond_cont_sys = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_cont_sys = PTHREAD_COND_INITIALIZER;
+
+static void* control_sys_thread(void* args){
+    pthread_mutex_lock(&mutex_cond_cont_sys);
+
+    struct timespec wake_time;
+
+    while(1){
+
+        pthread_cond_wait(&cond_cont_sys, &mutex_cond_cont_sys);
+
+        clock_gettime(CLOCK_MONOTONIC, &wake_time);
+
+        while(get_mode() != RESET){
+
+            kf_update();
+            pid_update();
+
+            motor_output();
+
+            wake_time.tv_nsec += CONTROL_SYS_WAIT;
+            if(wake_time.tv_nsec >= 1000000000){
+                wake_time.tv_sec++;
+                wake_time.tv_nsec -= 1000000000;
+            }
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
+        }
+    }
+
+    return NULL;
+}
+#endif

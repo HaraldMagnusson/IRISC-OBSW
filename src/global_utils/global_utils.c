@@ -154,3 +154,22 @@ int logging(int level, char module_name[12],
 
     return SUCCESS;
 }
+
+void logging_csv(FILE* stream, const char* format, ...){
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    struct tm *local = localtime(&now.tv_sec);
+    int hours = local->tm_hour;
+    int minutes = local->tm_min;
+    int seconds = local->tm_sec;
+
+    char buffer[256];
+    va_list args;
+    va_start (args, format);
+    vsnprintf (buffer, 256, format, args);
+    va_end (args);
+
+    fprintf(stream, "%02d:%02d:%02d.%03ld,%s\n",
+            hours, minutes, seconds, now.tv_nsec / 1000000, buffer);
+    fflush(stream);
+}

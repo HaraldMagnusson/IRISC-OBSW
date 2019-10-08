@@ -13,14 +13,16 @@
 #include "current_target.h"
 #include "gimbal.h"
 #include "target_selection.h"
+#include "kalman_filter.h"
 
-#define MODULE_COUNT 4
+#define MODULE_COUNT 5
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
     {"tar__selection", &init_target_selection},
     {"current_target", &init_current_target},
     {"stabilization", &init_stabilization},
+    {"kalman_filter", &init_kalman_filter},
     {"gimbal", &init_gimbal}
 };
 

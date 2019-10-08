@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <stdio.h>
+
 /* int function return values */
 #define SUCCESS 0
 #define FAILURE -1
@@ -27,6 +29,7 @@
 #define GYRO_SAMPLE_TIME      10000000  /* unit: nanoseconds */
 #define ENCODER_SAMPLE_TIME   10000000  /* unit: nanoseconds */
 #define TRACKING_UPDATE_TIME 100000000  /* unit: nanoseconds */
+#define CONTROL_SYS_WAIT      10000000  /* unit: nanoseconds */
 
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);
@@ -48,3 +51,5 @@ int init_submodules(const module_init_t init_sequence[], int module_count);
 
 int logging(int level, char module_name[12],
             const char * format, ... );
+
+void logging_csv(FILE* stream, const char* format, ...);
