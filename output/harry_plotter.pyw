@@ -14,8 +14,12 @@ if plot1 is 1:
 
 	with open('simdata.txt','r') as csvfile:
 		plots = csv.DictReader(csvfile, delimiter=',')
+		i = 0;
 		for row in plots:
-			x.append(float(row["sim time"]))
+			if i == 0:			
+				start_time = float(row["sim time"])
+				i += 1
+			x.append(float(row["sim time"]) - start_time)
 			y.append(float(row["current pos"]))
 			y_err.append(float(row["pos error"]))
 			y_target.append(float(row["target pos"]))
@@ -40,8 +44,12 @@ if plot2 is 1:
 
 	with open('simdata.txt','r') as csvfile:
 		plots = csv.DictReader(csvfile, delimiter=',')
+		i = 0;
 		for row in plots:
-			x2.append(float(row["sim time"]))
+			if i == 0:			
+				start_time = float(row["sim time"])
+				i += 1
+			x2.append(float(row["sim time"]) - start_time)
 			y2.append(float(row["integral"]))
 			y3.append(float(row["derivative"]))
 			y4.append(float(row["proportional"]))
