@@ -125,10 +125,6 @@ int main(int argc, char* const argv[]){
         return FAILURE;
     }
 
-    pthread_mutex_lock(&mutex_cond_cont_sys);
-    pthread_cond_signal(&cond_cont_sys);
-    pthread_mutex_unlock(&mutex_cond_cont_sys);
-
     while(1){
         sleep(1000);
     }

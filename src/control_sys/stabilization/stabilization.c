@@ -361,7 +361,7 @@ static void* control_sys_thread(void* args){
 
     struct timespec wake_time;
 
-    double az_alt[2];
+    double az_alt[2], motor_out[2];
 
     while(1){
 
@@ -369,12 +369,12 @@ static void* control_sys_thread(void* args){
 
         clock_gettime(CLOCK_MONOTONIC, &wake_time);
 
-        while(1){
+        while(get_mode() != RESET){
 
             kf_update(az_alt);
-            pid_update();
+            pid_update(as_alt, motor_out);
 
-            motor_output();
+            motor_output(motor_out);
 
             wake_time.tv_nsec += CONTROL_SYS_WAIT;
             if(wake_time.tv_nsec >= 1000000000){
