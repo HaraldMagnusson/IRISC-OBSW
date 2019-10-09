@@ -59,8 +59,8 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"mode", &init_mode},
     {"gpio", &init_gpio},
     {"camera", &init_camera},
-    {"command", &init_command},
     {"e_link", &init_elink},
+    {"command", &init_command},
     {"global_utils", &init_global_utils},
     {"img_processing", &init_img_processing},
     {"sensors", &init_sensors},
@@ -121,6 +121,8 @@ int main(int argc, char* const argv[]){
         return FAILURE;
     }
     /* initialization sequence done */
+
+    
 
     check_flags();
 
