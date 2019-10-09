@@ -42,12 +42,12 @@ static void* thread_func(void* param){
         memset(msg, 0, sizeof(msg));
         temp = read_downlink_queue();
         if(temp.flag==0){
+            /* ID for string */
             msg[0]=0;
             msg[1]=0;
             data = temp.filepath;
             len = strlen(data);
 
-            /* ID for string */
             char* bytes = (char*)&len;
             msg[2] = bytes[0];
             msg[3] = bytes[1];

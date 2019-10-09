@@ -12,7 +12,4 @@
 /* initialise the gimbal component */
 int init_gimbal(void* args);
 
-/* control the gimbal motors 
- * placeholder name
- */
-void set_servo( void );
+int step_gimbal(int az_stepps, int el_stepps, int rt_stepps);

@@ -14,7 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
-
+#include <netdb.h> 
 #include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -23,18 +23,21 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <math.h>
 
 static int sockfd, newsockfd, init_flag = 0;
 
 pthread_mutex_t e_link_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t e_link_mutex_read = PTHREAD_MUTEX_INITIALIZER;
 
 static void* thread_socket(void*);
-static unsigned short sleep_time = 100;
+static unsigned int sleep_time = 30000;
 
 
 int init_elink(void* args){
 
     pthread_mutex_lock( &e_link_mutex );
+    pthread_mutex_lock( &e_link_mutex_read );
 
     return create_thread("e_link", thread_socket, 16);
 }
@@ -66,22 +69,33 @@ int write_elink(char *buffer, int bytes){
 }
 
 int read_elink(char *buffer, int bytes){
+
+    pthread_mutex_lock( &e_link_mutex_read );
+
+    printf("read_elink\n");
+
     int n, bytes_avail;
 
     do{
-        ioctl(sockfd, FIONREAD, &bytes_avail);
+        ioctl(newsockfd, FIONREAD, &bytes_avail);
+        //printf("Bytes avail: %d\n", bytes_avail);
         sleep(1);
     } while(bytes_avail < bytes);
 
     n=read(newsockfd, buffer, bytes);
 
+    printf("Bytes read: %d\n", n);
+    printf("Bytes to read: %d\n", bytes);
+
+    pthread_mutex_unlock( &e_link_mutex_read );
+
     if (n<0){
         logging(ERROR, "e_link", "ERROR reading from socket: %s\n", strerror(errno));
         return FAILURE;
     } else if(n>0){
-        #ifdef E_LINK_DEBUG
+        //#ifdef E_LINK_DEBUG
         logging(DEBUG, "e_link", "Message read from GS: %s", buffer);
-        #endif
+        //#endif
     }
 
     return SUCCESS;
@@ -137,6 +151,7 @@ static void* thread_socket(void* param){
         }
         logging(INFO, "e_link", "Accepted connection to GS");
         pthread_mutex_unlock( &e_link_mutex );
+        pthread_mutex_unlock( &e_link_mutex_read );
         init_flag = 1;
     }
 
@@ -149,7 +164,11 @@ void close_socket( void ){
 }
 
 int set_datarate (unsigned short datarate){
-    sleep_time=datarate;
+    float temp = 1500.0*8/datarate*1000;
+    
+    sleep_time=floor(temp);
+
+    logging(INFO, "e_link", "sleep_time: %d", sleep_time);
 
     return SUCCESS;
 }
