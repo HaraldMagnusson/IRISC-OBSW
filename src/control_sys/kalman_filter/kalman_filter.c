@@ -77,7 +77,6 @@ typedef struct{
 
 typedef struct{
     arr_t mem[18];
-    char axis_flag;
 
     double **x_prev;
     double **x_upd;
@@ -97,6 +96,11 @@ typedef struct{
     double **nu_next;
     double **S_next;
     double **K;
+
+    FILE* x_prev_log;
+    FILE* p_prev_log;
+    FILE* nu_next_log;
+    FILE* s_next_log;
 } axis_context_t;
 
 static int open_logs(void);
@@ -139,8 +143,7 @@ static axis_context_t az_c = {
         {&az_c.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
         {&az_c.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
         {&az_c.K,            K_ROWS,         K_COLS          }
-    },
-    AZ_AXIS_FLAG
+    }
 };
 
 static axis_context_t alt_c = {
@@ -163,8 +166,7 @@ static axis_context_t alt_c = {
         {&alt_c.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
         {&alt_c.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
         {&alt_c.K,            K_ROWS,         K_COLS          }
-    },
-    ALT_AXIS_FLAG
+    }
 };
 
 // TODO: replace when ST stuff is available
@@ -172,11 +174,7 @@ static axis_context_t alt_c = {
 static double ang_init = 1;
 // steps used for initial innovation
 static int init_steps;
-
-static FILE* x_prev_log;
-static FILE* p_prev_log;
-static FILE* nu_next_log;
-static FILE* s_next_log;
+static int l = 0;
 
 int init_kalman_filter(void* args){
 
@@ -234,7 +232,7 @@ int init_kalman_filter(void* args){
             }
 
             for(int kk=0; kk < rows; ++kk){
-                (*arr[ii]->mem[jj].var)[kk] = malloc(cols * **arr[ii]->mem[jj].var[kk]);
+                (*arr[ii]->mem[jj].var)[kk] = malloc(cols * sizeof **arr[ii]->mem[jj].var[kk]);
 
                 if(*arr[ii]->mem[jj].var == NULL){
                     logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
@@ -288,38 +286,77 @@ static int open_logs(void){
 
     char log_fn[100];
 
+    /*******************************az*****************************************/
     strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/x_upd.log");
+    strcat(log_fn, "output/logs/kf/az/x_upd.log");
 
-    x_prev_log = fopen(log_fn, "a");
-    if(x_prev_log == NULL){
+    az_c.x_prev_log = fopen(log_fn, "a");
+    if(az_c.x_prev_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open x_upd log file: %m");
         return errno;
     }
 
     strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/p_upd.log");
+    strcat(log_fn, "output/logs/kf/az/p_upd.log");
 
-    p_prev_log = fopen(log_fn, "a");
-    if(p_prev_log == NULL){
+    az_c.p_prev_log = fopen(log_fn, "a");
+    if(az_c.p_prev_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
         return errno;
     }
 
     strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/nu_next.log");
+    strcat(log_fn, "output/logs/kf/az/nu_next.log");
 
-    nu_next_log = fopen(log_fn, "a");
-    if(nu_next_log == NULL){
+    az_c.nu_next_log = fopen(log_fn, "a");
+    if(az_c.nu_next_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open nu_next log file: %m");
         return errno;
     }
 
     strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/s_next.log");
+    strcat(log_fn, "output/logs/kf/az/s_next.log");
 
-    s_next_log = fopen(log_fn, "a");
-    if(s_next_log == NULL){
+    az_c.s_next_log = fopen(log_fn, "a");
+    if(az_c.s_next_log == NULL){
+        logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
+        return errno;
+    }
+
+    /******************************alt*****************************************/
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/kf/alt/x_upd.log");
+
+    alt_c.x_prev_log = fopen(log_fn, "a");
+    if(alt_c.x_prev_log == NULL){
+        logging(ERROR, "Kalman F", "Failed to open x_upd log file: %m");
+        return errno;
+    }
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/kf/alt/p_upd.log");
+
+    alt_c.p_prev_log = fopen(log_fn, "a");
+    if(alt_c.p_prev_log == NULL){
+        logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
+        return errno;
+    }
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/kf/alt/nu_next.log");
+
+    alt_c.nu_next_log = fopen(log_fn, "a");
+    if(alt_c.nu_next_log == NULL){
+        logging(ERROR, "Kalman F", "Failed to open nu_next log file: %m");
+        return errno;
+    }
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/kf/alt/s_next.log");
+
+    alt_c.s_next_log = fopen(log_fn, "a");
+    if(alt_c.s_next_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
         return errno;
     }
@@ -349,13 +386,16 @@ int kf_update(double az_alt[2]){
     az_alt[0] = az_c.x_prev[0][0];
     az_alt[1] = alt_c.x_prev[0][0];
 
+    l++;
+
+    if(l == 100000){
+        return FAILURE;
+    }
     return SUCCESS;
 }
 
-
 static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
     // TODO: not necessary anymore when ST data is incorporated
-    static int l = 0;
 
     // get the gyro measurement
     // TODO: Replace with gyro data
@@ -401,13 +441,13 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         //          log(P_upd);
         //          log(nu_next);
         //          log(S_next);
-        logging_csv(x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
+        logging_csv(axis.x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
-        logging_csv(p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
+        logging_csv(axis.p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
                 axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
 
-        logging_csv(nu_next_log, "%+.10e", **axis.nu_next);
-        logging_csv(s_next_log, "%+.10e", **axis.S_next);
+        logging_csv(axis.nu_next_log, "%+.10e", **axis.nu_next);
+        logging_csv(axis.s_next_log, "%+.10e", **axis.S_next);
 
         #ifdef KF_DEBUG
             logging(DEBUG, "Kalman F", "step number: %d", l);
@@ -456,9 +496,9 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         // save estimates
         //          log(x_next);
         //          log(P_next);
-        logging_csv(x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
+        logging_csv(axis.x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
-        logging_csv(p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
+        logging_csv(axis.p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
                 axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
 
         //          printf("x_prev for i = %d", l);
@@ -471,14 +511,8 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
 
     }
 
-    if(l == 100000){
-        return FAILURE;
-    }
-
-    l++;
     return SUCCESS;
 }
-
 
 /*******************************************************************************
 ********************************************************************************
