@@ -22,6 +22,7 @@ int init_star_tracker(void* args){
     st_local.dec = 0;
     st_local.roll = 0;
     st_local.out_of_date = 1;
+    st_local.new_data = 0;
 
     int ret = pthread_mutex_init( &mutex_st, NULL );
     if( ret ){
@@ -42,6 +43,9 @@ void get_star_tracker_local(star_tracker_t* st){
     st->dec = st_local.dec;
     st->roll = st_local.roll;
     st->out_of_date = st_local.out_of_date;
+    st->new_data = st_local.new_data;
+
+    st_local.new_data = 0;
 
     pthread_mutex_unlock(&mutex_st);
 }
@@ -54,6 +58,7 @@ void set_star_tracker(star_tracker_t* st){
     st_local.dec = st->dec;
     st_local.roll = st->roll;
     st_local.out_of_date = 0;
+    st_local.new_data = 1;
 
     pthread_mutex_unlock(&mutex_st);
 }

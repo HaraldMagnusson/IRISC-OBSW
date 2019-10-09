@@ -97,10 +97,10 @@ typedef struct{
     double **S_next;
     double **K;
 
-    FILE* x_prev_log;
-    FILE* p_prev_log;
-    FILE* nu_next_log;
-    FILE* s_next_log;
+    FILE* x_log;
+    FILE* p_log;
+    FILE* nu_log;
+    FILE* s_log;
 } axis_context_t;
 
 static int open_logs(void);
@@ -123,49 +123,72 @@ static void comp_k_gain(axis_context_t axis);
 static void update_state(axis_context_t axis);
 static void update_covar(axis_context_t axis);
 
-static axis_context_t az_c = {
+static axis_context_t x = {
     {
-        {&az_c.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
-        {&az_c.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
-        {&az_c.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
-        {&az_c.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
-        {&az_c.Phi,          PHI_ROWS,       PHI_COLS        },
-        {&az_c.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
-        {&az_c.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
-        {&az_c.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
-        {&az_c.H,            H_ROWS,         H_COLS          },
-        {&az_c.Q,            Q_ROWS,         Q_COLS          },
-        {&az_c.R,            R_ROWS,         R_COLS          },
-        {&az_c.Q2,           Q2_ROWS,        Q2_COLS         },
-        {&az_c.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
-        {&az_c.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
-        {&az_c.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
-        {&az_c.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
-        {&az_c.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
-        {&az_c.K,            K_ROWS,         K_COLS          }
+        {&x.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&x.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&x.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&x.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&x.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&x.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&x.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&x.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&x.H,            H_ROWS,         H_COLS          },
+        {&x.Q,            Q_ROWS,         Q_COLS          },
+        {&x.R,            R_ROWS,         R_COLS          },
+        {&x.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&x.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&x.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&x.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&x.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&x.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&x.K,            K_ROWS,         K_COLS          }
     }
 };
 
-static axis_context_t alt_c = {
+static axis_context_t y = {
     {
-        {&alt_c.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
-        {&alt_c.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
-        {&alt_c.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
-        {&alt_c.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
-        {&alt_c.Phi,          PHI_ROWS,       PHI_COLS        },
-        {&alt_c.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
-        {&alt_c.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
-        {&alt_c.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
-        {&alt_c.H,            H_ROWS,         H_COLS          },
-        {&alt_c.Q,            Q_ROWS,         Q_COLS          },
-        {&alt_c.R,            R_ROWS,         R_COLS          },
-        {&alt_c.Q2,           Q2_ROWS,        Q2_COLS         },
-        {&alt_c.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
-        {&alt_c.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
-        {&alt_c.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
-        {&alt_c.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
-        {&alt_c.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
-        {&alt_c.K,            K_ROWS,         K_COLS          }
+        {&y.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&y.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&y.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&y.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&y.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&y.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&y.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&y.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&y.H,            H_ROWS,         H_COLS          },
+        {&y.Q,            Q_ROWS,         Q_COLS          },
+        {&y.R,            R_ROWS,         R_COLS          },
+        {&y.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&y.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&y.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&y.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&y.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&y.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&y.K,            K_ROWS,         K_COLS          }
+    }
+};
+
+static axis_context_t z = {
+    {
+        {&z.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&z.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&z.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&z.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&z.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&z.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&z.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&z.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&z.H,            H_ROWS,         H_COLS          },
+        {&z.Q,            Q_ROWS,         Q_COLS          },
+        {&z.R,            R_ROWS,         R_COLS          },
+        {&z.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&z.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&z.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&z.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&z.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&z.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&z.K,            K_ROWS,         K_COLS          }
     }
 };
 
@@ -204,8 +227,8 @@ int init_kalman_filter(void* args){
 
 
     // allocate memory
-    axis_context_t* arr[2] = {&az_c, &alt_c};
-    for(int ii=0; ii<2; ++ii){
+    axis_context_t* arr[3] = {&x, &y, &z};
+    for(int ii=0; ii<3; ++ii){
         for(int jj=0; jj<18; ++jj){
             int rows = arr[ii]->mem[jj].rows;
             int cols = arr[ii]->mem[jj].cols;
@@ -231,10 +254,11 @@ int init_kalman_filter(void* args){
     // initialise Kalman filter
 
     //TODO: Replace with first ST measurement
-    az_c.x_prev[0][0] = ang_init;  // starting position
-    alt_c.x_prev[0][0] = ang_init;
+    x.x_prev[0][0] = ang_init;  // starting position
+    y.x_prev[0][0] = ang_init;
+    z.x_prev[0][0] = ang_init;
 
-    for(int ii=0; ii<2; ++ii){
+    for(int ii=0; ii<3; ++ii){
         arr[ii]->x_prev[1][0] = 0;
 
         arr[ii]->P_prev[0][0] = s_init*s_init;
@@ -270,14 +294,40 @@ int init_kalman_filter(void* args){
 
 static int open_logs(void){
 
+    char axes[3] = {'x', 'y', 'z'};
+    char* vars[] = {"x", "p", "nu", "s"};
+    axis_context_t* arr[3] = {&x, &y, &z};
+
     char log_fn[100];
+    strcpy(log_fn, get_top_dir());
+    /* dirlen is the index in log_fn where local paths start */
+    int dirlen = strlen(log_fn);
+
+    for(int ii=0; ii<3; ++ii){
+        FILE** logs[4] = {&arr[ii]->x_log, &arr[ii]->p_log, &arr[ii]->nu_log, &arr[ii]->s_log};
+
+        for(int jj=0; jj<4; ++jj){
+
+            snprintf(&log_fn[dirlen], 100-dirlen, "output/logs/kf/%c/%s.log", axes[ii], vars[jj]);
+
+            *logs[jj] = fopen(log_fn, "a");
+            if(*logs[jj] == NULL){
+                logging(ERROR, "Kalman F", "Failed to open %s log for axis %c: %m",
+                        vars[jj], axes[ii]);
+
+                return errno;
+            }
+        }
+
+    }
+    #if 0
 
     /*******************************az*****************************************/
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/az/x_upd.log");
 
-    az_c.x_prev_log = fopen(log_fn, "a");
-    if(az_c.x_prev_log == NULL){
+    x.x_log = fopen(log_fn, "a");
+    if(x.x_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open x_upd log file: %m");
         return errno;
     }
@@ -285,8 +335,8 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/az/p_upd.log");
 
-    az_c.p_prev_log = fopen(log_fn, "a");
-    if(az_c.p_prev_log == NULL){
+    x.p_log = fopen(log_fn, "a");
+    if(x.p_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
         return errno;
     }
@@ -294,8 +344,8 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/az/nu_next.log");
 
-    az_c.nu_next_log = fopen(log_fn, "a");
-    if(az_c.nu_next_log == NULL){
+    x.nu_log = fopen(log_fn, "a");
+    if(x.nu_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open nu_next log file: %m");
         return errno;
     }
@@ -303,8 +353,8 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/az/s_next.log");
 
-    az_c.s_next_log = fopen(log_fn, "a");
-    if(az_c.s_next_log == NULL){
+    x.s_log = fopen(log_fn, "a");
+    if(x.s_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
         return errno;
     }
@@ -314,8 +364,8 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/alt/x_upd.log");
 
-    alt_c.x_prev_log = fopen(log_fn, "a");
-    if(alt_c.x_prev_log == NULL){
+    z.x_log = fopen(log_fn, "a");
+    if(z.x_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open x_upd log file: %m");
         return errno;
     }
@@ -323,8 +373,8 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/alt/p_upd.log");
 
-    alt_c.p_prev_log = fopen(log_fn, "a");
-    if(alt_c.p_prev_log == NULL){
+    z.p_log = fopen(log_fn, "a");
+    if(z.p_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
         return errno;
     }
@@ -332,8 +382,8 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/alt/nu_next.log");
 
-    alt_c.nu_next_log = fopen(log_fn, "a");
-    if(alt_c.nu_next_log == NULL){
+    z.nu_log = fopen(log_fn, "a");
+    if(z.nu_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open nu_next log file: %m");
         return errno;
     }
@@ -341,36 +391,77 @@ static int open_logs(void){
     strcpy(log_fn, get_top_dir());
     strcat(log_fn, "output/logs/kf/alt/s_next.log");
 
-    alt_c.s_next_log = fopen(log_fn, "a");
-    if(alt_c.s_next_log == NULL){
+    z.s_log = fopen(log_fn, "a");
+    if(z.s_log == NULL){
         logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
         return errno;
     }
+    #endif
 
     return SUCCESS;
 }
 
 int kf_update(double az_alt[2]){
 
-    /* TODO: get_st */
-
-    /* get gyro */
     gyro_t gyro;
     get_gyro(&gyro);
-    if(gyro.out_of_date){
+
+    star_tracker_t st;
+    get_star_tracker(&st);
+    if(st.new_data){
+
+        double az = 0, alt = 0;
+        /* convert ra & dec to az & alt */
+
+        //TODO: conversion
+        //az = qieuh ( st.ra);
+        //alt = oiwjer (st.dec);
+
+
+        /* extract x from star tracker */
+        double sin_alt = sin(alt * M_PI / 180);
+        double cos_alt = cos(alt * M_PI / 180);
+
+        double st_x = (az + st.roll * sin_alt) / cos_alt;
+
+        kf_axis(x, gyro.x, &st_x);
+        kf_axis(y, gyro.y, &st.roll);
+        kf_axis(z, gyro.z, &alt);
+
+    }
+    else{
+        kf_axis(x, gyro.x, NULL);
+        kf_axis(y, gyro.y, NULL);
+        kf_axis(z, gyro.z, NULL);
     }
 
-    kf_axis(alt_c, gyro.z, NULL);
+    double sin_z = sin(z.x_prev[0][0] * M_PI / 180);
+    double cos_z = cos(z.x_prev[0][0] * M_PI / 180);
 
-    double gyro_az = 0, sin_az = 0, cos_alt = 0;
-    sincos(alt_c.x_prev[0][0] * M_PI / 180, &sin_az, &cos_alt);
-    gyro_az = gyro.y * sin_az - gyro.x * cos_alt;
+    az_alt[0] = x.x_prev[0][0] * cos_z - y.x_prev[0][0] * sin_z;
+    az_alt[1] = z.x_prev[0][0];
 
-    kf_axis(az_c, gyro_az, NULL);
+    #if 0
+        /* TODO: get_st */
 
-    // should we use x_prev or x_next?
-    az_alt[0] = az_c.x_prev[0][0];
-    az_alt[1] = alt_c.x_prev[0][0];
+        /* get gyro */
+        gyro_t gyro;
+        get_gyro(&gyro);
+        if(gyro.out_of_date){
+        }
+
+        kf_axis(z, gyro.z, NULL);
+
+        double gyro_az = 0, sin_alt = 0, cos_alt = 0;
+        sincos(z.x_prev[0][0] * M_PI / 180, &sin_alt, &cos_alt);
+        gyro_az = gyro.y * sin_alt - gyro.x * cos_alt;
+
+        kf_axis(x, gyro_az, NULL);
+
+        // should we use x_prev or x_next?
+        az_alt[0] = x.x_prev[0][0];
+        az_alt[1] = z.x_prev[0][0];
+    #endif
 
     l++;
 
@@ -427,13 +518,13 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         //          log(P_upd);
         //          log(nu_next);
         //          log(S_next);
-        logging_csv(axis.x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
+        logging_csv(axis.x_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
-        logging_csv(axis.p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
+        logging_csv(axis.p_log, "%+.10e,%+.10e,%+.10e,%+.10e",
                 axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
 
-        logging_csv(axis.nu_next_log, "%+.10e", **axis.nu_next);
-        logging_csv(axis.s_next_log, "%+.10e", **axis.S_next);
+        logging_csv(axis.nu_log, "%+.10e", **axis.nu_next);
+        logging_csv(axis.s_log, "%+.10e", **axis.S_next);
 
         #ifdef KF_DEBUG
             logging(DEBUG, "Kalman F", "step number: %d", l);
@@ -482,9 +573,9 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         // save estimates
         //          log(x_next);
         //          log(P_next);
-        logging_csv(axis.x_prev_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
+        logging_csv(axis.x_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
-        logging_csv(axis.p_prev_log, "%+.10e,%+.10e,%+.10e,%+.10e",
+        logging_csv(axis.p_log, "%+.10e,%+.10e,%+.10e,%+.10e",
                 axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
 
         //          printf("x_prev for i = %d", l);

@@ -29,8 +29,8 @@ typedef struct{
 } encoder_t;
 
 typedef struct{
-    float ra, dec, roll;
-    char out_of_date;
+    double ra, dec, roll;
+    char out_of_date, new_data;
 } star_tracker_t;
 
 /* initialise the sensors component */
