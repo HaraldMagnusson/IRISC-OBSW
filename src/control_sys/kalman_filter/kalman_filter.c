@@ -204,20 +204,6 @@ int init_kalman_filter(void* args){
 
 
     // allocate memory
-    #if 0
-    for(int ii = 0; ii < 18; ++ii){
-        *vars[ii].var = malloc(vars[ii].rows * sizeof **vars[ii].var);
-        if(*vars[ii].var == NULL){
-            return ENOMEM;
-        }
-        for(int jj = 0; jj < vars[ii].rows; ++jj){
-            (*vars[ii].var)[jj] = malloc(vars[ii].cols * sizeof **vars[ii].var[jj]);
-            if((*vars[ii].var)[jj] == NULL){
-                return ENOMEM;
-            }
-        }
-    }
-    #endif
     axis_context_t* arr[2] = {&az_c, &alt_c};
     for(int ii=0; ii<2; ++ii){
         for(int jj=0; jj<18; ++jj){
@@ -365,7 +351,7 @@ static int open_logs(void){
 }
 
 int kf_update(double az_alt[2]){
-    
+
     /* TODO: get_st */
 
     /* get gyro */

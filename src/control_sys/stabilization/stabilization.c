@@ -37,8 +37,6 @@ double motor_control_step(pid_values_t* current_pid_values,
                           control_variables_t* prev_vars,
                           control_variables_t* current_vars);
 
-static void* control_sys_thread(void* args);
-
 static pid_values_t current_az_pid_values;
 static pid_values_t current_alt_pid_values;
 
@@ -92,8 +90,8 @@ static double az_motor_input, alt_motor_input;
 FILE *simdata;
 
 int init_stabilization(void* args){
-    //simdata = fopen("/home/alarm/irisc-obsw/output/simdata.txt","w+");
-    //fprintf(simdata, "sim time,current pos,pos error,target pos,integral,derivative,proportional,pid output\n");
+    simdata = fopen("/home/alarm/irisc-obsw/output/simdata.txt","w+");
+    fprintf(simdata, "sim time,current pos,pos error,target pos,integral,derivative,proportional,pid output\n");
 
     az_prev_control_vars.current_position = 0;
     az_prev_control_vars.target_position = 0;
@@ -111,50 +109,7 @@ int init_stabilization(void* args){
 
     change_stabilization_mode(0);
     pthread_t main_loop;
-    pthread_attr_t thread_attr;
-    struct sched_param param;
-    int ret = pthread_attr_init( &thread_attr );
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_init for watchdog component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_attr_setstacksize(&thread_attr, 10000000);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setstacksize of watchdog component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_attr_setschedpolicy(&thread_attr, SCHED_FIFO);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setschedpolicy of watchdog component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    param.sched_priority = 10;
-    ret = pthread_attr_setschedparam(&thread_attr, &param);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setschedparam of watchdog component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    ret = pthread_attr_setinheritsched(&thread_attr, PTHREAD_EXPLICIT_SCHED);
-    if( ret != 0 ){
-        fprintf(stderr,
-            "Failed pthread_attr_setinheritsched of watchdog component. "
-            "Return value: %d\n", ret);
-        return ret;
-    }
-
-    pthread_create(&main_loop, &thread_attr, control_sys_thread, NULL);
+    pthread_create(&main_loop, NULL, stabilization_main_loop, NULL);
 
     return SUCCESS;
 }
@@ -396,7 +351,7 @@ int change_stabilization_mode(int on_off){
     } else return 1;
 }
 
-#if 1
+#if 0
 // structure for control system thread with KF + PID
 pthread_mutex_t mutex_cond_cont_sys = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_cont_sys = PTHREAD_COND_INITIALIZER;
@@ -416,12 +371,10 @@ static void* control_sys_thread(void* args){
 
         while(1){
 
-            if(kf_update(az_alt)){
-                exit(0);
-            }
-            //pid_update();
+            kf_update(az_alt);
+            pid_update();
 
-            //motor_output();
+            motor_output();
 
             wake_time.tv_nsec += CONTROL_SYS_WAIT;
             if(wake_time.tv_nsec >= 1000000000){
