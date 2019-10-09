@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -27,8 +28,23 @@ static void* thread_func(void* arg);
 
 static pthread_t gyro_thread;
 static FT_HANDLE fd;
+static FILE* gyro_log;
 
 int init_gyroscope_poller(void* args){
+
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/gyro.log");
+
+    gyro_log = fopen(log_fn, "a");
+    if(gyro_log == NULL){
+        logging(ERROR, "Gyro",
+            "Failed to open gyro log file, (%s)",
+            strerror(errno));
+        return errno;
+    }
 
     /* gpio pin is used for trigger to poll the gyroscope */
     int ret = gpio_export(GYRO_TRIG_PIN);
@@ -169,6 +185,10 @@ static void* thread_func(void* arg){
             gyro.z = rate[2];
 
             set_gyro(&gyro);
+
+            logging_csv(gyro_log, "%+.10e,%+.10e,%+.10e",
+                    gyro.x, gyro.y, gyro.z);
+
 
             #if GYRO_DEBUG
                 logging(DEBUG, "Gyro", "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",

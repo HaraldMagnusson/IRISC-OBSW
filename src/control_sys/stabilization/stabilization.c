@@ -27,6 +27,8 @@
 
 #include "global_utils.h"
 #include "stabilization.h"
+#include "kalman_filter.h"
+#include "mode.h"
 
 double get_current_time();
 double motor_control_step(pid_values_t* current_pid_values,
@@ -375,3 +377,41 @@ void pid_reset(){
     logging(INFO, "Stabil", "Resetting the integral part.");
 }
 
+
+#if 0
+// structure for control system thread with KF + PID
+pthread_mutex_t mutex_cond_cont_sys = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_cont_sys = PTHREAD_COND_INITIALIZER;
+
+static void* control_sys_thread(void* args){
+    pthread_mutex_lock(&mutex_cond_cont_sys);
+
+    struct timespec wake_time;
+
+    double az_alt[2], motor_out[2];
+
+    while(1){
+
+        pthread_cond_wait(&cond_cont_sys, &mutex_cond_cont_sys);
+
+        clock_gettime(CLOCK_MONOTONIC, &wake_time);
+
+        while(get_mode() != RESET){
+
+            kf_update(az_alt);
+            pid_update(as_alt, motor_out);
+
+            motor_output(motor_out);
+
+            wake_time.tv_nsec += CONTROL_SYS_WAIT;
+            if(wake_time.tv_nsec >= 1000000000){
+                wake_time.tv_sec++;
+                wake_time.tv_nsec -= 1000000000;
+            }
+            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake_time, NULL);
+        }
+    }
+
+    return NULL;
+}
+#endif

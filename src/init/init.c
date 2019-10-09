@@ -32,14 +32,14 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 13
+#define MODULE_COUNT 12
 
 static int ret;
 static struct sigaction sa;
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"watchdog", &init_watchdog},
+    //{"watchdog", &init_watchdog},
     {"gpio", &init_gpio},
     {"camera", &init_camera},
     {"command", &init_command},
@@ -124,6 +124,10 @@ int main(int argc, char* const argv[]){
     if(count != 0){
         return FAILURE;
     }
+
+    pthread_mutex_lock(&mutex_cond_cont_sys);
+    pthread_cond_signal(&cond_cont_sys);
+    pthread_mutex_unlock(&mutex_cond_cont_sys);
 
     while(1){
         sleep(1000);
