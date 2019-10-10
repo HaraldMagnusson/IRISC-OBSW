@@ -39,9 +39,6 @@ int expose_nir_local(int exp, int gain);
  * and return if that is the case. Otherwise the image will be fetched from
  * the camera and saved.
  *
- * input:
- *      fn: filename to save image as
- *
  * return:
  *      SUCCESS: operation is successful
  *      EXP_NOT_READY: exposure still ongoing, wait a bit and call again
@@ -53,7 +50,7 @@ int expose_nir_local(int exp, int gain);
  *      ENODEV: camera disconnected
  *
  */
-int save_img_nir_local(char* fn);
+int save_img_nir_local(void);
 
 /* abort_exp_nir_local:
  * Abort an ongoing exposure of the NIR camera and save the image.
@@ -70,4 +67,4 @@ int save_img_nir_local(char* fn);
  *      EIO: failed to fetch data from camera
  *      ENODEV: camera disconnected
  */
-int abort_exp_nir_local(char* fn);
+int abort_exp_nir_local(void);

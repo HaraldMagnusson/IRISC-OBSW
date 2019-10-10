@@ -146,7 +146,7 @@ static void* sel_track_thread_func(void* arg){
             /* abort exposure if target is moving out of operational FoV */
             if(fabs(enc.az) > OP_FOV * 0.45){
                 if(exposing_flag){
-                    abort_exp_nir("hax.fit");
+                    abort_exp_nir();
                     logging(WARN, "Tracking",
                             "Aborted exposure due to telescope leaving operational FoV.");
                 }
@@ -169,7 +169,7 @@ static void* sel_track_thread_func(void* arg){
 
             if(exposing_flag){
                 /* save image */
-                ret = save_img_nir("hax.fit");
+                ret = save_img_nir();
                 if(ret != EXP_NOT_READY){
                     break;
                 }

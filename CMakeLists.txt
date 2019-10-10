@@ -4,15 +4,21 @@ project(irisc_obsw)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # compiler flags
-set(CFLAGS "-O2 -std=gnu17 -Wall")
-# useful defines:
-#       GYRO_DEBUG, GPS_DEBUG, ENCODER_DEBUG, SELECTION_DEBUG,
-#       TRACKING_DEBUG, ST_DEBUG
-set(COMPILE_DEFINES "-DGPS_DEBUG -DSELECTION_DEBUG -DTRACKING_DEBUG -DST_DEBUG -DKF_DEBUG")
+set(CFLAGS "-O2 -std=gnu17 -Wall -Wpedantic")
+
+# useful debug defines: GYRO_DEBUG, GPS_DEBUG, ENCODER_DEBUG,
+#                       SEQ_DEBUG, ST_DEBUG, E_LINK_DEBUG, DOWNLINK_DEBUG
+#                       CAMERA_DEBUG, SELECTION_DEBUG, TRACKING_DEBUG
+set(COMPILE_DEFINES "-DST_DEBUG -DSEQ_DEBUG -DE_LINK_DEBUG -DDOWNLINK_DEBUG -DCAMERA_DEBUG -DKF_DEBUG -DTRACKING_DEBUG -DSELECTION_DEBUG")
+
+#useful test defines: ST_TEST, SEQ_TEST
+set(COMPILE_DEFINES "${COMPILE_DEFINES} -DSEQ_TEST")
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
-set(LDFLAGS "-lrt -lm -pthread -lcfitsio -lftd2xx")
+set(LDFLAGS "-lrt -lm -pthread -lcfitsio -lftd2xx -lzstd")
+
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources

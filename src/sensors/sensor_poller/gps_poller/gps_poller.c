@@ -13,7 +13,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -28,37 +27,59 @@ static unsigned char calc_chksum(const unsigned char* str, unsigned char* chksum
 static unsigned char nibble_to_ascii_hex(const unsigned char nibble);
 static int divide_NMEA_str(const unsigned char* str, unsigned char NMEA_str_arr[30][20]);
 static int process_gps(const unsigned char str[BUFFER_S]);
-static void* gps_thread_func();
+static void* gps_thread_func(void* args);
 static float coord_conv(const unsigned char* str, int lon);
 
 static unsigned char ch = 0xFF;
 static unsigned char buffer[BUFFER_S];
 static struct timespec wake_time;
-static pthread_t gps_thread;
 static int fd_spi12;
+static FILE* gps_log;
 
+#ifdef SEQ_TEST
+    static float altitude = 1;
+#endif
 
 int init_gps_poller(void* args){
+
+    /* set up log file */
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/gps.log");
+
+    gps_log = fopen(log_fn, "a");
+    if(gps_log == NULL){
+        logging(ERROR, "GPS",
+            "Failed to open gps log file, (%s)",
+            strerror(errno));
+        return errno;
+    }
 
     char* spi12 = "/dev/spidev1.2";
 
     fd_spi12 = open(spi12, O_RDONLY);
 
     if(fd_spi12 < 0){
-        logging(ERROR, "GPS", "Failed to open spi device: %s", strerror(errno));
+        logging(ERROR, "GPS", "Failed to open spi device, %m");
+        return errno;
     }
 
     __u32 speed = 200000;
-    ioctl(fd_spi12, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    int ret = ioctl(fd_spi12, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    if(ret == -1){
+        logging(ERROR, "GPS",
+                "Failed to set spi speed for spidev1.2, (%s)",
+                strerror(errno));
+        return errno;
+    }
 
     buffer[0] = '$';
 
-    pthread_create(&gps_thread, NULL, gps_thread_func, NULL);
-
-    return SUCCESS;
+    return create_thread("gps_poller", gps_thread_func, 24);
 }
 
-static void* gps_thread_func(){
+static void* gps_thread_func(void* args){
     int ii, ret = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &wake_time);
@@ -97,6 +118,7 @@ static void* gps_thread_func(){
             }
         }
     }
+    return NULL;
 }
 
 /* process_gps:
@@ -130,9 +152,19 @@ static int process_gps(const unsigned char str[BUFFER_S]){
 
     gps.lat = coord_conv(NMEA_str_arr[2], 0);
     gps.lon = coord_conv(NMEA_str_arr[4], 1);
-    gps.alt = strtof((char*)NMEA_str_arr[9], NULL);
+    #ifndef SEQ_TEST
+        gps.alt = strtof((char*)NMEA_str_arr[9], NULL);
+    #else
+        if(altitude < 26000){
+            altitude += 1000;
+        }
+
+        gps.alt = altitude;
+    #endif
 
     set_gps(&gps);
+
+    logging_csv(gps_log, "%010.7f,%010.6f,%07.1f", gps.lat, gps.lon, gps.alt);
 
     #if GPS_DEBUG
         logging(DEBUG, "GPS", "lat: %.3f, long: %.3f, alt: %.3f",

@@ -5,7 +5,7 @@
  *          an interface to each camera.
  * -----------------------------------------------------------------------------
  */
-#include <stdio.h>
+
 #include <string.h>
 
 #include "global_utils.h"
@@ -26,12 +26,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 int init_camera(void* args){
 
     /* init whatever in this module */
-    int ret = init_submodules(init_sequence, MODULE_COUNT);
-    if( ret != SUCCESS ){
-        return ret;
-    }
-
-    return SUCCESS;
+    return init_submodules(init_sequence, MODULE_COUNT);
 }
 
 /* expose_guiding:
@@ -116,9 +111,6 @@ int expose_nir(int exp, int gain){
  * and return if that is the case. Otherwise the image will be fetched from the
  * camera and saved.
  *
- * input:
- *      fn: filename to save image as
- *
  * return:
  *      SUCCESS: operation is successful
  *      EXP_NOT_READY: exposure still ongoing, wait a bit and call again
@@ -130,8 +122,8 @@ int expose_nir(int exp, int gain){
  *      ENODEV: camera disconnected
  *
  */
-int save_img_nir(char* fn){
-    return save_img_nir_local(fn);
+int save_img_nir(void){
+    return save_img_nir_local();
 }
 
 /* abort_exp_nir:
@@ -149,6 +141,6 @@ int save_img_nir(char* fn){
  *      EIO: failed to fetch data from camera
  *      ENODEV: camera disconnected
  */
-int abort_exp_nir(char* fn){
-    return abort_exp_nir_local(fn);
+int abort_exp_nir(void){
+    return abort_exp_nir_local();
 }

@@ -7,6 +7,8 @@
  * -----------------------------------------------------------------------------
  */
 
+#include <string.h>
+
 #include "global_utils.h"
 
 #include "stabilization.h"
@@ -29,12 +31,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
 int init_control_sys(void* args){
 
     /* init whatever in this module */
-    int ret = init_submodules(init_sequence, MODULE_COUNT);
-    if( ret != SUCCESS ){
-        return ret;
-    }
-
-    return SUCCESS;
+    return init_submodules(init_sequence, MODULE_COUNT);
 }
 
 /* Set the error thresholds for when to start exposing camera */

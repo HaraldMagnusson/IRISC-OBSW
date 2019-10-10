@@ -21,6 +21,7 @@
 #include "mode.h"
 #include "kalman_filter.h"
 #include "sensors.h"
+#include "current_target.h"
 
 /* Kalman filter
  *  double x_prev[2][1], x_upd[2][1], x_next[2][1];
@@ -104,6 +105,7 @@ typedef struct{
 } axis_context_t;
 
 static int open_logs(void);
+static void init_kalman_vars(double x_init, double y_init, double z_init);
 static int kf_axis(axis_context_t axis, double gyro_data, double* st_data);
 
 static void eye(int m, double** mat);
@@ -199,32 +201,14 @@ static double ang_init = 1;
 static int init_steps;
 static int l = 0;
 
+
+
+
 int init_kalman_filter(void* args){
-
-    // initialisation parameters
-    double dt;
-    dt = (double)GYRO_SAMPLE_TIME/1000000000; // sampling time of the system
-
-    /* TODO: remove for non testing */
-    //dt = 0.1; // for testing uses
 
     if(open_logs()){
         return errno;
     }
-
-    // gyro parameters
-    double ARW, RRW, gyro_bias_0;
-    ARW = (.15/180*M_PI/60)*(.15/180*M_PI/60);    // angular random walk of gyro
-    gyro_bias_0 = 10./180*M_PI/3600;
-    //gyro_bias_0 = M_PI*10/180;
-    RRW = (1./180*M_PI/3600/sqrt(3600))*(1./180*M_PI/3600/sqrt(3600));      // rate random walk of gyro
-
-    // initialisation mode parameters
-    double init_time = 300;
-    double s_init = 0.1/180*M_PI;
-    init_steps = init_time/dt;
-
-
 
     // allocate memory
     axis_context_t* arr[3] = {&x, &y, &z};
@@ -252,11 +236,38 @@ int init_kalman_filter(void* args){
     }
 
     // initialise Kalman filter
+    init_kalman_vars(0, 0, 45);
 
-    //TODO: Replace with first ST measurement
-    x.x_prev[0][0] = ang_init;  // starting position
-    y.x_prev[0][0] = ang_init;
-    z.x_prev[0][0] = ang_init;
+    return SUCCESS;
+}
+
+static void init_kalman_vars(double x_init, double y_init, double z_init){
+
+    /* TODO: remove for non testing */
+    //dt = 0.1; // for testing uses
+
+    // initialisation parameters
+    double dt;
+    dt = (double)GYRO_SAMPLE_TIME/1000000000; // sampling time of the system
+
+    // gyro parameters
+    double ARW, RRW, gyro_bias_0;
+    ARW = (.15/180*M_PI/60)*(.15/180*M_PI/60);    // angular random walk of gyro
+    gyro_bias_0 = 10./180*M_PI/3600;
+    //gyro_bias_0 = M_PI*10/180;
+    RRW = (1./180*M_PI/3600/sqrt(3600))*(1./180*M_PI/3600/sqrt(3600));      // rate random walk of gyro
+
+    // initialisation mode parameters
+    double init_time = 300;
+    double s_init = 0.1/180*M_PI;
+    init_steps = init_time/dt;
+
+
+    axis_context_t* arr[3] = {&x, &y, &z};
+
+    x.x_prev[0][0] = x_init;  // starting position
+    y.x_prev[0][0] = y_init;
+    z.x_prev[0][0] = z_init;
 
     for(int ii=0; ii<3; ++ii){
         arr[ii]->x_prev[1][0] = 0;
@@ -289,7 +300,7 @@ int init_kalman_filter(void* args){
         arr[ii]->Q2[0][0] = RRW/dt;
         arr[ii]->R[0][0] = s_init*s_init;
     }
-    return SUCCESS;
+
 }
 
 static int open_logs(void){
@@ -401,6 +412,7 @@ static int open_logs(void){
     return SUCCESS;
 }
 
+static char first_st_flag = 1;
 int kf_update(double az_alt[2]){
 
     gyro_t gyro;
@@ -423,6 +435,15 @@ int kf_update(double az_alt[2]){
         double cos_alt = cos(alt * M_PI / 180);
 
         double st_x = (az + st.roll * sin_alt) / cos_alt;
+
+        if(first_st_flag){
+            init_kalman_vars(st_x, st.roll, alt);
+            set_tracking_angles(az, alt);
+
+            //start selection and tracking
+
+            first_st_flag = 0;
+        }
 
         kf_axis(x, gyro.x, &st_x);
         kf_axis(y, gyro.y, &st.roll);

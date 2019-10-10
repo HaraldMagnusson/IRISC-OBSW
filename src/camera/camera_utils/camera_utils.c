@@ -7,7 +7,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <errno.h>
@@ -22,7 +21,8 @@ static struct timespec start_time[2];
 static char exp_start_datetime[2][20];
 static int timeref[2];
 
-static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn, struct timespec* exp_time);
+static int write_img(unsigned short* buffer,
+        ASI_CAMERA_INFO* cam_info, char* fn, struct timespec* exp_time);
 static void yflip(unsigned short* buffer, int width, int height);
 
 /* cam_setup:
@@ -87,16 +87,18 @@ int cam_setup(ASI_CAMERA_INFO* cam_info, char cam_name){
 
     ret = ASIInitCamera(id);
     if(ret != ASI_SUCCESS){
-        logging(ERROR, "Camera", "Failed to initialise camera: %c. "
-                "Return value: %d", cam_name, ret);
+        logging(ERROR, "Camera",
+                "Failed to initialise camera: %c. Return value: %d",
+                cam_name, ret);
         return FAILURE;
     }
 
     /* setting image format to 16 bit per pixel */
     ret = ASISetROIFormat(id, width, height, 1, ASI_IMG_RAW16);
     if(ret != ASI_SUCCESS){
-        logging(ERROR, "Camera", "Failed to set image format for camera: %c. "
-                "Return value: %d", cam_name, ret);
+        logging(ERROR, "Camera",
+            "Failed to set image format for camera: %c. Return value: %d",
+            cam_name, ret);
         return FAILURE;
     }
 
@@ -180,7 +182,8 @@ int expose(int id, int exp, int gain, char* cam_name){
  *
  * TODO: System for file names and queueing up image for processing.
  */
-int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespec* exp_time){
+int save_img(ASI_CAMERA_INFO* cam_info, char* fn,
+        char* cam_name, struct timespec* exp_time){
 
     int id = cam_info->CameraID, ret;
 
@@ -191,10 +194,12 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespe
         case ASI_EXP_WORKING:
             return EXP_NOT_READY;
         case ASI_EXP_FAILED:
-            logging(ERROR, "Camera", "Exposure of %s camera failed", cam_name);
+            logging(ERROR, "Camera",
+                    "Exposure of %s camera failed", cam_name);
             return EXP_FAILED;
         case ASI_EXP_IDLE:
-            logging(ERROR, "Camera", "save_img called before starting exposure");
+            logging(ERROR, "Camera",
+                    "save_img called before starting exposure");
             return EPERM;
         default:
             break;
@@ -207,18 +212,21 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespe
     unsigned char* buffer = (unsigned char*) malloc(buffer_size);
 
     if(buffer == NULL){
-        logging(ERROR, "Camera", "Cannot allocate memory for image buffer");
+        logging(ERROR, "Camera",
+                "Cannot allocate memory for image buffer");
         return ENOMEM;
     }
 
     /* fetch data */
     ret = ASIGetDataAfterExp(id, buffer, buffer_size);
     if(ret == ASI_ERROR_INVALID_ID){
-        logging(ERROR, "Camera", "Camera disconnected when fetching data: %s", cam_name);
+        logging(ERROR, "Camera",
+                "Camera disconnected when fetching data: %s", cam_name);
         return ENODEV;
     }
     else if(ret != ASI_SUCCESS){
-        logging(ERROR, "Camera", "Failed to fetch data from %s camera.", cam_name);
+        logging(ERROR, "Camera",
+                "Failed to fetch data from %s camera.", cam_name);
         return EIO;
     }
 
@@ -250,7 +258,8 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespe
  *      SUCCESS: operation is successful
  *      FAILURE: write failed, fits error written to stderr
  */
-static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn, struct timespec* exp_time){
+static int write_img(unsigned short* buffer,
+        ASI_CAMERA_INFO* cam_info, char* fn, struct timespec* exp_time){
     fitsfile* fptr;
     int ret = 0;
 
@@ -265,7 +274,7 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         fn_f[ii+1] = fn[ii];
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "saving image, filename: %s", fn_f);
         logging(DEBUG, "Camera", "creating file");
     #endif
@@ -276,7 +285,7 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "creating img");
     #endif
 
@@ -286,15 +295,16 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "updating header");
     #endif
     long exposure, gain;
     ASI_BOOL pb_auto = ASI_FALSE;
     if(exp_time != NULL){
         exposure = exp_time->tv_sec * 1000000 + exp_time->tv_nsec / 1000;
-        #if CAMERA_DEBUG
-            logging(DEBUG, "Camera", "aborted after exposing for %ld microseconds", exposure);
+        #ifdef CAMERA_DEBUG
+            logging(DEBUG, "Camera",
+                    "aborted after exposing for %ld microseconds", exposure);
         #endif
     }
     else{
@@ -315,7 +325,7 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "writing image");
     #endif
     fits_write_img(fptr, TSHORT, fpixel, nelements, buffer, &ret);
@@ -324,7 +334,7 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "writing data");
     #endif
     fits_update_key(fptr, TSTRING, "DATE", exp_start_datetime[cam_info->CameraID],
@@ -334,7 +344,7 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "writing checksum");
     #endif
     fits_write_chksum(fptr, &ret);
@@ -343,7 +353,7 @@ static int write_img(unsigned short* buffer, ASI_CAMERA_INFO* cam_info, char* fn
         return FAILURE;
     }
 
-    #if CAMERA_DEBUG
+    #ifdef CAMERA_DEBUG
         logging(DEBUG, "Camera", "closing file");
     #endif
     fits_close_file(fptr, &ret);

@@ -84,7 +84,7 @@ static double sim_start = 0;
 static int threshold = 0; // Helper variable for simulation
 
 static telescope_att_t current_telescope_att;
-static double az_motor_input, alt_motor_input;
+//static double az_motor_input, alt_motor_input;
 
 FILE *simdata;
 
