@@ -413,7 +413,7 @@ static int open_logs(void){
 }
 
 static char first_st_flag = 1;
-int kf_update(double az_alt[2]){
+int kf_update(telescope_att_t* cur_att){
 
     gyro_t gyro;
     get_gyro(&gyro);
@@ -459,8 +459,10 @@ int kf_update(double az_alt[2]){
     double sin_z = sin(z.x_prev[0][0] * M_PI / 180);
     double cos_z = cos(z.x_prev[0][0] * M_PI / 180);
 
-    az_alt[0] = x.x_prev[0][0] * cos_z - y.x_prev[0][0] * sin_z;
-    az_alt[1] = z.x_prev[0][0];
+    cur_att->az = x.x_prev[0][0] * cos_z - y.x_prev[0][0] * sin_z;
+    cur_att->alt = z.x_prev[0][0];
+
+
 
     #if 0
         /* TODO: get_st */

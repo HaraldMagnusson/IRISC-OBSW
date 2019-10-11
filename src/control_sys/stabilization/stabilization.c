@@ -83,7 +83,8 @@ static double sim_start = 0;
 //static int changer = 0; // Helper variable for simulation
 static int threshold = 0; // Helper variable for simulation
 
-static telescope_att_t current_telescope_att;
+/* TODO: replace with input arguments */
+// static telescope_att_t current_telescope_att;
 //static double az_motor_input, alt_motor_input;
 
 FILE *simdata;
@@ -126,9 +127,11 @@ void stabilization_main_loop() {
     pthread_mutex_lock(&alt_control_vars_mutex);
 
     // Getting values from Kalman filter and tracking subsystem
-        get_telescope_att(&current_telescope_att);
-        az_current_control_vars.current_position = current_telescope_att.az;
-        alt_current_control_vars.current_position = current_telescope_att.alt;
+
+        /* TODO: replace with input arguments */
+        //get_telescope_att(&current_telescope_att);
+        //az_current_control_vars.current_position = current_telescope_att.az;
+        //alt_current_control_vars.current_position = current_telescope_att.alt;
         get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position);
 
     // TODO: This is for simulation only
@@ -388,7 +391,8 @@ static void* control_sys_thread(void* args){
 
     struct timespec wake_time;
 
-    double az_alt[2], motor_out[2];
+    double motor_out[2];
+    telescope_att_t cur_pos;
 
     while(1){
 
@@ -398,8 +402,8 @@ static void* control_sys_thread(void* args){
 
         while(get_mode() != RESET){
 
-            kf_update(az_alt);
-            pid_update(as_alt, motor_out);
+            kf_update(&cur_pos);
+            pid_update(&cur_pos, motor_out);
 
             motor_output(motor_out);
 

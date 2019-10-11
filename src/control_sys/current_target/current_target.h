@@ -19,14 +19,12 @@ typedef struct{
     char out_of_date;
 } telescope_att_t;
 
+typedef struct{
+    double az, alt, ha;
+} target_t;
+
 /* initialise the current target component */
 int init_current_target(void* args);
-
-/* update the list of targets and priorities */
-void set_target_list( void );
-
-/* return the list of targets and priorities */
-void set_target_list( void );
 
 void get_telescope_att(telescope_att_t* telescope_att);
 

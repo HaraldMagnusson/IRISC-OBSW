@@ -10,6 +10,7 @@
 
 #pragma once
 
+//TODO: change for actual values
 #define OP_FOV 180
 
 typedef struct{
@@ -17,10 +18,6 @@ typedef struct{
     double ra, dec, mag;
     int type_prio;
 } const_target_t;
-
-typedef struct{
-    double az, alt, ha;
-} target_t;
 
 typedef struct{
     double pos_param, exp_param, tot_prio;

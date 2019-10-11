@@ -11,4 +11,4 @@
 
 int init_kalman_filter(void* args);
 
-int kf_update(double az_alt[2]);
+int kf_update(telescope_att_t* cur_att);
