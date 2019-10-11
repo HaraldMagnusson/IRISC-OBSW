@@ -16,8 +16,9 @@
 #include "gimbal.h"
 #include "target_selection.h"
 #include "kalman_filter.h"
+#include "pid.h"
 
-#define MODULE_COUNT 5
+#define MODULE_COUNT 6
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
@@ -25,7 +26,8 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"current_target", &init_current_target},
     {"stabilization", &init_stabilization},
     {"kalman_filter", &init_kalman_filter},
-    {"gimbal", &init_gimbal}
+    {"gimbal", &init_gimbal},
+    {"pid", &init_pid}
 };
 
 int init_control_sys(void* args){

@@ -19,9 +19,9 @@
 
 #include "global_utils.h"
 #include "mode.h"
+#include "current_target.h"
 #include "kalman_filter.h"
 #include "sensors.h"
-#include "current_target.h"
 
 /* Kalman filter
  *  double x_prev[2][1], x_upd[2][1], x_next[2][1];
