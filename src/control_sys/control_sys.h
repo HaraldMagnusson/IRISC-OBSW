@@ -12,6 +12,9 @@
 extern pthread_mutex_t mutex_cond_cont_sys;
 extern pthread_cond_t cond_cont_sys;
 
+extern pthread_mutex_t mutex_cond_sel_track;
+extern pthread_cond_t cond_sel_track;
+
 /* initialise the control_sys component */
 int init_control_sys(void* args);
 

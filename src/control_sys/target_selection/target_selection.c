@@ -18,9 +18,10 @@
 #include "target_selection.h"
 #include "sensors.h"
 #include "camera.h"
+#include "mode.h"
 
 static void* sel_track_thread_func(void* arg);
-static void selection(int* tar_index);
+static int selection();
 static int tracking(int tar_index, char exposing_flag);
 
 static double d_mod(double val, int mod);
@@ -29,7 +30,6 @@ static void angle_calc(double dec, double ha,
 static void fetch_time(double* ut_hours, double* j2000);
 
 static int exp_time = 30, sensor_gain = 100;
-
 static double az_threshold = 0.01, alt_threshold = 0.01;
 
 
@@ -38,41 +38,48 @@ int init_target_selection(void* args){
     return create_thread("select_track", sel_track_thread_func, 30);
 }
 
+pthread_mutex_t mutex_cond_sel_track = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_sel_track = PTHREAD_COND_INITIALIZER;
+
 static void* sel_track_thread_func(void* arg){
+
+    pthread_mutex_lock(&mutex_cond_sel_track);
 
     struct timespec wake;
 
-    clock_gettime(CLOCK_MONOTONIC, &wake);
-    wake.tv_sec++;
-
-    /* selection */
     while(1){
 
-        /* reset camera axis to center */
-        int tar_index;
-        selection(&tar_index);
+        pthread_cond_wait(&cond_sel_track, &mutex_cond_sel_track);
 
-        char exposing_flag = 0;
+        /* selection */
+        while(get_mode() != RESET){
 
-        /* tracking */
-        while(1){
+            /* reset camera axis to center */
+            int tar_index = selection();
 
-            tracking(tar_index, exposing_flag);
+            char exposing_flag = 0;
 
-            /* wait for one sample time */
-            wake.tv_nsec += TRACKING_UPDATE_TIME;
-            if(wake.tv_nsec >= 1000000000){
-                wake.tv_sec++;
-                wake.tv_nsec -= 1000000000;
+            clock_gettime(CLOCK_MONOTONIC, &wake);
+
+            /* tracking */
+            while(1){
+
+                tracking(tar_index, exposing_flag);
+
+                /* wait for one sample time */
+                wake.tv_nsec += TRACKING_UPDATE_TIME;
+                if(wake.tv_nsec >= 1000000000){
+                    wake.tv_sec++;
+                    wake.tv_nsec -= 1000000000;
+                }
+                clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
             }
-            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
         }
     }
-
     return NULL;
 }
 
-static void selection(int* tar_index){
+static int selection(void){
     /* fetch data: gps, time, gondola attitude(kalman filter + encoder) */
     /* time */
     double ut_hours, j2000;
@@ -126,16 +133,19 @@ static void selection(int* tar_index){
 
     /* finding maximum priority target */
     double max_prio = 0;
+    int tar_index = 0;
     for(int ii=0; ii<19; ++ii){
         if( target_prio[ii].tot_prio > max_prio ){
             max_prio = target_prio[ii].tot_prio;
-            *tar_index = ii;
+            tar_index = ii;
         }
     }
 
     #ifdef SELECTION_DEBUG
         logging(DEBUG, "Selection", "Current target: %s", target_list_rd[tar_index].name);
     #endif
+
+    return tar_index;
 }
 
 static int tracking(int tar_index, char exposing_flag){
