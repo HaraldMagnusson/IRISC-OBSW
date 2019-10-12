@@ -22,6 +22,7 @@
 #include "current_target.h"
 #include "kalman_filter.h"
 #include "sensors.h"
+#include "control_sys.h"
 
 /* Kalman filter
  *  double x_prev[2][1], x_upd[2][1], x_next[2][1];
@@ -381,7 +382,9 @@ int kf_update(telescope_att_t* cur_att){
             init_kalman_vars(st_x, st.roll, alt);
             set_tracking_angles(az, alt);
 
-            //start selection and tracking
+            pthread_mutex_lock(&mutex_cond_sel_track);
+            pthread_cond_signal(&cond_sel_track);
+            pthread_mutex_unlock(&mutex_cond_sel_track);
 
             first_st_flag = 0;
         }
