@@ -194,13 +194,13 @@ static axis_context_t z = {
     }
 };
 
-// TODO: replace when ST stuff is available
-//initial mode position
-static double ang_init = 1;
-// steps used for initial innovation
-static int init_steps;
-static int l = 0;
-
+#ifdef KF_TEST
+    //initial mode position
+    static double ang_init = 0;
+    // steps used for initial innovation
+    static int init_steps;
+    static int l = 0;
+#endif
 
 
 
@@ -236,7 +236,11 @@ int init_kalman_filter(void* args){
     }
 
     // initialise Kalman filter
-    init_kalman_vars(0, 0, 45);
+    #ifdef KF_TEST
+        init_kalman_vars(0, 0, 0);
+    #else
+        init_kalman_vars(0, 0, 45);
+    #endif
 
     return SUCCESS;
 }
@@ -331,83 +335,6 @@ static int open_logs(void){
         }
 
     }
-    #if 0
-
-    /*******************************az*****************************************/
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/az/x_upd.log");
-
-    x.x_log = fopen(log_fn, "a");
-    if(x.x_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open x_upd log file: %m");
-        return errno;
-    }
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/az/p_upd.log");
-
-    x.p_log = fopen(log_fn, "a");
-    if(x.p_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
-        return errno;
-    }
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/az/nu_next.log");
-
-    x.nu_log = fopen(log_fn, "a");
-    if(x.nu_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open nu_next log file: %m");
-        return errno;
-    }
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/az/s_next.log");
-
-    x.s_log = fopen(log_fn, "a");
-    if(x.s_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
-        return errno;
-    }
-
-    /******************************alt*****************************************/
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/alt/x_upd.log");
-
-    z.x_log = fopen(log_fn, "a");
-    if(z.x_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open x_upd log file: %m");
-        return errno;
-    }
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/alt/p_upd.log");
-
-    z.p_log = fopen(log_fn, "a");
-    if(z.p_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
-        return errno;
-    }
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/alt/nu_next.log");
-
-    z.nu_log = fopen(log_fn, "a");
-    if(z.nu_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open nu_next log file: %m");
-        return errno;
-    }
-
-    strcpy(log_fn, get_top_dir());
-    strcat(log_fn, "output/logs/kf/alt/s_next.log");
-
-    z.s_log = fopen(log_fn, "a");
-    if(z.s_log == NULL){
-        logging(ERROR, "Kalman F", "Failed to open p_upd log file: %m");
-        return errno;
-    }
-    #endif
 
     return SUCCESS;
 }
@@ -419,7 +346,21 @@ int kf_update(telescope_att_t* cur_att){
     get_gyro(&gyro);
 
     star_tracker_t st;
-    get_star_tracker(&st);
+    #ifdef KF_TEST
+        if(l<init_steps){
+            st.ra = 0;
+            st.dec = 0;
+            st.roll = 0;
+            st.new_data = 1;
+            st.out_of_date = 0;
+        }
+        else{
+            st.new_data = 0;
+        }
+    #else
+        get_star_tracker(&st);
+    #endif
+
     if(st.new_data){
 
         double az = 0, alt = 0;
@@ -462,30 +403,6 @@ int kf_update(telescope_att_t* cur_att){
     cur_att->az = x.x_prev[0][0] * cos_z - y.x_prev[0][0] * sin_z;
     cur_att->alt = z.x_prev[0][0];
 
-
-
-    #if 0
-        /* TODO: get_st */
-
-        /* get gyro */
-        gyro_t gyro;
-        get_gyro(&gyro);
-        if(gyro.out_of_date){
-        }
-
-        kf_axis(z, gyro.z, NULL);
-
-        double gyro_az = 0, sin_alt = 0, cos_alt = 0;
-        sincos(z.x_prev[0][0] * M_PI / 180, &sin_alt, &cos_alt);
-        gyro_az = gyro.y * sin_alt - gyro.x * cos_alt;
-
-        kf_axis(x, gyro_az, NULL);
-
-        // should we use x_prev or x_next?
-        az_alt[0] = x.x_prev[0][0];
-        az_alt[1] = z.x_prev[0][0];
-    #endif
-
     l++;
 
     if(l == 100000){
@@ -495,10 +412,7 @@ int kf_update(telescope_att_t* cur_att){
 }
 
 static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
-    // TODO: not necessary anymore when ST data is incorporated
 
-    // get the gyro measurement
-    // TODO: Replace with gyro data
     axis.w_meas[0][0] = gyro_data;
 
     // propagate state vector
@@ -506,9 +420,7 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
 
     prop_p_next(axis);
 
-    // TODO: replace with check for if new ST data is available
-    // if (st_data != NULL){
-    if (l < init_steps) { // update only for the first measurements where pointing is known (no motion)
+    if (st_data != NULL){
         
         // innovation
         innovate_nu_next(axis, st_data);
@@ -867,9 +779,11 @@ static void innovate_nu_next(axis_context_t axis, double* st_data){
     for (int i = 0; i < ang_rows; i++) {
         ang[i] = malloc(ang_cols * sizeof *ang[i]);
     }
-    // TODO: fetch ST data
-    // ang[0][0] = *st_data;
-    ang[0][0] = ang_init;
+    #ifdef KF_TEST
+        ang[0][0] = ang_init;
+    #else
+        ang[0][0] = *st_data;
+    #endif
 
     msub(ang, mmult1, axis.nu_next, ang_rows, ang_cols);
 

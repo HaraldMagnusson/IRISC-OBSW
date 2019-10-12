@@ -103,6 +103,8 @@ int init_gyroscope_poller(void* args){
 
 static void* thread_func(void* args){
 
+    pthread_mutex_lock(&mutex_cond_gyro);
+
     struct timespec wake_time;
     int ret;
 
@@ -111,8 +113,6 @@ static void* thread_func(void* args){
         logging(WARN, "GYRO",
                 "Failed to purge UART receive buffer: %d", ret);
     }
-
-    pthread_mutex_lock(&mutex_cond_gyro);
 
     while(1){
 

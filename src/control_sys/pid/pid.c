@@ -90,8 +90,8 @@ FILE *simdata;
 
 int init_pid(void* args){
     // TODO: Change this for actual path
-    simdata = fopen("/home/alarm/irisc-obsw/output/simdata.txt","w+");
-    fprintf(simdata, "sim time,current pos,pos error,target pos,integral,derivative,proportional,pid output\n");
+    //simdata = fopen("/home/alarm/irisc-obsw/output/simdata.txt","w+");
+    //fprintf(simdata, "sim time,current pos,pos error,target pos,integral,derivative,proportional,pid output\n");
 
     az_prev_control_vars.current_position = 0;
     az_prev_control_vars.target_position = 0;
