@@ -40,6 +40,11 @@
 /* the threshold for the acceptable angular rate of the gondola to start observation phase */
 #define GON_ROT_THRESHOLD 1.0 /* unit: degree per second */
 
+/* motor/gearbox values */
+#define STEPS_PER_REVOLUTION 200
+#define MICRO_STEP_FACTOR 32
+#define GEARBOX_RATIO 48
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);
 typedef struct {

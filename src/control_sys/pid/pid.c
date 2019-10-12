@@ -22,11 +22,13 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
-
-#include <current_target/current_target.h>
+#include <string.h>
 #include <sys/time.h>
+#include <math.h>
 
 #include "global_utils.h"
+#include "gimbal.h"
+#include "current_target.h"
 #include "pid.h"
 
 double get_current_time();
@@ -44,9 +46,9 @@ static double motor_rate_threshold = 0.227;
 
 /* Stabilization parameters */
 static pid_values_t stab_az_pid_values = {
-        .kp = 1
-       ,.ki = 0.0001
-       ,.kd = 1
+        .kp = 0.6
+       ,.ki = 10
+       ,.kd = 0.00015
 };
 static pid_values_t stab_alt_pid_values = {
         .kp = 1
@@ -66,32 +68,40 @@ static pid_values_t track_alt_pid_values = {
        ,.kd = 0
 };
 
-static pthread_mutex_t az_pid_values_mutex, alt_pid_values_mutex,
-                       az_control_vars_mutex, alt_control_vars_mutex;
+static pthread_mutex_t az_pid_values_mutex = PTHREAD_MUTEX_INITIALIZER,
+        alt_pid_values_mutex = PTHREAD_MUTEX_INITIALIZER,
+        az_control_vars_mutex = PTHREAD_MUTEX_INITIALIZER,
+        alt_control_vars_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static control_variables_t az_prev_control_vars, az_current_control_vars,
                            alt_prev_control_vars, alt_current_control_vars;
 
 static double az_expected_rate, alt_expected_rate;
 
-static double stabilization_timestep = 0.01;
+static double stabilization_timestep = (double)CONTROL_SYS_WAIT/1000000000;
 static double sim_time = 0;
-static int i;
 static double sim_start = 0;
 
 //static int changer = 0; // Helper variable for simulation
 static int threshold = 0; // Helper variable for simulation
 
-/* TODO: replace with input arguments */
-// static telescope_att_t current_telescope_att;
-//static double az_motor_input, alt_motor_input;
+/* factor for converting from angle to amount of steps */
+static double step_per_deg = 0;
 
 FILE *simdata;
 
 int init_pid(void* args){
-    // TODO: Change this for actual path
-    //simdata = fopen("/home/alarm/irisc-obsw/output/simdata.txt","w+");
-    //fprintf(simdata, "sim time,current pos,pos error,target pos,integral,derivative,proportional,pid output\n");
+    char simdata_fn[100];
+
+    strcpy(simdata_fn, get_top_dir());
+    strcat(simdata_fn, "output/simdata.txt");
+
+    simdata = fopen(simdata_fn, "w+");
+    if(simdata == NULL){
+        logging(ERROR, "PID", "Failed to open log file: %m");
+    }
+
+    fprintf(simdata, "log time, sim time,current pos,pos error,target pos,proportional,integral,derivative,pid output\n");
 
     az_prev_control_vars.current_position = 0;
     az_prev_control_vars.target_position = 0;
@@ -107,31 +117,31 @@ int init_pid(void* args){
     alt_prev_control_vars.integral = 0;
     alt_prev_control_vars.pid_output = 0;
 
-//    change_stabilization_mode(0);
+    /* factor for converting from angle to amount of steps */
+    step_per_deg = (double)STEPS_PER_REVOLUTION * MICRO_STEP_FACTOR * GEARBOX_RATIO / 360.0;
+
+    change_stabilization_mode(0);
 //    pthread_t main_loop;
 //    pthread_create(&main_loop, NULL, stabilization_main_loop, NULL);
 
     return SUCCESS;
 }
 
-void stabilization_main_loop() {
+char first_iteration = 1;
+void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
 //void *stabilization_main_loop() {
 //    usleep(1000000); //1 sec
 //    int i = 0;
 //    while(1) {
 //    usleep(10000); //0.01 sec TODO: Delete this, as in the end it's not a loop
 
-    i = 0;
     pthread_mutex_lock(&az_control_vars_mutex);
     pthread_mutex_lock(&alt_control_vars_mutex);
 
     // Getting values from Kalman filter and tracking subsystem
-
-        /* TODO: replace with input arguments */
-        //get_telescope_att(&current_telescope_att);
-        //az_current_control_vars.current_position = current_telescope_att.az;
-        //alt_current_control_vars.current_position = current_telescope_att.alt;
-        get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position);
+    az_current_control_vars.current_position = cur_att->az;
+    alt_current_control_vars.current_position = cur_att->alt;
+    get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position);
 
     // TODO: This is for simulation only
 //    az_current_control_vars.current_position = az_prev_control_vars.pid_output;
@@ -142,12 +152,14 @@ void stabilization_main_loop() {
     // End of the sim block
 
     // Further initialization
-    if(i == 0){
+    if(first_iteration){
         sim_start = get_current_time();
         az_prev_control_vars.time_in_seconds = sim_start;
         alt_prev_control_vars.time_in_seconds = sim_start;
-        az_prev_control_vars.position_error =  az_current_control_vars.target_position -  az_current_control_vars.current_position;
-        alt_prev_control_vars.position_error =  alt_current_control_vars.target_position -  alt_current_control_vars.current_position;
+        az_prev_control_vars.position_error =  0; //az_current_control_vars.target_position -  az_current_control_vars.current_position;
+        alt_prev_control_vars.position_error =  0; //alt_current_control_vars.target_position -  alt_current_control_vars.current_position;
+
+        first_iteration = 0;
     }
 
     sim_time = get_current_time();
@@ -163,7 +175,7 @@ void stabilization_main_loop() {
     threshold = 0;
     // Azimuth output saturation
     az_expected_rate = (az_current_control_vars.pid_output - az_current_control_vars.current_position);
-    stabilization_timestep = az_current_control_vars.time_in_seconds - az_prev_control_vars.time_in_seconds;
+    //stabilization_timestep = az_current_control_vars.time_in_seconds - az_prev_control_vars.time_in_seconds;
     if(az_expected_rate > motor_rate_threshold*stabilization_timestep){
         threshold = 1;
         az_current_control_vars.pid_output = az_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
@@ -173,7 +185,7 @@ void stabilization_main_loop() {
     }
 
     // Altitude output saturation
-    stabilization_timestep = alt_current_control_vars.time_in_seconds - alt_prev_control_vars.time_in_seconds;
+    //stabilization_timestep = alt_current_control_vars.time_in_seconds - alt_prev_control_vars.time_in_seconds;
     alt_expected_rate = (alt_current_control_vars.pid_output - alt_current_control_vars.current_position);
     if(alt_expected_rate > motor_rate_threshold*stabilization_timestep){
         alt_current_control_vars.pid_output = alt_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
@@ -181,11 +193,15 @@ void stabilization_main_loop() {
         alt_current_control_vars.pid_output = alt_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
     }
 
-    // todo: remove this for final
-    logging(DEBUG, "Stabil", "Sim time\t %.10lf", az_current_control_vars.time_in_seconds);
+    #ifdef PID_DEBUG
+        logging(DEBUG, "Stabil", "Sim time\t %.10lf", az_current_control_vars.time_in_seconds);
+    #endif
 
-    // TODO: Convert it into `logging_csv`, once merged
-    fprintf(simdata, "%.4lf,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d\n",
+    /* convert angle output to steps for output */
+    motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
+    motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
+
+    logging_csv(simdata, "%.4lf,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d,%d",
             az_current_control_vars.time_in_seconds,
             az_current_control_vars.current_position,
             az_current_control_vars.position_error,
@@ -194,12 +210,9 @@ void stabilization_main_loop() {
             az_current_control_vars.integral*current_az_pid_values.ki,
             az_current_control_vars.derivative*current_az_pid_values.kd,
             az_current_control_vars.pid_output,
-            threshold);
-    fflush(simdata);
-
-    // TODO: here add some actual motor control.
-    //  Pass `az_current_control_vars.pid_output` to the motor controller
-    //  as the angle input value.
+            threshold,
+            motor_out->az,
+            motor_out->alt);
 
     az_prev_control_vars = az_current_control_vars;
     alt_prev_control_vars = alt_current_control_vars;
@@ -213,7 +226,6 @@ void stabilization_main_loop() {
 //            changer = 1;
 //        }
 //    sim_time = sim_time + stabilization_timestep;
-    i++;
 //    }
 }
 
@@ -234,11 +246,10 @@ double motor_control_step(pid_values_t* current_pid_values,
                         pthread_mutex_t* pid_values_mutex,
                         control_variables_t* prev_vars,
                         control_variables_t* current_vars) {
+    //stabilization_timestep = current_vars->time_in_seconds - prev_vars->time_in_seconds;
 
-    stabilization_timestep = current_vars->time_in_seconds - prev_vars->time_in_seconds;
+    //if (stabilization_timestep < 0.000001) stabilization_timestep = 0.000001;
 
-    if (stabilization_timestep < 0.000001) stabilization_timestep = 0.000001;
-    
     current_vars->position_error = current_vars->target_position - current_vars->current_position;
     current_vars->integral = prev_vars->integral + current_vars->position_error * stabilization_timestep;
     current_vars->derivative = (current_vars->position_error - prev_vars->position_error) / stabilization_timestep;

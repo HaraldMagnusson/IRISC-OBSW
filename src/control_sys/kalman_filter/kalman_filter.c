@@ -403,6 +403,8 @@ int kf_update(telescope_att_t* cur_att){
     cur_att->az = x.x_prev[0][0] * cos_z - y.x_prev[0][0] * sin_z;
     cur_att->alt = z.x_prev[0][0];
 
+    set_telescope_att(cur_att);
+
     l++;
 
     if(l == 100000){

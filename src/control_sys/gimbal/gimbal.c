@@ -25,9 +25,9 @@ int init_gimbal(void* args){
 
     fd_i2c = open("/dev/i2c-5", O_RDWR);
     if(fd_i2c == -1){
-        printf("open: %m\n");
+        logging(ERROR, "Gimbal", "Failed to open i2c-5 device: %m");
+        return FAILURE;
     }
-
 
     return SUCCESS;
 }
@@ -61,7 +61,8 @@ int step_gimbal(int az_stepps, int el_stepps, int rt_stepps){
 
     int ret = ioctl(fd_i2c, I2C_SLAVE, addr_1);
     if(ret == -1){
-        printf("ioctl: %m\n");
+        logging(ERROR, "Gimbal", "Failed to set i2c slave address: %m");
+        return FAILURE;
     }
 
     write(fd_i2c, &az_buff, 1);
@@ -69,10 +70,11 @@ int step_gimbal(int az_stepps, int el_stepps, int rt_stepps){
 
     ret = ioctl(fd_i2c, I2C_SLAVE, addr_2);
     if(ret == -1){
-        printf("ioctl: %m\n");
+        logging(ERROR, "Gimbal", "Failed to set i2c slave address: %m");
+        return FAILURE;
     }
 
     write(fd_i2c, &rt_buff, 1);
-    
+
     return SUCCESS;
 }

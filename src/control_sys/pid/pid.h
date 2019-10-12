@@ -41,6 +41,7 @@ typedef struct{
 /* initialise the pid component */
 int init_pid(void* args);
 
+void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out);
 
 /* Changes pid parameters until next mode change
  *

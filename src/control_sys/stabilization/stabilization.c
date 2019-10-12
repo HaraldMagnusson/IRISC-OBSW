@@ -13,9 +13,9 @@
 #include "current_target.h"
 #include "global_utils.h"
 #include "mode.h"
+#include "gimbal.h"
 #include "pid.h"
 #include "kalman_filter.h"
-#include "gimbal.h"
 
 static void* control_sys_thread(void* args);
 
@@ -31,7 +31,7 @@ static void* control_sys_thread(void* args){
 
     struct timespec wake_time;
 
-    //double motor_out[2];
+    motor_step_t motor_out;
     telescope_att_t cur_pos;
 
     while(1){
@@ -40,10 +40,13 @@ static void* control_sys_thread(void* args){
 
         clock_gettime(CLOCK_MONOTONIC, &wake_time);
 
+        /* for loop for testing */
+        //for(int ii=0; ii<10; ii++){
         while(get_mode() != RESET){
 
             kf_update(&cur_pos);
-            //pid_update(&cur_pos, motor_out);
+
+            pid_update(&cur_pos, &motor_out);
 
             //motor_output(motor_out);
 

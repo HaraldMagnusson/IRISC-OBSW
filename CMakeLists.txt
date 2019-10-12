@@ -9,8 +9,8 @@ set(CFLAGS "-O2 -std=gnu17 -Wall -Wpedantic")
 # useful debug defines: GYRO_DEBUG, GPS_DEBUG, ENCODER_DEBUG,
 #                       SEQ_DEBUG, ST_DEBUG, E_LINK_DEBUG, DOWNLINK_DEBUG
 #                       CAMERA_DEBUG, SELECTION_DEBUG, TRACKING_DEBUG
-#                       KF_DEBUG
-set(COMPILE_DEFINES "-DSEQ_DEBUG -DKF_DEBUG")
+#                       KF_DEBUG, PID_DEBUG
+set(COMPILE_DEFINES "-DSEQ_DEBUG -DKF_DEBUG -DPID_DEBUG")
 
 #useful test defines: ST_TEST, SEQ_TEST, KF_TEST
 set(COMPILE_DEFINES "${COMPILE_DEFINES} -DSEQ_TEST -DKF_TEST")
