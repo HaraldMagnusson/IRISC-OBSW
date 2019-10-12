@@ -336,15 +336,17 @@ static void wake_m(void){
     pthread_cond_signal(&cond_enc);
     pthread_mutex_unlock(&mutex_cond_enc);
 
+    logging(INFO, "MODE", "waking control system");
+    pthread_mutex_lock(&mutex_cond_cont_sys);
+    pthread_cond_signal(&cond_cont_sys);
+    pthread_mutex_unlock(&mutex_cond_cont_sys);
+
+    sleep(2);
+
     logging(INFO, "MODE", "waking star tracker");
     pthread_mutex_lock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
     pthread_mutex_unlock(&mutex_cond_st);
-
-    /*TODO: start
-        - selection & tracking
-        - control system
-    */
 
     set_mode(NORMAL);
 }

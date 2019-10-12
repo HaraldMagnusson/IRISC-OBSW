@@ -305,7 +305,6 @@ static void init_kalman_vars(double x_init, double y_init, double z_init){
         arr[ii]->Q2[0][0] = RRW/dt;
         arr[ii]->R[0][0] = s_init*s_init;
     }
-
 }
 
 static int open_logs(void){
@@ -382,6 +381,7 @@ int kf_update(telescope_att_t* cur_att){
             init_kalman_vars(st_x, st.roll, alt);
             set_tracking_angles(az, alt);
 
+            logging(INFO, "MODE", "Waking selection and tracking");
             pthread_mutex_lock(&mutex_cond_sel_track);
             pthread_cond_signal(&cond_sel_track);
             pthread_mutex_unlock(&mutex_cond_sel_track);
