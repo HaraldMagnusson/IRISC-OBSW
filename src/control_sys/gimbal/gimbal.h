@@ -16,4 +16,6 @@ typedef struct{
 /* initialise the gimbal component */
 int init_gimbal(void* args);
 
-int step_gimbal(int az_stepps, int el_stepps, int rt_stepps);
+int step_az_alt(motor_step_t* steps);
+
+int step_roll(motor_step_t* steps);

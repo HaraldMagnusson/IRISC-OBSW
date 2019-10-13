@@ -16,10 +16,16 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <pthread.h>
+
+#include "gimbal.h"
 
 static int fd_i2c;
-int addr_1 = 0x70;
-int addr_2 = 0x0F;
+int addr_az_alt = 0x70;
+int addr_roll = 0x0F;
+
+pthread_mutex_t mutex_i2c = PTHREAD_MUTEX_INITIALIZER;
 
 int init_gimbal(void* args){
 
@@ -32,49 +38,79 @@ int init_gimbal(void* args){
     return SUCCESS;
 }
 
-int step_gimbal(int az_stepps, int el_stepps, int rt_stepps){
+int step_az_alt(motor_step_t* steps){
 
-    char az_dir, az_buff, el_dir, el_buff, rt_dir, rt_buff;
+    int az = steps->az, alt = steps->alt;
+    unsigned char az_dir, alt_dir;
 
-    if(az_stepps>0){
-        az_dir = 1;
-        az_stepps = az_stepps*-1;
-    } else {
+    if(az < 0){
         az_dir = 0;
+        az *= -1;
     }
-    if(el_stepps>0){
-        el_dir = 1;
-        el_stepps = el_stepps*-1;
-    } else {
-        el_dir = 0;
-    }
-    if(rt_stepps>0){
-        rt_dir = 1;
-        rt_stepps = rt_stepps*-1;
-    } else {
-        rt_dir = 0;
+    else{
+        az_dir = 0x80;
     }
 
-    az_buff = (char)az_stepps;
-    el_buff = (char)el_stepps;
-    rt_buff = (char)rt_stepps;
-
-    int ret = ioctl(fd_i2c, I2C_SLAVE, addr_1);
-    if(ret == -1){
-        logging(ERROR, "Gimbal", "Failed to set i2c slave address: %m");
-        return FAILURE;
+    if(alt < 0){
+        alt_dir = 0;
+        alt *= -1;
+    }
+    else{
+        alt_dir = 0x80;
     }
 
-    write(fd_i2c, &az_buff, 1);
-    write(fd_i2c, &el_buff, 1);
+    unsigned char msg_az  = az_dir  | (0x3F & az) | 0x40;
+    unsigned char msg_alt = alt_dir | (0x3F & alt);
 
-    ret = ioctl(fd_i2c, I2C_SLAVE, addr_2);
-    if(ret == -1){
-        logging(ERROR, "Gimbal", "Failed to set i2c slave address: %m");
-        return FAILURE;
+    pthread_mutex_lock(&mutex_i2c);
+
+    if(ioctl(fd_i2c, I2C_SLAVE, addr_az_alt) == -1){
+        logging(ERROR, "Motor Cont", "Failed to set i2c slave address: %m");
+        pthread_mutex_unlock(&mutex_i2c);
+        return errno;
+    }
+    if(write(fd_i2c, &msg_az, 1) != 1){
+        pthread_mutex_unlock(&mutex_i2c);
+        return errno;
     }
 
-    write(fd_i2c, &rt_buff, 1);
+    if(write(fd_i2c, &msg_alt, 1) != 1){
+        pthread_mutex_unlock(&mutex_i2c);
+        return errno;
+    }
+
+    pthread_mutex_unlock(&mutex_i2c);
+
+    return SUCCESS;
+}
+
+int step_roll(motor_step_t* steps){
+
+    int roll = steps->roll;
+    unsigned char dir;
+
+    if(roll < 0){
+        dir = 0;
+        roll *= -1;
+    }
+    else{
+        dir = 0x80;
+    }
+
+    unsigned char msg = dir | (0x3F & roll);
+
+    pthread_mutex_lock(&mutex_i2c);
+
+    if(ioctl(fd_i2c, I2C_SLAVE, addr_roll) == -1){
+        logging(ERROR, "Motor Cont", "Failed to set i2c slave address: %m");
+        pthread_mutex_unlock(&mutex_i2c);
+        return errno;
+    }
+    if(write(fd_i2c, &msg, 1) != 1){
+        return errno;
+    }
+
+    pthread_mutex_unlock(&mutex_i2c);
 
     return SUCCESS;
 }

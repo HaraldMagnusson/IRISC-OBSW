@@ -48,7 +48,7 @@ static void* control_sys_thread(void* args){
 
             pid_update(&cur_pos, &motor_out);
 
-            //motor_output(motor_out);
+            step_az_alt(&motor_out);
 
             wake_time.tv_nsec += CONTROL_SYS_WAIT;
             if(wake_time.tv_nsec >= 1000000000){
