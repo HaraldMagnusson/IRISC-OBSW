@@ -62,7 +62,7 @@ static int handle_command(char command){
             set_datarate(datarate);
 
             snprintf(buffer, 1400, "Datarate set to: %d", datarate);
-*/
+
             send_telemetry_local(buffer, 1, 0, 0);
 
             break;

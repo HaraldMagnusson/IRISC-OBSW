@@ -47,7 +47,6 @@ static void normal_m(void);
 #endif
 
 static int ret;
-static struct sigaction sa;
 
 static char gyro_wake_flag = '0', rotate_flag, float_flag;
 static char rotate_flag_fn[100], float_flag_fn[100];
@@ -98,9 +97,14 @@ static void sigint_handler(int signum){
 
 int main(int argc, char* const argv[]){
 
+    struct sigaction sa;
     sa.sa_handler = sigint_handler;
+    sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
+
+    sa.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &sa, NULL);
 
     /* add buffer to stderr */
     if(setvbuf(stderr, stderr_buf, _IOLBF, 4096)){
