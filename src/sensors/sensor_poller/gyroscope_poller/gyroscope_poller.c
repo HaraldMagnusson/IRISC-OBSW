@@ -6,6 +6,8 @@
  * -----------------------------------------------------------------------------
  */
 
+#define _GNU_SOURCE
+
 #include <ftd2xx.h>
 #include <pthread.h>
 #include <string.h>
@@ -13,6 +15,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 
 #include "global_utils.h"
 #include "sensors.h"
@@ -136,7 +139,7 @@ static void* thread_func(void* args){
 }
 
 static gyro_t gyro;
-static unsigned char data[DATAGRAM_SIZE], buffer[4];
+static unsigned char data[DATAGRAM_SIZE];
 static unsigned int bytes_read, bytes_available;
 static double rate[3];
 static int ret;
@@ -188,6 +191,7 @@ static void active_m(void){
 
     /* calculate gyroscope data */
     for(int ii=0; ii<3; ++ii){
+        unsigned char buffer[4];
         buffer[0] = data[3+3*ii];
         buffer[1] = data[2+3*ii];
         buffer[2] = data[1+3*ii];
@@ -202,12 +206,26 @@ static void active_m(void){
 
     set_gyro(&gyro);
 
-    logging_csv(gyro_log, "%+011.6lf,%+011.6lf,%+011.6lf",
-            gyro.x, gyro.y, gyro.z);
+    double temp = NAN;
+    if(data[17] == 0){
+        unsigned char buffer[2];
+        buffer[0] = data[12];
+        buffer[1] = data[11];
+        temp = (double)*(int16_t*)buffer / 256.f;
+
+        set_gyro_temp(temp);
+    }
+    else{
+        logging(WARN, "Gyro", "Bad gyroscope temperature data quality: %2x",
+                data[17]);
+    }
+
+    logging_csv(gyro_log, "%+011.6lf,%+011.6lf,%+011.6lf,%+011.6lf",
+            gyro.x, gyro.y, gyro.z, temp);
 
     #if GYRO_DEBUG
         logging(DEBUG, "Gyro",
-                "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf",
-                gyro.x, gyro.y, gyro.z);
+                "x: %+09.4lf\ty: %+09.4lf\tz: %+09.4lf\ttemp: %+09.4lf",
+                gyro.x, gyro.y, gyro.z, temp);
     #endif
 }

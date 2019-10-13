@@ -74,3 +74,11 @@ void set_st_exp_gain(int st_exp, int st_gain){
 int enc_single_samp(encoder_t* enc){
     return enc_single_samp_l(enc);
 }
+
+double get_gyro_temp(void){
+    return get_gyro_temp_l();
+}
+
+void set_gyro_temp(double temp){
+    set_gyro_temp_l(temp);
+}

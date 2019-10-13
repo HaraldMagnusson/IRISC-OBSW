@@ -68,3 +68,7 @@ void set_st_exp_gain(int st_exp, int st_gain);
 
 /* fetch a single sample from the encoder */
 int enc_single_samp(encoder_t* enc);
+
+double get_gyro_temp(void);
+
+void set_gyro_temp(double temp);

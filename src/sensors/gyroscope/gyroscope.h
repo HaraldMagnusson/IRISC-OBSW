@@ -17,3 +17,7 @@ void set_gyro(gyro_t* gyro);
 
 /* set the out of date flag on the gyro data */
 void gyro_out_of_date(void);
+
+double get_gyro_temp_l(void);
+
+void set_gyro_temp_l(double temp);
