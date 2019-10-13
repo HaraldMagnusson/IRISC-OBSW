@@ -23,6 +23,7 @@
 #include "kalman_filter.h"
 #include "sensors.h"
 #include "control_sys.h"
+#include "target_selection.h"
 
 /* Kalman filter
  *  double x_prev[2][1], x_upd[2][1], x_next[2][1];
@@ -365,11 +366,9 @@ int kf_update(telescope_att_t* cur_att){
 
         double az = 0, alt = 0;
         /* convert ra & dec to az & alt */
-
-        //TODO: conversion
-        //az = qieuh ( st.ra);
-        //alt = oiwjer (st.dec);
-
+        #ifndef KF_TEST
+            rd_to_aa(st.ra, st.dec, &az, &alt);
+        #endif
 
         /* extract x from star tracker */
         double sin_alt = sin(alt * M_PI / 180);

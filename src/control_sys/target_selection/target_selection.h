@@ -53,3 +53,6 @@ int init_target_selection(void* args);
 
 /* Set the error thresholds for when to start exposing camera */
 void set_error_thresholds_local(double az, double alt_ang);
+
+/* Convert ra & dec (ECI) to az & alt (ECEF) */
+void rd_to_aa(double ra, double dec, double* az, double* alt);

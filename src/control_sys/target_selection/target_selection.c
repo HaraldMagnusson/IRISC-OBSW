@@ -149,26 +149,9 @@ static int selection(void){
 }
 
 static int tracking(int tar_index, char exposing_flag){
-    /* fetch data */
-    double ut_hours, j2000;
-    fetch_time(&ut_hours, &j2000);
 
-    gps_t gps;
-    get_gps(&gps);
-
-    encoder_t enc;
-    get_encoder(&enc);
-
-    telescope_att_t telescope_att;
-    get_telescope_att(&telescope_att);
-
-    /* calculate tracking angles */
-    double lst = 100.46 + 0.985647 * j2000 + gps.lon + 15 * ut_hours;
-    lst = d_mod(lst, 360);
-
-    double ha = lst - 15 * target_list_rd[tar_index].ra;
     double az, alt;
-    angle_calc(target_list_rd[tar_index].dec, ha, gps.lat, &alt, &az);
+    rd_to_aa(target_list_rd[tar_index].ra, target_list_rd[tar_index].dec, &az, &alt);
 
     set_tracking_angles(az, alt);
 
@@ -177,8 +160,11 @@ static int tracking(int tar_index, char exposing_flag){
                 az, alt);
     #endif
 
+    encoder_t enc;
+    get_encoder(&enc);
+
     /* abort exposure if target is moving out of operational FoV */
-    if(fabs(enc.az) > OP_FOV * 0.45){
+    if(!enc.out_of_date && fabs(enc.az) > OP_FOV * 0.45){
         if(exposing_flag){
             abort_exp_nir();
             logging(WARN, "Tracking",
@@ -187,12 +173,16 @@ static int tracking(int tar_index, char exposing_flag){
         return FAILURE;
     }
 
+    telescope_att_t telescope_att;
+    get_telescope_att(&telescope_att);
+
     /* camera control */
     target_t target_err;
     target_err.az = az - telescope_att.az;
     target_err.alt = alt - telescope_att.alt;
 
-    if(     !exposing_flag                  &&
+    if(     !telescope_att.out_of_date      &&
+            !exposing_flag                  &&
             target_err.az < az_threshold    &&
             target_err.alt < alt_threshold) {
 
@@ -210,26 +200,42 @@ static int tracking(int tar_index, char exposing_flag){
     return SUCCESS;
 }
 
+/* Convert ra & dec (ECI) to az & alt (ECEF) */
+void rd_to_aa(double ra, double dec, double* az, double* alt){
+    double ut_hours, j2000;
+    fetch_time(&ut_hours, &j2000);
+
+    gps_t gps;
+    get_gps(&gps);
+
+    /* calculate tracking angles */
+    double lst = 100.46 + 0.985647 * j2000 + gps.lon + 15 * ut_hours;
+    lst = d_mod(lst, 360);
+
+    double ha = lst - 15 * ra;
+    angle_calc(dec, ha, gps.lat, az, alt);
+}
+
 /* Modulo opperation on doubles */
 static double d_mod(double val, int mod){
     return val - mod*(unsigned long)(val/mod);
 }
 
-/* Calculates azimuth and altitude from declination, hour angle, and lattitude */
-static void angle_calc(double dec, double ha, double lat, double* alt, double* az){
+/* Calculates azimuth and altitude from declination, hour angle, and latitude */
+static void angle_calc(double dec, double ha, double lat, double* az, double* alt){
     dec *= M_PI / 180;
     ha *= M_PI / 180;
     lat *= M_PI / 180;
 
-    *alt = asin(sin(dec)*sin(lat)+cos(dec)*cos(lat)*cos(ha));
+    *alt = asin(sin(dec)*sin(lat) + cos(dec)*cos(lat)*cos(ha));
     *az = acos((sin(dec) - sin(*alt)*sin(lat)) / (cos(*alt)*cos(lat)));
 
     if(sin(ha) > 0){
         *az = 2 * M_PI - *az;
     }
 
-    *alt *= 180 / M_PI;
-    *az *= 180 / M_PI;
+    *alt *= 180.0 / M_PI;
+    *az *= 180.0 / M_PI;
 }
 
 /* Fetch the current UTC time in hours with decimals and as julian-2000 date */ 
