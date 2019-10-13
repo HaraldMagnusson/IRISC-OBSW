@@ -117,3 +117,7 @@ int save_img_nir(void);
  *      ENODEV: camera disconnected
  */
 int abort_exp_nir(void);
+
+double get_guiding_temp(void);
+
+double get_nir_temp(void);

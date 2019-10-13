@@ -7,12 +7,15 @@
  * -----------------------------------------------------------------------------
  */
 
+#define _GNU_SOURCE
+
 #include <time.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <fitsio.h>
 #include <errno.h>
+#include <math.h>
 
 #include "global_utils.h"
 #include "camera_utils.h"
@@ -444,3 +447,16 @@ int abort_exp(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name){
         }
     }
 #endif
+
+double get_cam_temp(int id, char* cam_name){
+    long val;
+    ASI_BOOL pbAuto;
+    ASI_ERROR_CODE stat = ASIGetControlValue(id, ASI_TEMPERATURE, &val, &pbAuto);
+    if(stat != ASI_SUCCESS){
+        logging(WARN, "Camera", "Failed to fetch temperature of %s camera sensor",
+                cam_name);
+        return NAN;
+    }
+
+    return (double)val/10;
+}

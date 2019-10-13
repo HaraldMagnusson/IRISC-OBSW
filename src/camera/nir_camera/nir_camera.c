@@ -122,3 +122,7 @@ int abort_exp_nir_local(void){
     queue_image(out_fn, IMAGE_MAIN);
     return SUCCESS;
 }
+
+double get_nir_temp_l(void){
+    return get_cam_temp(cam_info.CameraID, "nir");
+}

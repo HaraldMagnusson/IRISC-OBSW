@@ -97,3 +97,5 @@ int save_img(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name, struct timespe
  *      ENODEV: camera disconnected
  */
 int abort_exp(ASI_CAMERA_INFO* cam_info, char* fn, char* cam_name);
+
+double get_cam_temp(int id, char* cam_name);
