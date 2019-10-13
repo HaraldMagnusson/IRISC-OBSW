@@ -29,7 +29,7 @@
 #define ERROR   3
 #define CRIT    4
 
-#define GYRO_TRIG_PIN 26
+#define GYRO_TRIG_PIN 25
 
 #define GPS_SAMPLE_TIME              4  /* unit: seconds     */
 #define GYRO_SAMPLE_TIME      10000000  /* unit: nanoseconds */
