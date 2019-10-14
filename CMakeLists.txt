@@ -19,7 +19,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS} ${COMPILE_DEFINES}")
 
 # linker flags
 set(LDFLAGS "-lrt -lm -pthread -lcfitsio -lftd2xx -lzstd")
-
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LDFLAGS}")
 
 # list of sources

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
- * Component Name: Controller
+ * Component Name: Stabilization
  * Parent Component: Control System
- * Author(s): Adam Śmiałek
+ * Author(s): Harald Magnusson
  * Purpose: Stabilise the telescope on the current target.
  *
  * -----------------------------------------------------------------------------

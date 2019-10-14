@@ -88,20 +88,20 @@ static int threshold = 0; // Helper variable for simulation
 /* factor for converting from angle to amount of steps */
 static double step_per_deg = 0;
 
-FILE *simdata;
+FILE *pid_log;
 
 int init_pid(void* args){
-    char simdata_fn[100];
+    char pid_log_fn[100];
 
-    strcpy(simdata_fn, get_top_dir());
-    strcat(simdata_fn, "output/simdata.txt");
+    strcpy(pid_log_fn, get_top_dir());
+    strcat(pid_log_fn, "output/logs/pid.log");
 
-    simdata = fopen(simdata_fn, "w+");
-    if(simdata == NULL){
+    pid_log = fopen(pid_log_fn, "a");
+    if(pid_log == NULL){
         logging(ERROR, "PID", "Failed to open log file: %m");
     }
 
-    fprintf(simdata, "log time, sim time,current pos,pos error,target pos,proportional,integral,derivative,pid output\n");
+    //fprintf(pid_log, "log time,sim time,current pos,pos error,target pos,proportional,integral,derivative,pid output\n");
 
     az_prev_control_vars.current_position = 0;
     az_prev_control_vars.target_position = 0;
@@ -194,15 +194,14 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     }
 
     #ifdef PID_DEBUG
-        logging(DEBUG, "Stabil", "Sim time\t %.10lf", az_current_control_vars.time_in_seconds);
+        logging(DEBUG, "PID", "Sim time\t %.10lf", az_current_control_vars.time_in_seconds);
     #endif
 
     /* convert angle output to steps for output */
     motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
     motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
 
-    logging_csv(simdata, "%.4lf,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d,%d",
-            az_current_control_vars.time_in_seconds,
+    logging_csv(pid_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d,%d",
             az_current_control_vars.current_position,
             az_current_control_vars.position_error,
             az_current_control_vars.target_position,
@@ -284,7 +283,7 @@ int change_pid_values(int motor_id, double new_p, double new_i, double new_d){
         pthread_mutex_unlock(&alt_pid_values_mutex);
         return 0;
     } else {
-        logging(ERROR, "Stabil", "change_pid_values: Wrong motor id.");
+        logging(ERROR, "PID", "change_pid_values: Wrong motor id.");
         return 1;
     }
 }
@@ -311,7 +310,7 @@ int change_mode_pid_values(int motor_id, int mode_id, double new_p, double new_i
             stab_az_pid_values.ki = new_i;
             stab_az_pid_values.kd = new_d;
         } else {
-            logging(ERROR, "Stabil", "change_mode_pid_values: Wrong mode id.");
+            logging(ERROR, "PID", "change_mode_pid_values: Wrong mode id.");
             pthread_mutex_unlock(&az_pid_values_mutex);
             return 1;
         }
@@ -328,14 +327,14 @@ int change_mode_pid_values(int motor_id, int mode_id, double new_p, double new_i
             stab_alt_pid_values.ki = new_i;
             stab_alt_pid_values.kd = new_d;
         } else {
-            logging(ERROR, "Stabil", "change_mode_pid_values: Wrong mode id.");
+            logging(ERROR, "PID", "change_mode_pid_values: Wrong mode id.");
             pthread_mutex_unlock(&az_pid_values_mutex);
             return 1;
         }
         pthread_mutex_unlock(&alt_pid_values_mutex);
         return 0;
     } else {
-        logging(ERROR, "Stabil", "change_mode_pid_values: Wrong motor id.");
+        logging(ERROR, "PID", "change_mode_pid_values: Wrong motor id.");
         return 1;
     }
 }
@@ -355,7 +354,7 @@ int change_stabilization_mode(int on_off){
         current_alt_pid_values = stab_alt_pid_values;
         pthread_mutex_unlock(&alt_pid_values_mutex);
 
-        logging(INFO, "Stabil", "Mode changed to stabilization.");
+        logging(INFO, "PID", "Mode changed to stabilization.");
         return 0;
     } else if (on_off == 0) {
         pthread_mutex_lock(&az_pid_values_mutex);
@@ -366,10 +365,10 @@ int change_stabilization_mode(int on_off){
         current_alt_pid_values = track_alt_pid_values;
         pthread_mutex_unlock(&alt_pid_values_mutex);
 
-        logging(INFO, "Stabil", "Mode changed to tracking.");
+        logging(INFO, "PID", "Mode changed to tracking.");
         return 0;
     } else {
-        logging(ERROR, "Stabil", "Wrong mode. Choose 1 for stabilization or 0 for tracking.");
+        logging(ERROR, "PID", "Wrong mode. Choose 1 for stabilization or 0 for tracking.");
         return 1;
     }
 }
@@ -390,5 +389,5 @@ void pid_reset(){
     alt_current_control_vars.integral = 0;
     pthread_mutex_unlock(&alt_control_vars_mutex);
 
-    logging(INFO, "Stabil", "Resetting the integral part.");
+    logging(INFO, "PID", "Resetting the integral part.");
 }
