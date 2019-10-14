@@ -31,8 +31,6 @@ static void* thread_command(void* param){
     while(1){
         if(read_elink(command, 1)==0){
 
-            printf("Ostkaka: %d\n", command[0]);
-
             ret = handle_command(command[0]);
         }  
     }
@@ -43,8 +41,6 @@ static void* thread_command(void* param){
 static int handle_command(char command){
 
     char buffer[1400];
-
-    printf("switch %d\n", command);
 
     switch(command){
 
