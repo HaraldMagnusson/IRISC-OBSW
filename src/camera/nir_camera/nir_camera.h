@@ -67,4 +67,6 @@ int save_img_nir_local(void);
  *      EIO: failed to fetch data from camera
  *      ENODEV: camera disconnected
  */
-int abort_exp_nir_local(char* fn);
+int abort_exp_nir_local(void);
+
+double get_nir_temp_l(void);

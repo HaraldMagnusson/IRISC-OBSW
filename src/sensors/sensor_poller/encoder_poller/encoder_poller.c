@@ -23,8 +23,8 @@
 #include "mode.h"
 
 /* indicies for data arrays */
-#define RA 0
-#define DEC 1
+#define AZ 0
+#define ALT_ANG 1
 
 static int checksum_ctl(unsigned char data[2][2]);
 static int checksum_ctl_enc(unsigned char data[2]);
@@ -36,7 +36,11 @@ pthread_mutex_t mutex_cond_enc;
 pthread_cond_t cond_enc;
 
 static int fd_spi00, fd_spi01;
+
+static double az_offset = 0, alt_offset = 0;
+
 static FILE* encoder_log;
+
 
 int init_encoder_poller(void* args){
 
@@ -119,8 +123,8 @@ int enc_single_samp_ll(encoder_t* enc){
 
     unsigned char data[2][2];
 
-    read(fd_spi00, data[RA], 2);
-    read(fd_spi01, data[DEC], 2);
+    read(fd_spi00, data[AZ], 2);
+    read(fd_spi01, data[ALT_ANG], 2);
 
     if(checksum_ctl(data)){
         return FAILURE;
@@ -175,19 +179,16 @@ static int checksum_ctl(unsigned char data[2][2]){
         ctl[ii] = checksum_ctl_enc(data[ii]);
     }
 
-    if(ctl[RA]){
-        if(ctl[DEC]){
-            logging(WARN, "Encoder",
-                    "Incorrect checksum from encoders: ra & dec");
+    if(ctl[AZ]){
+        if(ctl[ALT_ANG]){
+            logging(WARN, "Encoder", "Incorrect checksum from encoders: az & alt_ang");
             return FAILURE;
         }
-        logging(WARN, "Encoder",
-                "Incorrect checksum from encoder: ra");
+        logging(WARN, "Encoder", "Incorrect checksum from encoder: az");
         return FAILURE;
     }
-    if(ctl[DEC]){
-        logging(WARN, "Encoder",
-                "Incorrect checksum from encoder: dec");
+    if(ctl[ALT_ANG]){
+        logging(WARN, "Encoder", "Incorrect checksum from encoder: alt_ang");
         return FAILURE;
     }
     return SUCCESS;
@@ -220,6 +221,13 @@ static int checksum_ctl_enc(unsigned char data[2]){
     return FAILURE;
 }
 
+
+/* set offsets for the azimuth and altitude angle encoders */
+void set_offsets(double az, double alt){
+    az_offset = az;
+    alt_offset = alt;
+}
+
 static void proc(unsigned char data[2][2], encoder_t* enc){
     unsigned short data_s[2];
     double ang[2];
@@ -229,12 +237,12 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
         ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
     }
 
-    logging_csv(encoder_log, "%010.6lf,%010.6lf", ang[RA], ang[DEC]);
+    logging_csv(encoder_log, "%010.6lf,%010.6lf", ang[AZ], ang[ALT_ANG]);
 
     #ifdef ENCODER_DEBUG
-        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[RA], ang[DEC]);
+        logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[AZ], ang[ALT_ANG]);
     #endif
 
-    enc->ra = ang[RA];
-    enc->dec = ang[DEC];
+    enc->az = ang[AZ];
+    enc->alt_ang = ang[ALT_ANG];
 }

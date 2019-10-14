@@ -14,8 +14,10 @@
 #include "sensors.h"
 #include "gyroscope.h"
 
-static pthread_mutex_t mutex_gyro;
+static pthread_mutex_t mutex_gyro = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex_gyro_temp = PTHREAD_MUTEX_INITIALIZER;
 static gyro_t gyro_local;
+static double gyro_temp;
 
 int init_gyroscope(void* args){
 
@@ -24,15 +26,6 @@ int init_gyroscope(void* args){
     gyro_local.z = 0;
     gyro_local.out_of_date = 1;
 
-
-    int ret = pthread_mutex_init(&mutex_gyro, NULL);
-    if( ret ){
-        logging(ERROR, "Gyro",
-                "The initialisation of the gyro mutex failed: %d, (%s)",
-                ret, strerror(ret));
-        return ret;
-    }
-
     return SUCCESS;
 }
 
@@ -40,10 +33,7 @@ void get_gyro_local(gyro_t* gyro){
 
     pthread_mutex_lock(&mutex_gyro);
 
-    gyro->x = gyro_local.x;
-    gyro->y = gyro_local.y;
-    gyro->z = gyro_local.z;
-    gyro->out_of_date = gyro_local.out_of_date;
+    *gyro = gyro_local;
 
     pthread_mutex_unlock(&mutex_gyro);
 }
@@ -52,9 +42,7 @@ void set_gyro(gyro_t* gyro){
 
     pthread_mutex_lock(&mutex_gyro);
 
-    gyro_local.x = gyro->x;
-    gyro_local.y = gyro->y;
-    gyro_local.z = gyro->z;
+    gyro_local = *gyro;
     gyro_local.out_of_date = 0;
 
     pthread_mutex_unlock(&mutex_gyro);
@@ -68,4 +56,23 @@ void gyro_out_of_date(void){
     gyro_local.out_of_date = 1;
 
     pthread_mutex_unlock(&mutex_gyro);
+}
+
+double get_gyro_temp_l(void){
+    pthread_mutex_lock(&mutex_gyro_temp);
+
+    double temp = gyro_temp;
+
+    pthread_mutex_unlock(&mutex_gyro_temp);
+
+    return temp;
+}
+
+void set_gyro_temp_l(double temp){
+
+    pthread_mutex_lock(&mutex_gyro_temp);
+
+    gyro_temp = temp;
+
+    pthread_mutex_unlock(&mutex_gyro_temp);
 }

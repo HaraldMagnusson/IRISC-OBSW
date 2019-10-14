@@ -92,3 +92,7 @@ int save_img_guiding_local(char* fn){
 int abort_exp_guiding_local(char* fn){
     return abort_exp(&cam_info, fn, "guiding");
 }
+
+double get_guiding_temp_l(void){
+    return get_cam_temp(cam_info.CameraID, "guiding");
+}

@@ -50,6 +50,11 @@ void get_gyro(gyro_t* gyro){
     get_gyro_local(gyro);
 }
 
+/* set offsets for the azimuth and altitude angle encoders */
+void set_encoder_offsets(double az, double alt){
+    set_encoder_offsets_local(az, alt);
+}
+
 /* fetch the latest star tracker data */
 void get_star_tracker(star_tracker_t* st){
     get_star_tracker_local(st);
@@ -68,4 +73,12 @@ void set_st_exp_gain(int st_exp, int st_gain){
 /* fetch a single sample from the encoder */
 int enc_single_samp(encoder_t* enc){
     return enc_single_samp_l(enc);
+}
+
+double get_gyro_temp(void){
+    return get_gyro_temp_l();
+}
+
+void set_gyro_temp(double temp){
+    set_gyro_temp_l(temp);
 }

@@ -33,13 +33,13 @@ typedef struct{
 } gyro_t;
 
 typedef struct{
-    double ra, dec;
+    double az, alt_ang;
     char out_of_date;
 } encoder_t;
 
 typedef struct{
-    float ra, dec, roll;
-    char out_of_date;
+    double ra, dec, roll;
+    char out_of_date, new_data;
 } star_tracker_t;
 
 /* initialise the sensors component */
@@ -54,6 +54,9 @@ void get_encoder(encoder_t* encoder);
 /* fetch the latest gyro data */
 void get_gyro(gyro_t* gyro);
 
+/* set offsets for the azimuth and altitude angle encoders */
+void set_encoder_offsets(double az, double alt);
+
 /* fetch the latest star tracker data */
 void get_star_tracker(star_tracker_t* st);
 
@@ -65,3 +68,7 @@ void set_st_exp_gain(int st_exp, int st_gain);
 
 /* fetch a single sample from the encoder */
 int enc_single_samp(encoder_t* enc);
+
+double get_gyro_temp(void);
+
+void set_gyro_temp(double temp);

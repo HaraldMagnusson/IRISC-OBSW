@@ -5,7 +5,6 @@
  *
  * -----------------------------------------------------------------------------
  */
-#define _GNU_SOURCE
 
 #include <signal.h>
 #include <stdlib.h>
@@ -29,7 +28,7 @@
 #include "sensors.h"
 #include "telemetry.h"
 #include "thermal.h"
-#include "tracking.h"
+#include "control_sys.h"
 #include "watchdog.h"
 
 /* not including init */
@@ -65,7 +64,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     {"sensors", &init_sensors},
     {"telemetry", &init_telemetry},
     {"thermal", &init_thermal},
-    {"tracking", &init_tracking}
+    {"control_sys", &init_control_sys}
 };
 
 static void sigint_handler(int signum){
@@ -125,8 +124,6 @@ int main(int argc, char* const argv[]){
         return FAILURE;
     }
     /* initialization sequence done */
-
-    
 
     check_flags();
 
@@ -279,9 +276,8 @@ static void sleep_m(void){
             usleep(1000);
         } while(ret != SUCCESS);
 
-        double ang_rate = 0, sin_dec = 0, cos_dec = 0;
-
-        sincos(enc.dec * M_PI / 180, &sin_dec, &cos_dec);
+        double sin_alt_ang = sin(enc.alt_ang * M_PI / 180);
+        double cos_alt_ang = cos(enc.alt_ang * M_PI / 180);
 
         gyro_t gyro;
         get_gyro(&gyro);
@@ -290,7 +286,7 @@ static void sleep_m(void){
             return;
         }
 
-        ang_rate = gyro.y * sin_dec - gyro.x * cos_dec;
+        double ang_rate = gyro.y * sin_alt_ang - gyro.x * cos_alt_ang;
 
         if(fabs(ang_rate) < GON_ROT_THRESHOLD){
             /* write flag to storage */
@@ -343,15 +339,17 @@ static void wake_m(void){
     pthread_cond_signal(&cond_enc);
     pthread_mutex_unlock(&mutex_cond_enc);
 
+    logging(INFO, "MODE", "waking control system");
+    pthread_mutex_lock(&mutex_cond_cont_sys);
+    pthread_cond_signal(&cond_cont_sys);
+    pthread_mutex_unlock(&mutex_cond_cont_sys);
+
+    sleep(2);
+
     logging(INFO, "MODE", "waking star tracker");
     pthread_mutex_lock(&mutex_cond_st);
     pthread_cond_signal(&cond_st);
     pthread_mutex_unlock(&mutex_cond_st);
-
-    /*TODO: start
-        - selection & tracking
-        - control system
-    */
 
     set_mode(NORMAL);
 }

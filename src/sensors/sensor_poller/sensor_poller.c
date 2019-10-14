@@ -36,6 +36,11 @@ int init_sensor_poller(void* args){
     return init_submodules(init_sequence, MODULE_COUNT);
 }
 
+/* set offsets for the azimuth and altitude angle encoders */
+void set_encoder_offsets_local(double az, double alt){
+    set_offsets(az, alt);
+}
+
 /* return the pid for the star tracker child process */
 pid_t get_st_pid(void){
     return get_st_pid_local();

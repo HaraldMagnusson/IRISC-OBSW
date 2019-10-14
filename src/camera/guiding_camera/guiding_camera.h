@@ -71,3 +71,5 @@ int save_img_guiding_local(char* fn);
  *      ENODEV: camera disconnected
  */
 int abort_exp_guiding_local(char* fn);
+
+double get_guiding_temp_l(void);

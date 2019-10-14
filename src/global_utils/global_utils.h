@@ -29,14 +29,21 @@
 #define ERROR   3
 #define CRIT    4
 
-#define GYRO_TRIG_PIN 26
+#define GYRO_TRIG_PIN 25
 
-#define GPS_SAMPLE_TIME 4           /* unit: seconds */
-#define GYRO_SAMPLE_TIME 10000000    /* unit: nanoseconds */
-#define ENCODER_SAMPLE_TIME 10000000 /* unit: nanoseconds */
+#define GPS_SAMPLE_TIME              4  /* unit: seconds     */
+#define GYRO_SAMPLE_TIME      10000000  /* unit: nanoseconds */
+#define ENCODER_SAMPLE_TIME   10000000  /* unit: nanoseconds */
+#define TRACKING_UPDATE_TIME 100000000  /* unit: nanoseconds */
+#define CONTROL_SYS_WAIT      10000000  /* unit: nanoseconds */
 
 /* the threshold for the acceptable angular rate of the gondola to start observation phase */
 #define GON_ROT_THRESHOLD 1.0 /* unit: degree per second */
+
+/* motor/gearbox values */
+#define STEPS_PER_REVOLUTION 200
+#define MICRO_STEP_FACTOR 32
+#define GEARBOX_RATIO 48
 
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);

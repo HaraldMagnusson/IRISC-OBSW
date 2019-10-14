@@ -27,6 +27,8 @@
 static char top_dir[TOP_DIR_S];
 static const char* const top_dir_p = top_dir;
 
+int debug_mode = 1;
+
 int init_global_utils(void* args){
 
     char* launch_arg = (char*) args;
@@ -118,6 +120,8 @@ char logging_levels[5][7] =
 
 int logging(int level, char module_name[12],
             const char * format, ... ) {
+    if (debug_mode == 0 && level == 0) return 0;
+
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     struct tm *local = localtime(&now.tv_sec);

@@ -9,11 +9,14 @@
 
 #pragma once
 
-/* initialise the tracking component */
-int init_tracking(void* args);
+extern pthread_mutex_t mutex_cond_cont_sys;
+extern pthread_cond_t cond_cont_sys;
 
-/* return the current target to be tracked */
-void get_target( void );
+extern pthread_mutex_t mutex_cond_sel_track;
+extern pthread_cond_t cond_sel_track;
 
-/* update the list of targets and priorities */
-void set_target_list( void );
+/* initialise the control_sys component */
+int init_control_sys(void* args);
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds(double az, double alt_ang);

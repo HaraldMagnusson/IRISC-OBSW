@@ -18,8 +18,8 @@ static encoder_t encoder_local;
 
 int init_encoder(void* args){
 
-    encoder_local.ra = 0;
-    encoder_local.dec = 0;
+    encoder_local.az = 0;
+    encoder_local.alt_ang = 0;
     encoder_local.out_of_date = 1;
 
     int ret = pthread_mutex_init( &mutex_encoder, NULL );
@@ -37,8 +37,8 @@ void get_encoder_local(encoder_t* encoder){
 
     pthread_mutex_lock(&mutex_encoder);
 
-    encoder->ra = encoder_local.ra;
-    encoder->dec = encoder_local.dec;
+    encoder->az = encoder_local.az;
+    encoder->alt_ang = encoder_local.alt_ang;
     encoder->out_of_date = encoder_local.out_of_date;
 
     pthread_mutex_unlock(&mutex_encoder);
@@ -48,8 +48,8 @@ void set_encoder(encoder_t* encoder){
 
     pthread_mutex_lock(&mutex_encoder);
 
-    encoder_local.ra = encoder->ra;
-    encoder_local.dec = encoder->dec;
+    encoder_local.az = encoder->az;
+    encoder_local.alt_ang = encoder->alt_ang;
     encoder_local.out_of_date = 0;
 
     pthread_mutex_unlock(&mutex_encoder);

@@ -11,23 +11,32 @@
 
 #include "global_utils.h"
 
-#include "controller.h"
+#include "stabilization.h"
 #include "current_target.h"
 #include "gimbal.h"
-#include "target_selecting.h"
+#include "target_selection.h"
+#include "kalman_filter.h"
+#include "pid.h"
 
-#define MODULE_COUNT 4
+#define MODULE_COUNT 6
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"controller", &init_controller},
+    {"tar__selection", &init_target_selection},
     {"current_target", &init_current_target},
+    {"stabilization", &init_stabilization},
+    {"kalman_filter", &init_kalman_filter},
     {"gimbal", &init_gimbal},
-    {"target_selecting", &init_target_selecting}
+    {"pid", &init_pid}
 };
 
-int init_tracking(void* args){
+int init_control_sys(void* args){
 
     /* init whatever in this module */
     return init_submodules(init_sequence, MODULE_COUNT);
+}
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds(double az, double alt_ang){
+    set_error_thresholds_local(az, alt_ang);
 }
