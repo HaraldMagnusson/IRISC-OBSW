@@ -12,6 +12,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "global_utils.h"
 #include "current_target.h"

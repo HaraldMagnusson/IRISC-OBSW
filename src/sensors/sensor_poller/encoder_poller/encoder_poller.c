@@ -31,6 +31,7 @@ static int checksum_ctl_enc(unsigned char data[2]);
 static void proc(unsigned char data[2][2], encoder_t* enc);
 static void* thread_func(void* args);
 static void active_m(void);
+static int read_offsets(void);
 
 pthread_mutex_t mutex_cond_enc;
 pthread_cond_t cond_enc;
@@ -40,7 +41,6 @@ static int fd_spi00, fd_spi01;
 static double az_offset = 0, alt_offset = 0;
 
 static FILE* encoder_log;
-
 
 int init_encoder_poller(void* args){
 
@@ -55,8 +55,11 @@ int init_encoder_poller(void* args){
     encoder_log = fopen(log_fn, "a");
     if(encoder_log == NULL){
         logging(ERROR, "Encoder",
-                "Failed to open encoder log file, (%s)",
-                strerror(errno));
+                "Failed to open encoder log file: %m");
+        return errno;
+    }
+
+    if(read_offsets()){
         return errno;
     }
 
@@ -69,53 +72,84 @@ int init_encoder_poller(void* args){
     fd_spi00 = open(spi00, O_RDONLY);
     if(fd_spi00 == -1){
         logging(ERROR, "Encoder",
-                "Failed to open spidev0.0, %s",
-                strerror(errno));
+                "Failed to open spidev0.0: %m");
         return errno;
     }
 
     fd_spi01 = open(spi01, O_RDONLY);
     if(fd_spi00 == -1){
         logging(ERROR, "Encoder",
-                "Failed to open spidev0.1, %s",
-                strerror(errno));
+                "Failed to open spidev0.1: %m");
         return errno;
     }
 
     ret = ioctl(fd_spi00, SPI_IOC_WR_MODE, &spi_mode);
     if(ret == -1){
         logging(ERROR, "Encoder",
-                "Failed to set spi mode for spidev0.0, %s",
-                strerror(errno));
+                "Failed to set spi mode for spidev0.0: %m");
         return errno;
     }
 
     ret = ioctl(fd_spi01, SPI_IOC_WR_MODE, &spi_mode);
     if(ret == -1){
         logging(ERROR, "Encoder",
-                "Failed to set spi mode for spidev0.1, %s",
-                strerror(errno));
+                "Failed to set spi mode for spidev0.1: %m");
         return errno;
     }
 
     ret = ioctl(fd_spi00, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
     if(ret == -1){
         logging(ERROR, "Encoder",
-                "Failed to set spi speed for spidev0.0, %s",
-                strerror(errno));
+                "Failed to set spi speed for spidev0.0: %m");
         return errno;
     }
 
     ret = ioctl(fd_spi01, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
     if(ret == -1){
         logging(ERROR, "Encoder",
-                "Failed to set spi speed for spidev0.1, %s",
-                strerror(errno));
+                "Failed to set spi speed for spidev0.1: %m");
         return errno;
     }
     /* done setting up spi devices */
 
     return create_thread("encoder", thread_func, 25);
+}
+
+static int read_offsets(void){
+
+    char fn[100];
+
+    /* az offset */
+    FILE* encoder_offset_az = NULL;
+    strcpy(fn, get_top_dir());
+    strcat(fn, "output/enc_az_offset.log");
+
+    encoder_offset_az = fopen(fn, "r");
+    if(encoder_log == NULL){
+        logging(ERROR, "Encoder",
+                "Failed to open encoder az offset file: %m");
+        return errno;
+    }
+
+    fread((void*)&az_offset, sizeof(double), 1, encoder_offset_az);
+    fclose(encoder_offset_az);
+
+    /* alt offset */
+    FILE* encoder_offset_alt = NULL;
+    strcpy(fn, get_top_dir());
+    strcat(fn, "output/enc_alt_offset.log");
+
+    encoder_log = fopen(fn, "r");
+    if(encoder_log == NULL){
+        logging(ERROR, "Encoder",
+                "Failed to open encoder alt offset file: %m");
+        return errno;
+    }
+
+    fread((void*)&alt_offset, sizeof(double), 1, encoder_offset_alt);
+    fclose(encoder_offset_alt);
+
+    return SUCCESS;
 }
 
 /* fetch a single sample from the encoder */
@@ -221,11 +255,44 @@ static int checksum_ctl_enc(unsigned char data[2]){
     return FAILURE;
 }
 
-
 /* set offsets for the azimuth and altitude angle encoders */
-void set_offsets(double az, double alt){
+int set_offsets(double az, double alt){
     az_offset = az;
     alt_offset = alt;
+
+    char fn[100];
+
+    /* az offset */
+    FILE* encoder_offset_az = NULL;
+    strcpy(fn, get_top_dir());
+    strcat(fn, "output/enc_az_offset.log");
+
+    encoder_offset_az = fopen(fn, "w");
+    if(encoder_log == NULL){
+        logging(ERROR, "Encoder",
+                "Failed to open encoder az offset file: %m");
+        return errno;
+    }
+
+    fwrite((void*)&az_offset, sizeof(double), 1, encoder_offset_az);
+    fclose(encoder_offset_az);
+
+    /* alt offset */
+    FILE* encoder_offset_alt = NULL;
+    strcpy(fn, get_top_dir());
+    strcat(fn, "output/enc_alt_offset.log");
+
+    encoder_log = fopen(fn, "w");
+    if(encoder_log == NULL){
+        logging(ERROR, "Encoder",
+                "Failed to open encoder alt offset file: %m");
+        return errno;
+    }
+
+    fwrite((void*)&alt_offset, sizeof(double), 1, encoder_offset_alt);
+    fclose(encoder_offset_alt);
+
+    return SUCCESS;
 }
 
 static void proc(unsigned char data[2][2], encoder_t* enc){
@@ -243,6 +310,6 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
         logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[AZ], ang[ALT_ANG]);
     #endif
 
-    enc->az = ang[AZ];
-    enc->alt_ang = ang[ALT_ANG];
+    enc->az = ang[AZ] - az_offset;
+    enc->alt_ang = ang[ALT_ANG] - alt_offset;
 }

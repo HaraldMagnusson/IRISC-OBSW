@@ -13,7 +13,7 @@
 int init_sensor_poller(void* args);
 
 /* set offsets for the azimuth and altitude angle encoders */
-void set_encoder_offsets_local(double az, double alt);
+int set_encoder_offsets_l(double az, double alt);
 
 /* return the pid for the star tracker child process */
 pid_t get_st_pid(void);

@@ -51,8 +51,8 @@ void get_gyro(gyro_t* gyro){
 }
 
 /* set offsets for the azimuth and altitude angle encoders */
-void set_encoder_offsets(double az, double alt){
-    set_encoder_offsets_local(az, alt);
+int set_encoder_offsets(double az, double alt){
+    return set_encoder_offsets_l(az, alt);
 }
 
 /* fetch the latest star tracker data */
