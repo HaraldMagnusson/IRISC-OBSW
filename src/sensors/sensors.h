@@ -55,7 +55,7 @@ void get_encoder(encoder_t* encoder);
 void get_gyro(gyro_t* gyro);
 
 /* set offsets for the azimuth and altitude angle encoders */
-int set_encoder_offsets(double az, double alt);
+int set_enc_offsets(void);
 
 /* fetch the latest star tracker data */
 void get_star_tracker(star_tracker_t* st);

@@ -161,6 +161,7 @@ int enc_single_samp_ll(encoder_t* enc){
     read(fd_spi01, data[ALT_ANG], 2);
 
     if(checksum_ctl(data)){
+        errno = EIO;
         return FAILURE;
     }
 
@@ -256,13 +257,24 @@ static int checksum_ctl_enc(unsigned char data[2]){
 }
 
 /* set offsets for the azimuth and altitude angle encoders */
-int set_offsets(double az, double alt){
-    az_offset = az;
-    alt_offset = alt;
+int set_offsets(void){
+
+    encoder_t enc;
+    if(enc_single_samp_ll(&enc)){
+        return errno;
+    }
+
+    /* add the previous offsets to get the original encoder output */
+    enc.az += az_offset;
+    enc.alt_ang += alt_offset;
+
+    /* store new offsets */
+    az_offset = enc.az;
+    alt_offset = enc.alt_ang;
 
     char fn[100];
 
-    /* az offset */
+    /* storing az in file */
     FILE* encoder_offset_az = NULL;
     strcpy(fn, get_top_dir());
     strcat(fn, "output/enc_az_offset.log");
@@ -277,7 +289,7 @@ int set_offsets(double az, double alt){
     fwrite((void*)&az_offset, sizeof(double), 1, encoder_offset_az);
     fclose(encoder_offset_az);
 
-    /* alt offset */
+    /* storing alt in file */
     FILE* encoder_offset_alt = NULL;
     strcpy(fn, get_top_dir());
     strcat(fn, "output/enc_alt_offset.log");

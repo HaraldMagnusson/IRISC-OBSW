@@ -6,15 +6,17 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "global_utils.h"
-#include "e_link.h"
-#include "downlink_queue.h"
-#include "command.h"
 #include <stdio.h>
 #include <pthread.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "global_utils.h"
+#include "e_link.h"
+#include "downlink_queue.h"
+#include "command.h"
+#include "sensors.h"
 
 static void* thread_command(void* param);
 static int handle_command(char command);
@@ -61,6 +63,12 @@ static int handle_command(char command){
 
             send_telemetry_local(buffer, 1, 0, 0);
 
+            break;
+
+        case CMD_ENC_OFFSETS:
+            if(set_enc_offsets()){
+                send_telemetry_local("Setting encoder offsets failed.", 1, 0, 0);
+            }
             break;
 
         default : /*  Default  */
