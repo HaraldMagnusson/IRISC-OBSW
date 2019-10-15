@@ -42,6 +42,26 @@ typedef struct{
     char out_of_date, new_data;
 } star_tracker_t;
 
+typedef struct{
+    double
+            pcb_0,
+            pcb_1,
+            pcb_2,
+            ambient,
+            motor_az,
+            motor_alt,
+            motor_roll,
+            motor_focus,
+            telescope_0,
+            telescope_1,
+            encoder_0,
+            encoder_1,
+            nir,
+            guiding,
+            cpu;
+    char out_of_date;
+} temp_t;
+
 /* initialise the sensors component */
 int init_sensors(void* args);
 
@@ -69,6 +89,11 @@ void set_st_exp_gain(int st_exp, int st_gain);
 /* fetch a single sample from the encoder */
 int enc_single_samp(encoder_t* enc);
 
+/* fetch the temperature of the gyroscope */
 double get_gyro_temp(void);
 
+/* update the protected object for the temperature of the gyroscope */
 void set_gyro_temp(double temp);
+
+/* fetch the temperatures of the entire system except gyroscope */
+void get_temp(temp_t* temp);

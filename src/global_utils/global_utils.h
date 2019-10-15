@@ -31,6 +31,7 @@
 
 #define GYRO_TRIG_PIN 25
 
+#define TEMP_SAMPLE_TIME             1  /* unit: seconds     */
 #define GPS_SAMPLE_TIME              4  /* unit: seconds     */
 #define GYRO_SAMPLE_TIME      10000000  /* unit: nanoseconds */
 #define ENCODER_SAMPLE_TIME   10000000  /* unit: nanoseconds */
