@@ -20,3 +20,6 @@ int init_control_sys(void* args);
 
 /* Set the error thresholds for when to start exposing camera */
 void set_error_thresholds(double az, double alt_ang);
+
+/* Rotate the telescope to center of horizontal field of view, 45 deg up */
+void center_telescope(void);

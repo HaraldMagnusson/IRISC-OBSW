@@ -18,8 +18,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <pthread.h>
+#include <math.h>
 
 #include "gimbal.h"
+#include "sensors.h"
 
 static int fd_i2c;
 int addr_az_alt = 0x70;
@@ -113,4 +115,67 @@ int step_roll(motor_step_t* steps){
     pthread_mutex_unlock(&mutex_i2c);
 
     return SUCCESS;
+}
+
+/* Rotate the telescope to center of horizontal field of view, 45 deg up */
+void center_telescope_l(void){
+    encoder_t enc;
+    motor_step_t steps;
+
+    struct timespec wake;
+    clock_gettime(CLOCK_MONOTONIC, &wake);
+
+    /* alt */
+    double alt_target = 45;
+
+    do{
+        get_enc(&enc);
+        if(enc.out_of_date){
+            continue;
+        }
+
+        double err = alt_target - enc.alt;
+        int sign  = err >= 0 ? 1 : -1;
+
+        steps.alt = 15 * sign;
+        steps.az = 0;
+        step_az_alt(&steps);
+
+        wake.tv_nsec += 10000000;
+        if(wake.tv_nsec >= 1000000000){
+            wake.tv_nsec -= 1000000000;
+            wake.tv_sec++;
+        }
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
+    } while(fabs(err) < 1);
+
+    steps.alt = 0;
+    step_az_alt(&steps);
+
+    /* az */
+    double az_target = 0;
+
+    do{
+        get_enc(&enc);
+        if(enc.out_of_date){
+            continue;
+        }
+
+        double err = az_target - enc.az;
+        int sign  = err >= 0 ? 1 : -1;
+
+        steps.az = 15 * sign;
+        steps.alt = 0;
+        step_az_alt(&steps);
+
+        wake.tv_nsec += 10000000;
+        if(wake.tv_nsec >= 1000000000){
+            wake.tv_nsec -= 1000000000;
+            wake.tv_sec++;
+        }
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
+    } while(fabs(err) < 1);
+
+    steps.az = 0;
+    step_az_alt(&steps);
 }

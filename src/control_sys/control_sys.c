@@ -40,3 +40,8 @@ int init_control_sys(void* args){
 void set_error_thresholds(double az, double alt_ang){
     set_error_thresholds_local(az, alt_ang);
 }
+
+/* Rotate the telescope to center of horizontal field of view, 45 deg up */
+void center_telescope(void){
+    center_telescope_l();
+}
