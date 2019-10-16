@@ -17,6 +17,10 @@
 #define CMD_NIR_GAI 65
 #define CMD_ST_EXP 70
 #define CMD_ST_GAI 75
+#define CMD_STP_AZ 80
+#define CMD_STP_ALT 85
+#define CMD_ENCODER 90
+
 
 /* initialise the command component */
 int init_command(void* args);

@@ -13,6 +13,7 @@
 #include "current_target.h"
 #include "global_utils.h"
 #include "mode.h"
+#include "control_sys.h"
 #include "gimbal.h"
 #include "pid.h"
 #include "kalman_filter.h"

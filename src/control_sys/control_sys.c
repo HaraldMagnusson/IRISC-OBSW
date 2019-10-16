@@ -8,8 +8,11 @@
  */
 
 #include <string.h>
+#include <pthread.h>
 
 #include "global_utils.h"
+
+#include "control_sys.h"
 
 #include "stabilization.h"
 #include "current_target.h"
@@ -39,4 +42,14 @@ int init_control_sys(void* args){
 /* Set the error thresholds for when to start exposing camera */
 void set_error_thresholds(double az, double alt_ang){
     set_error_thresholds_local(az, alt_ang);
+}
+
+int step_az_alt(motor_step_t* steps){
+
+    return step_az_alt_local(steps);
+}
+
+int step_roll(motor_step_t* steps){
+
+    return step_roll_local(steps);
 }

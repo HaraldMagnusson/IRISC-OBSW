@@ -36,9 +36,6 @@ static unsigned int sleep_time = 30000;
 
 int init_elink(void* args){
 
-    pthread_mutex_lock( &e_link_mutex );
-    pthread_mutex_lock( &e_link_mutex_read );
-
     return create_thread("e_link", thread_socket, 16);
 }
 
@@ -102,6 +99,9 @@ int read_elink(char *buffer, int bytes){
 }
 
 static void* thread_socket(void* param){
+
+    pthread_mutex_lock( &e_link_mutex );
+    pthread_mutex_lock( &e_link_mutex_read );
 
     socklen_t clilen;
     struct sockaddr_in serv_addr, cli_addr;

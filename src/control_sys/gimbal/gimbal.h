@@ -9,13 +9,9 @@
 
 #pragma once
 
-typedef struct{
-    int az, alt, roll;
-} motor_step_t;
-
 /* initialise the gimbal component */
 int init_gimbal(void* args);
 
-int step_az_alt(motor_step_t* steps);
+int step_az_alt_local(motor_step_t* steps);
 
-int step_roll(motor_step_t* steps);
+int step_roll_local(motor_step_t* steps);

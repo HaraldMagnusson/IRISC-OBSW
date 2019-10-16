@@ -8,6 +8,8 @@
  */
 
 #include "global_utils.h"
+#include <pthread.h>
+#include "control_sys.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -22,7 +24,7 @@
 #include "gimbal.h"
 
 static int fd_i2c;
-int addr_az_alt = 0x70;
+int addr_az_alt = 8;
 int addr_roll = 0x0F;
 
 pthread_mutex_t mutex_i2c = PTHREAD_MUTEX_INITIALIZER;
@@ -38,7 +40,7 @@ int init_gimbal(void* args){
     return SUCCESS;
 }
 
-int step_az_alt(motor_step_t* steps){
+int step_az_alt_local(motor_step_t* steps){
 
     int az = steps->az, alt = steps->alt;
     unsigned char az_dir, alt_dir;
@@ -84,7 +86,7 @@ int step_az_alt(motor_step_t* steps){
     return SUCCESS;
 }
 
-int step_roll(motor_step_t* steps){
+int step_roll_local(motor_step_t* steps){
 
     int roll = steps->roll;
     unsigned char dir;
