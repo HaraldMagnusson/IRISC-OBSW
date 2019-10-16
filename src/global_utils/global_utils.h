@@ -46,6 +46,9 @@
 #define MICRO_STEP_FACTOR 32
 #define GEARBOX_RATIO 48
 
+/* i2c address for hall effect adc */
+#define I2C_ADDR_HE 0x21
+
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);
 typedef struct {
