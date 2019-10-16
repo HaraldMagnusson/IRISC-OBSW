@@ -30,6 +30,21 @@ int img_startracker_counter = 0;
 static void* thread_func(void*);
 int compression_stream(const char* in_filename, const char* out_filename);
 
+static char st_fp[100];
+static char nir_fp[100];
+
+int init_image_handler(void* args) {
+
+    strcpy(st_fp, get_top_dir());
+    strcat(st_fp, "output/guiding/");
+
+    strcpy(nir_fp, get_top_dir());
+    strcat(nir_fp, "output/nir/");
+
+    return create_thread("image_handler", thread_func, 19);
+
+}
+
 static size_t fread_return_size(void* buffer, size_t sizeToRead, FILE* file)
 {
     size_t const readSize = fread(buffer, 1, sizeToRead, file);
@@ -120,21 +135,6 @@ static int compress_file(const char* file_name_in, const char* file_name_out, in
 int compression_stream(const char* in_filename, const char* out_filename) {
 
     return compress_file(in_filename, out_filename, COMPRESSION_LEVEL);
-
-}
-
-char st_fp[100];
-char nir_fp[100];
-
-int init_image_handler(void* args) {
-
-    strcpy(st_fp, get_top_dir());
-    strcat(st_fp, "output/guiding/");
-
-    strcpy(nir_fp, get_top_dir());
-    strcat(nir_fp, "output/nir/");
-
-    return create_thread("image_handler", thread_func, 19);
 
 }
 

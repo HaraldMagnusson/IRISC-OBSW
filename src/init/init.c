@@ -245,6 +245,7 @@ static void sleep_m(void){
         logging(INFO, "MODE", "rotating out telescope");
 
         //TODO: rotate telescope
+        center_telescope();
 
         /* set flag */
         rotate_flag = '1';

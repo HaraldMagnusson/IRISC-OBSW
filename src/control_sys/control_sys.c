@@ -53,3 +53,7 @@ int step_roll(motor_step_t* steps){
 
     return step_roll_local(steps);
 }
+/* Rotate the telescope to center of horizontal field of view, 45 deg up */
+void center_telescope(void){
+    center_telescope_l();
+}

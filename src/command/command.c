@@ -6,12 +6,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "global_utils.h"
-#include "e_link.h"
-#include "downlink_queue.h"
-#include "control_sys.h"
-#include "command.h"
-#include "mode.h"
 #include <stdio.h>
 #include <pthread.h>
 #include <limits.h>
@@ -19,6 +13,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/reboot.h>
+
+#include "global_utils.h"
+#include "e_link.h"
+#include "control_sys.h"
+#include "downlink_queue.h"
+#include "command.h"
+#include "mode.h"
+#include "sensors.h"
 
 static void* thread_command(void* param);
 static int handle_command(char command);
@@ -130,6 +132,12 @@ static int handle_command(char command){
 
             send_telemetry_local(buffer, 1, 0, 0);
 
+            break;
+
+        case CMD_ENC_OFFSETS:
+            if(set_enc_offsets()){
+                send_telemetry_local("Setting encoder offsets failed.", 1, 0, 0);
+            }
             break;
 
         default : /*  Default  */

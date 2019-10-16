@@ -12,6 +12,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "global_utils.h"
 #include "current_target.h"
@@ -32,8 +33,16 @@ static void fetch_time(double* ut_hours, double* j2000);
 static int exp_time = 30, sensor_gain = 100;
 static double az_threshold = 0.01, alt_threshold = 0.01;
 
+FILE* sel_trck_log;
 
 int init_target_selection(void* args){
+
+    char log_fn[100];
+
+    strcpy(log_fn, get_top_dir());
+    strcat(log_fn, "output/logs/tracking.log");
+
+    sel_trck_log = fopen(log_fn, "a");
 
     return create_thread("select_track", sel_track_thread_func, 30);
 }
@@ -141,9 +150,7 @@ static int selection(void){
         }
     }
 
-    #ifdef SELECTION_DEBUG
-        logging(DEBUG, "Selection", "Current target: %s", target_list_rd[tar_index].name);
-    #endif
+    logging(INFO, "Selection", "Target selected: %s", target_list_rd[tar_index].name);
 
     return tar_index;
 }
@@ -154,6 +161,8 @@ static int tracking(int tar_index, char exposing_flag){
     rd_to_aa(target_list_rd[tar_index].ra, target_list_rd[tar_index].dec, &az, &alt);
 
     set_tracking_angles(az, alt);
+
+    logging_csv(sel_trck_log, "%+.10e,%+.10e", az, alt);
 
     #ifdef TRACKING_DEBUG
         logging(DEBUG, "Tracking", "Tracking angles: az: %+9.4lf, alt: %+9.4lf",
