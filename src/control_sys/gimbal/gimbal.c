@@ -129,14 +129,15 @@ void center_telescope_l(void){
 
     /* alt */
     double alt_target = 45;
+    double err = 0;
 
     do{
-        get_enc(&enc);
+        get_encoder(&enc);
         if(enc.out_of_date){
             continue;
         }
 
-        double err = alt_target - enc.alt;
+        err = alt_target - enc.alt_ang;
         int sign  = err >= 0 ? 1 : -1;
 
         steps.alt = 15 * sign;
@@ -158,12 +159,12 @@ void center_telescope_l(void){
     double az_target = 0;
 
     do{
-        get_enc(&enc);
+        get_encoder(&enc);
         if(enc.out_of_date){
             continue;
         }
 
-        double err = az_target - enc.az;
+        err = az_target - enc.az;
         int sign  = err >= 0 ? 1 : -1;
 
         steps.az = 15 * sign;
