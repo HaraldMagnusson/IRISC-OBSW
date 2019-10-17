@@ -41,7 +41,6 @@ int init_i2c(void* args){
         return errno;
     }
 
-
     return SUCCESS;
 }
 
