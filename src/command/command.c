@@ -89,32 +89,6 @@ static int handle_command(char command){
             send_telemetry_local(buffer, 1, 0, 0);
 
             break;
-        
-        case CMD_STP_AZ:
-            { /* scope to avoid redeinition of target */
-                read_elink(buffer, 2);
-                double target = (double)*(short*)&buffer[0];
-
-                move_az_to(target);
-
-                snprintf(buffer, 1400, "Stepping AZ to: %lg", target);
-
-                send_telemetry_local(buffer, 1, 0, 0);
-            }
-            break;
-
-        case CMD_STP_ALT:
-            { /* scope to avoid redeinition of target */
-                read_elink(buffer, 2);
-                double target = (double)*(short*)&buffer[0];
-
-                move_alt_to(target);
-
-                snprintf(buffer, 1400, "Stepping ALT to: %lg", target);
-
-                send_telemetry_local(buffer, 1, 0, 0);
-            }
-            break;
 
         case CMD_STP_AZ:
             { /* scope to avoid redeinition of target */
