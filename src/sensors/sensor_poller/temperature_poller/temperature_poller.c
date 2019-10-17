@@ -16,6 +16,7 @@
 #include <sys/ioctl.h>
 
 #include "global_utils.h"
+#include "temperature_poller.h"
 
 static void* temp_poller_thread(void* args);
 static void active_m(void);
@@ -62,7 +63,7 @@ static void* temp_poller_thread(void* args){
 }
 
 static void active_m(void){
-
+#if 0
     unsigned char addrs[2] = {0x80, 0xA0};
 
     for(int ii=0; ii<2; ++ii){
@@ -80,7 +81,11 @@ static void active_m(void){
                 ii? 3:1, buf[0], buf[1], val > 0x0800 ? "high" : "low ");
     }
     printf("\033[2A");
-
+#else
+    printf("clockwise edge status: %s\n", fr_on_edge_ll(1) ? "on " : "off");
+    printf("counter clockwise edge status: %s\n", fr_on_edge_ll(0) ? "on " : "off");
+    printf("\033[2A");
+#endif
 }
 
 /* check if the field rotator is on a given edge */
@@ -104,5 +109,5 @@ char fr_on_edge_ll(char edge){
     pthread_mutex_unlock(&mutex_i2c);
 
     unsigned short val = (0x0F & buf[0]) << 8 | buf[1];
-    return val > 0x0800;
+    return val < 0x0800;
 }
