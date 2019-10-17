@@ -121,50 +121,28 @@ int step_roll_local(motor_step_t* steps){
 
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope_l(void){
+
+    move_alt_to(45);
+    move_az_to(0);
+}
+
+void move_az_to_l(double target){
+
+    double err = 0;
+
     encoder_t enc;
     motor_step_t steps;
 
     struct timespec wake;
     clock_gettime(CLOCK_MONOTONIC, &wake);
 
-    /* alt */
-    double alt_target = 45;
-    double err = 0;
-
     do{
         get_encoder(&enc);
         if(enc.out_of_date){
             continue;
         }
 
-        err = alt_target - enc.alt_ang;
-        int sign  = err >= 0 ? 1 : -1;
-
-        steps.alt = 15 * sign;
-        steps.az = 0;
-        step_az_alt(&steps);
-
-        wake.tv_nsec += 10000000;
-        if(wake.tv_nsec >= 1000000000){
-            wake.tv_nsec -= 1000000000;
-            wake.tv_sec++;
-        }
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-    } while(fabs(err) < 1);
-
-    steps.alt = 0;
-    step_az_alt(&steps);
-
-    /* az */
-    double az_target = 0;
-
-    do{
-        get_encoder(&enc);
-        if(enc.out_of_date){
-            continue;
-        }
-
-        err = az_target - enc.az;
+        err = target - enc.az;
         int sign  = err >= 0 ? 1 : -1;
 
         steps.az = 15 * sign;
@@ -180,5 +158,39 @@ void center_telescope_l(void){
     } while(fabs(err) < 1);
 
     steps.az = 0;
+    step_az_alt(&steps);
+}
+
+void move_alt_to_l(double target){
+    double err = 0;
+
+    encoder_t enc;
+    motor_step_t steps;
+
+    struct timespec wake;
+    clock_gettime(CLOCK_MONOTONIC, &wake);
+
+    do{
+        get_encoder(&enc);
+        if(enc.out_of_date){
+            continue;
+        }
+
+        err = target - enc.alt_ang;
+        int sign  = err >= 0 ? 1 : -1;
+
+        steps.alt = 15 * sign;
+        steps.az = 0;
+        step_az_alt(&steps);
+
+        wake.tv_nsec += 10000000;
+        if(wake.tv_nsec >= 1000000000){
+            wake.tv_nsec -= 1000000000;
+            wake.tv_sec++;
+        }
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
+    } while(fabs(err) < 1);
+
+    steps.alt = 0;
     step_az_alt(&steps);
 }

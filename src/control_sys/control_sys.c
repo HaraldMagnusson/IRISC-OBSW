@@ -57,3 +57,17 @@ int step_roll(motor_step_t* steps){
 void center_telescope(void){
     center_telescope_l();
 }
+
+/* Rotate the telescope to a target in az relative to gondola,
+ * with an accuracy of 1 degree
+ */
+void move_az_to(double target){
+    move_az_to_l(target);
+}
+
+/* Rotate the telescope to a target in alt relative to gondola,
+ * with an accuracy of 1 degree
+ */
+void move_alt_to(double target){
+    move_alt_to_l(target);
+}
