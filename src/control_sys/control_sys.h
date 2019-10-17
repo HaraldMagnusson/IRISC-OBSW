@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Tracking
- * Author(s): 
+ * Author(s): Anja Möslinger, Adam Śmiałek, Harald Magnusson
  * Purpose: Stabilise the telescope. Keep track of the currently highest 
  *          priority target. Provide an interface to update target 
  *          priority list.
