@@ -1,3 +1,3 @@
-[submodule "Tetra"]
-	path = Tetra
-	url = https://github.com/rymdllama/Tetra
+[submodule "Astrometry.net"]
+	path = Astrometry.net
+	url = https://github.com/rymdllama/Astrometry.net.git
