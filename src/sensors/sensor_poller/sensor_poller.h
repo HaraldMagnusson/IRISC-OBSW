@@ -23,3 +23,6 @@ void set_st_exp_gain_l(int st_exp, int st_gain);
 
 /* fetch a single sample from the encoder */
 int enc_single_samp_l(encoder_t* enc);
+
+/* check if the field rotator is on a given edge */
+char fr_on_edge_l(char edge);
