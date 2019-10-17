@@ -81,29 +81,38 @@ typedef struct{
 typedef struct{
     arr_t mem[18];
 
-    double **x_prev;
-    double **x_upd;
-    double **x_next;
-    double **w_meas;
-    double **Phi;
-    double **Gamma;
-    double **Upsilon;
-    double **Upsilon2;
-    double **H;
-    double **Q;
-    double **R;
-    double **Q2;
-    double **P_prev;
-    double **P_upd;
-    double **P_next;
-    double **nu_next;
-    double **S_next;
-    double **K;
+    double** x_prev;
+    double** x_upd;
+    double** x_next;
+    double** w_meas;
+    double** Phi;
+    double** Gamma;
+    double** Upsilon;
+    double** Upsilon2;
+    double** H;
+    double** Q;
+    double** R;
+    double** Q2;
+    double** P_prev;
+    double** P_upd;
+    double** P_next;
+    double** nu_next;
+    double** S_next;
+    double** K;
 
+    double* gyro_hist;
+    double** x_hist;
+    double*** p_hist;
+
+    /* innovative logs */
     FILE* x_log;
     FILE* p_log;
     FILE* nu_log;
     FILE* s_log;
+
+    /* propagation logs */
+    FILE* x_prop_log;
+    FILE* p_prop_log;
 } axis_context_t;
 
 static int open_logs(void);
@@ -117,7 +126,9 @@ static void transpose(double** mat, double** mat2, int rows, int cols);
 static void mdiv(double** matA, double scal, double** matB, int rows, int cols);
 static void mmult(double** matA, double** matB, double** matC, int rows1, int cols1, int rows2, int cols2);
 
+#if 0
 static void printarray2D(double** array, int rows, int cols);
+#endif
 
 static void prop_state_vec(axis_context_t axis);
 static void prop_p_next(axis_context_t axis);
@@ -204,8 +215,6 @@ static axis_context_t z = {
     static int l = 0;
 #endif
 
-
-
 int init_kalman_filter(void* args){
 
     if(open_logs()){
@@ -235,6 +244,55 @@ int init_kalman_filter(void* args){
                 }
             }
         }
+
+        /* gyro history */
+        int sec = 60; /* seconds to save */
+        int frequency = 1000*1000*1000 / GYRO_SAMPLE_TIME;
+        int hist_elements = sec * frequency;
+        arr[ii]->gyro_hist = malloc(hist_elements * sizeof(*arr[ii]->gyro_hist));
+        if(arr[ii]->gyro_hist == NULL){
+            logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+            return ENOMEM;
+        }
+
+        /* estimated state history */
+        arr[ii]->x_hist = malloc(hist_elements * sizeof(*arr[ii]->x_hist));
+        if(arr[ii]->x_hist == NULL){
+            logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+            return ENOMEM;
+        }
+
+        for(int jj=0; jj < hist_elements; ++jj){
+            arr[ii]->x_hist[jj] = malloc(X_PREV_ROWS * sizeof(*arr[ii]->x_hist[jj]));
+            if(arr[ii]->x_hist[jj] == NULL){
+                logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+                return ENOMEM;
+            }
+        }
+
+        /* P matrix history */
+        arr[ii]->p_hist = malloc(hist_elements * sizeof(*arr[ii]->p_hist));
+        if(arr[ii]->p_hist == NULL){
+            logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+            return ENOMEM;
+        }
+
+        for(int jj=0; jj < hist_elements; ++jj){
+            arr[ii]->p_hist[jj] = malloc(P_PREV_ROWS * sizeof(*arr[ii]->p_hist[jj]));
+            if(arr[ii]->p_hist[jj] == NULL){
+                logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+                return ENOMEM;
+            }
+
+            for(int kk=0; kk<P_PREV_ROWS; ++kk){
+                arr[ii]->p_hist[jj][kk] = malloc(P_PREV_COLS * sizeof(*arr[ii]->p_hist[jj][kk]));
+                if(arr[ii]->p_hist[jj][kk] == NULL){
+                    logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
+                    return ENOMEM;
+                }
+
+            }
+        }
     }
 
     // initialise Kalman filter
@@ -248,9 +306,6 @@ int init_kalman_filter(void* args){
 }
 
 static void init_kalman_vars(double x_init, double y_init, double z_init){
-
-    /* TODO: remove for non testing */
-    //dt = 0.1; // for testing uses
 
     // initialisation parameters
     double dt;
@@ -311,7 +366,7 @@ static void init_kalman_vars(double x_init, double y_init, double z_init){
 static int open_logs(void){
 
     char axes[3] = {'x', 'y', 'z'};
-    char* vars[] = {"x", "p", "nu", "s"};
+    char* vars[] = {"x", "p", "nu", "s", "x_prop", "p_prop"};
     axis_context_t* arr[3] = {&x, &y, &z};
 
     char log_fn[100];
@@ -320,27 +375,26 @@ static int open_logs(void){
     int dirlen = strlen(log_fn);
 
     for(int ii=0; ii<3; ++ii){
-        FILE** logs[4] = {&arr[ii]->x_log, &arr[ii]->p_log, &arr[ii]->nu_log, &arr[ii]->s_log};
+        FILE** logs[6] = {&arr[ii]->x_log, &arr[ii]->p_log, &arr[ii]->nu_log,
+                &arr[ii]->s_log, &arr[ii]->x_prop_log, &arr[ii]->p_prop_log};
 
-        for(int jj=0; jj<4; ++jj){
+        for(int jj=0; jj<6; ++jj){
 
             snprintf(&log_fn[dirlen], 100-dirlen, "output/logs/kf/%c/%s.log", axes[ii], vars[jj]);
-
             *logs[jj] = fopen(log_fn, "a");
             if(*logs[jj] == NULL){
                 logging(ERROR, "Kalman F", "Failed to open %s log for axis %c: %m",
                         vars[jj], axes[ii]);
-
                 return errno;
             }
         }
-
     }
 
     return SUCCESS;
 }
 
 static char first_st_flag = 1;
+static size_t hist_index = 0;
 int kf_update(telescope_att_t* cur_att){
 
     gyro_t gyro;
@@ -348,7 +402,8 @@ int kf_update(telescope_att_t* cur_att){
 
     star_tracker_t st;
     #ifdef KF_TEST
-        if(l<init_steps){
+        if(l % 1000 == 0){
+        //if(l<init_steps){
             st.ra = 0;
             st.dec = 0;
             st.roll = 0;
@@ -392,11 +447,14 @@ int kf_update(telescope_att_t* cur_att){
         kf_axis(y, gyro.y, &st.roll);
         kf_axis(z, gyro.z, &alt);
 
+        hist_index = 0;
     }
     else{
         kf_axis(x, gyro.x, NULL);
         kf_axis(y, gyro.y, NULL);
         kf_axis(z, gyro.z, NULL);
+
+        hist_index++;
     }
 
     double sin_z = sin(z.x_prev[0][0] * M_PI / 180);
@@ -425,10 +483,36 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
     prop_p_next(axis);
 
     if (st_data != NULL){
-        
+
+        /* go back to middle of exposure and re-propagate */
+        int prop_from_index = (get_st_exp() * 1000) / (2 * GYRO_SAMPLE_TIME);
+
+        for(int ii=0; ii<X_PREV_ROWS; ++ii){
+            axis.x_next[ii][0] = axis.x_hist[prop_from_index][ii];
+        }
+
+        for(int ii=0; ii<P_PREV_ROWS; ++ii){
+            for(int jj=0; jj<P_PREV_COLS; ++jj){
+                axis.P_next[ii][jj] = axis.p_hist[prop_from_index][ii][jj];
+            }
+        }
+
         // innovation
         innovate_nu_next(axis, st_data);
         update_s_next(axis);
+
+        //          log(nu_next);
+        //          log(S_next);
+        logging_csv(axis.nu_log, "%+.10e", **axis.nu_next);
+        logging_csv(axis.s_log, "%+.10e", **axis.S_next);
+
+        #ifdef KF_DEBUG
+            logging(DEBUG, "Kalman F", "nu_next:");
+            logging(DEBUG, "Kalman F", "%+.6e", axis.nu_next[0][0]);
+
+            logging(DEBUG, "Kalman F", "S_next:");
+            logging(DEBUG, "Kalman F", "%+.6e", axis.S_next[0][0]);
+        #endif
 
         // compute the Kalman gain
         comp_k_gain(axis);
@@ -452,44 +536,44 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
                 axis.P_prev[i][j] = axis.P_upd[i][j];
             }
         }
-
-        //          log(x_upd);
-        //          log(P_upd);
-        //          log(nu_next);
-        //          log(S_next);
+        //          log(x_prev);
+        //          log(P_prev);
         logging_csv(axis.x_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
         logging_csv(axis.p_log, "%+.10e,%+.10e,%+.10e,%+.10e",
+            axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
+
+        /* re-propagation loop */
+        for(int ii = prop_from_index; ii < hist_index; ++ii){
+
+            /* load gyro measurements */
+            axis.w_meas[0][0] = axis.gyro_hist[ii];
+
+            prop_state_vec(axis);
+            prop_p_next(axis);
+
+            //x_prev = x_next;
+            for(int i = 0; i < X_PREV_ROWS; i++) {
+                for(int j = 0; j < X_PREV_COLS; j++) {
+                    axis.x_prev[i][j] = axis.x_next[i][j];
+                }
+            }
+            //P_prev = P_next;
+            for(int i = 0; i < P_PREV_ROWS; i++) {
+                for(int j = 0; j < P_PREV_COLS; j++) {
+                    axis.P_prev[i][j] = axis.P_next[i][j];
+                }
+            }
+            //          log(x_prev);
+            //          log(P_prev);
+            logging_csv(axis.x_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
+
+            logging_csv(axis.p_log, "%+.10e,%+.10e,%+.10e,%+.10e",
                 axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
-
-        logging_csv(axis.nu_log, "%+.10e", **axis.nu_next);
-        logging_csv(axis.s_log, "%+.10e", **axis.S_next);
-
-        #ifdef KF_DEBUG
-            logging(DEBUG, "Kalman F", "step number: %d", l);
-            logging(DEBUG, "Kalman F", "x_upd:");
-            logging(DEBUG, "Kalman F", "%+.6e", axis.x_upd[0][0]);
-            logging(DEBUG, "Kalman F", "%+.6e", axis.x_upd[1][0]);
-
-            logging(DEBUG, "Kalman F", "P_upd:");
-            logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
-                    axis.P_upd[0][0], axis.P_upd[0][1]);
-            logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
-                    axis.P_upd[1][0], axis.P_upd[1][1]);
-
-            logging(DEBUG, "Kalman F", "nu_next:");
-            logging(DEBUG, "Kalman F", "%+.6e", axis.nu_next[0][0]);
-
-            logging(DEBUG, "Kalman F", "S_next:");
-            logging(DEBUG, "Kalman F", "%+.6e", axis.S_next[0][0]);
-
-        #endif
-        
-        prop_p_next(axis);
-
+        }
     }
     // new ST data not available
-    else { // initialisation completed - only propagate from this point
+    else {
 
         /* TODO: if we dont get any ST measurements for 10 min
          *       call set_mode(RESET);
@@ -512,18 +596,39 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         // save estimates
         //          log(x_next);
         //          log(P_next);
-        logging_csv(axis.x_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
+        logging_csv(axis.x_prop_log, "%+.10e,%+.10e", axis.x_prev[0][0], axis.x_prev[1][0]);
 
-        logging_csv(axis.p_log, "%+.10e,%+.10e,%+.10e,%+.10e",
+        logging_csv(axis.p_prop_log, "%+.10e,%+.10e,%+.10e,%+.10e",
                 axis.P_prev[0][0], axis.P_prev[0][1], axis.P_prev[1][0], axis.P_prev[1][1]);
+
+        /* Save gyro data, estimated state, and P matrix in history */
+        axis.gyro_hist[hist_index] = gyro_data;
+
+        for(int ii=0; ii<X_PREV_ROWS; ++ii){
+            axis.x_hist[hist_index][ii] = axis.x_prev[ii][0];
+        }
+
+        for(int ii=0; ii<P_PREV_ROWS; ++ii){
+            for(int jj=0; jj<P_PREV_COLS; ++jj){
+                axis.p_hist[hist_index][ii][jj] = axis.P_prev[ii][jj];
+            }
+        }
 
         //          printf("x_prev for i = %d", l);
         //          printarray2D(x_prev, X_PREV_ROWS, X_PREV_COLS);
         // x_next = Phi * x_prev + Gamma * w_meas;
-        printf("x_next for i = %d", l);
-        printarray2D(axis.x_next, X_NEXT_ROWS, X_NEXT_COLS);
-        printf("P_next for i = %d", l);
-        printarray2D(axis.P_next, P_NEXT_ROWS, P_NEXT_COLS);
+        #ifdef KF_DEBUG
+            logging(DEBUG, "Kalman F", "step number: %d", l);
+            logging(DEBUG, "Kalman F", "x_prev:");
+            logging(DEBUG, "Kalman F", "%+.6e", axis.x_prev[0][0]);
+            logging(DEBUG, "Kalman F", "%+.6e", axis.x_prev[1][0]);
+
+            logging(DEBUG, "Kalman F", "P_prev:");
+            logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
+                    axis.P_prev[0][0], axis.P_prev[0][1]);
+            logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
+                    axis.P_prev[1][0], axis.P_prev[1][1]);
+        #endif
 
     }
 
@@ -1019,7 +1124,7 @@ static void update_covar(axis_context_t axis){
 ********************************************************************************
 *******************************************************************************/
 
-
+#if 0
 static void printarray2D(double** array, int rows, int cols) {
     printf("\nPrint 2D array\n");
     for (int i = 0; i < rows; i++) {
@@ -1029,6 +1134,7 @@ static void printarray2D(double** array, int rows, int cols) {
         printf("\n");
     }
 }
+#endif
 
 static void eye(int m, double** mat) {
     for(int ii=0; ii<m; ++ii){

@@ -27,6 +27,7 @@
 #include <math.h>
 
 #include "global_utils.h"
+#include "control_sys.h"
 #include "gimbal.h"
 #include "current_target.h"
 #include "pid.h"

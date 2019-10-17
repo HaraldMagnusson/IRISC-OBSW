@@ -20,6 +20,7 @@
 #include "sensors.h"
 #include "camera.h"
 #include "mode.h"
+#include "gimbal.h"
 
 static void* sel_track_thread_func(void* arg);
 static int selection();
@@ -65,6 +66,9 @@ static void* sel_track_thread_func(void* arg){
 
             /* reset camera axis to center */
             int tar_index = selection();
+
+            /* move up telescope for sun avoidance */
+            move_alt_to(60);
 
             char exposing_flag = 0;
 

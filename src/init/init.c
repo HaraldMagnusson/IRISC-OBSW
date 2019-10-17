@@ -23,6 +23,7 @@
 #include "e_link.h"
 #include "global_utils.h"
 #include "gpio.h"
+#include "i2c.h"
 #include "img_processing.h"
 #include "mode.h"
 #include "sensors.h"
@@ -32,7 +33,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 6
+#define MODULE_COUNT 7
 
 static int init_func(char* const argv[]);
 static void check_flags(void);
@@ -56,6 +57,7 @@ static const module_init_t init_sequence[MODULE_COUNT] = {
     //{"watchdog", &init_watchdog},
     {"mode", &init_mode},
     {"gpio", &init_gpio},
+    {"i2c", &init_i2c},
     {"camera", &init_camera},
     //{"e_link", &init_elink},
     //{"command", &init_command},
@@ -249,6 +251,7 @@ static void sleep_m(void){
         logging(INFO, "MODE", "rotating out telescope");
 
         //TODO: rotate telescope
+        center_telescope();
 
         /* set flag */
         rotate_flag = '1';

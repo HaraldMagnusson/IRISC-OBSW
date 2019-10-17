@@ -51,6 +51,10 @@ void set_st_exp_gain_l(int st_exp, int st_gain){
     set_st_exp_gain_ll(st_exp, st_gain);
 }
 
+int get_st_exp_l(void){
+    return get_st_exp_ll();
+}
+
 /* fetch a single sample from the encoder */
 int enc_single_samp_l(encoder_t* enc){
     return enc_single_samp_ll(enc);

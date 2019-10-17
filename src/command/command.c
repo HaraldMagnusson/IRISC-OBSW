@@ -11,11 +11,15 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/reboot.h>
 
 #include "global_utils.h"
 #include "e_link.h"
+#include "control_sys.h"
 #include "downlink_queue.h"
 #include "command.h"
+#include "mode.h"
 #include "sensors.h"
 
 static void* thread_command(void* param);
@@ -47,6 +51,25 @@ static int handle_command(char command){
     switch(command){
 
         case CMD_REBOOT:
+
+            sync();
+            reboot(RB_AUTOBOOT);
+            break;
+
+        case CMD_MODE:
+
+            read_elink(buffer, 1);
+
+            if(buffer[0]>=0 && buffer[0]<4){
+                set_mode(buffer[0]);
+
+                snprintf(buffer, 1400, "Mode set to: %c", buffer[0]);
+                send_telemetry_local(buffer, 1, 0, 0);
+            } else {
+                snprintf(buffer, 1400, "Mode NOT set, unknown input: %c", buffer[0]);
+                send_telemetry_local(buffer, 1, 0, 0);
+            }
+
             break;
 
         case CMD_PING:
@@ -57,12 +80,40 @@ static int handle_command(char command){
 
             read_elink(buffer, 2);
             unsigned short datarate = *(unsigned short*)&buffer[0];
-            set_datarate(datarate);
+            if(datarate>0){
+                set_datarate(datarate);
+            }
 
             snprintf(buffer, 1400, "Datarate set to: %d", datarate);
 
             send_telemetry_local(buffer, 1, 0, 0);
 
+            break;
+
+        case CMD_STP_AZ:
+            { /* scope to avoid redeinition of target */
+                read_elink(buffer, 2);
+                double target = (double)*(short*)&buffer[0];
+
+                move_az_to(target);
+
+                snprintf(buffer, 1400, "Stepping AZ to: %lg", target);
+
+                send_telemetry_local(buffer, 1, 0, 0);
+            }
+            break;
+
+        case CMD_STP_ALT:
+            { /* scope to avoid redeinition of target */
+                read_elink(buffer, 2);
+                double target = (double)*(short*)&buffer[0];
+
+                move_alt_to(target);
+
+                snprintf(buffer, 1400, "Stepping ALT to: %lg", target);
+
+                send_telemetry_local(buffer, 1, 0, 0);
+            }
             break;
 
         case CMD_ENC_OFFSETS:

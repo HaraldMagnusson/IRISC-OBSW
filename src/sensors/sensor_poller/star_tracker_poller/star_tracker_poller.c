@@ -23,7 +23,7 @@
 #include "img_processing.h"
 
 #define TETRAPATH "Tetra/tetra.py"
-#define ST_WAIT_TIME 100*1000*1000
+#define ST_WAIT_TIME 10*1000*1000
 
 /* macros used in popen2 */
 #define READ 0
@@ -45,6 +45,7 @@ pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
 static pid_t py_pid = -1;
 static char st_running = 0;
 
+/* exposure time in microseconds */
 static int exp_time = 2*1000*1000, gain = 300;
 
 /* filenames for images */
@@ -88,11 +89,6 @@ int init_star_tracker_poller(void* args){
     return create_thread("st_poller", st_poller_thread, 23);
 }
 
-/*
- * TODO: This system will overwrite old files if the system restarts
- *       (might not be an issue since these files are only for the
- *       image handling queue)
- */
 static void* st_poller_thread(void* args){
 
     pthread_mutex_lock(&mutex_cond_st);
@@ -103,47 +99,40 @@ static void* st_poller_thread(void* args){
 
         while(get_mode() != RESET){
             active_m();
+
+            clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
         }
     }
 
     return NULL;
 }
 
-//TODO queue up image from star tracker
 static void active_m(void){
 
-    do{
-        #ifndef ST_TEST
-            /* capture image */
-            if(capture_image(st_fn)){
-                break;
-            }
-        #endif
-
-        /* star tracker calculations */
-        if(call_tetra(st_return)){
+    #ifndef ST_TEST
+        /* capture image */
+        if(capture_image(st_fn)){
             st_out_of_date();
-            break;
+            return;
         }
+    #endif
 
-        #ifndef ST_TEST
-            /* move image to img queue dir */
-            snprintf(out_fn, 100, "%sst%04d.fit", out_fp, img_cntr++);
-            rename(st_fn, out_fn);
+    /* star tracker calculations */
+    if(call_tetra(st_return)){
+        st_out_of_date();
+        return;
+    }
 
-            queue_image(out_fn, IMAGE_STARTRACKER);
-        #endif
-    } while(0);
+    #ifndef ST_TEST
+        /* move image to img queue dir */
+        snprintf(out_fn, 100, "%sst%04d.fit", out_fp, img_cntr++);
+        rename(st_fn, out_fn);
 
-    clock_nanosleep(CLOCK_MONOTONIC, 0, &wake, NULL);
-
-    /* TODO: queue up image */
+        queue_image(out_fn, IMAGE_STARTRACKER);
+    #endif
 }
 
 #ifndef ST_TEST
-/*
- * TODO: error handling from camera
- */
 static int capture_image(char* fn){
 
     int ret;
@@ -312,4 +301,8 @@ pid_t get_st_pid_local(void){
 void set_st_exp_gain_ll(int st_exp, int st_gain){
     exp_time = st_exp;
     gain = st_gain;
+}
+
+int get_st_exp_ll(void){
+    return exp_time;
 }

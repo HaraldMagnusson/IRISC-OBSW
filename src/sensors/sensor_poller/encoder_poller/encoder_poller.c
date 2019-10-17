@@ -125,7 +125,7 @@ static int read_offsets(void){
     strcat(fn, "output/enc_az_offset.log");
 
     encoder_offset_az = fopen(fn, "r");
-    if(encoder_log == NULL){
+    if(encoder_offset_az == NULL){
         logging(ERROR, "Encoder",
                 "Failed to open encoder az offset file: %m");
         return errno;
@@ -139,8 +139,8 @@ static int read_offsets(void){
     strcpy(fn, get_top_dir());
     strcat(fn, "output/enc_alt_offset.log");
 
-    encoder_log = fopen(fn, "r");
-    if(encoder_log == NULL){
+    encoder_offset_alt = fopen(fn, "r");
+    if(encoder_offset_alt == NULL){
         logging(ERROR, "Encoder",
                 "Failed to open encoder alt offset file: %m");
         return errno;

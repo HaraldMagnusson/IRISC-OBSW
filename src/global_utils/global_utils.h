@@ -43,8 +43,8 @@
 
 /* motor/gearbox values */
 #define STEPS_PER_REVOLUTION 200
-#define MICRO_STEP_FACTOR 32
-#define GEARBOX_RATIO 48
+#define MICRO_STEP_FACTOR 1
+#define GEARBOX_RATIO 48*64
 
 /* i2c address for hall effect adc */
 #define I2C_ADDR_HE 0x21
