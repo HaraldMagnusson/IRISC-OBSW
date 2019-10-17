@@ -79,10 +79,17 @@ int enc_single_samp(encoder_t* enc){
     return enc_single_samp_l(enc);
 }
 
+/* fetch the temperature of the gyroscope */
 double get_gyro_temp(void){
     return get_gyro_temp_l();
 }
 
+/* update the protected object for the temperature of the gyroscope */
 void set_gyro_temp(double temp){
     set_gyro_temp_l(temp);
+}
+
+/* fetch the temperatures of the entire system except gyroscope */
+void get_temp(temp_t* temp){
+    get_temp_l(temp);
 }

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Temperature Poller
  * Parent Component: Sensor Poller
- * Author(s):
+ * Author(s): Harald Magnusson
  * Purpose: Poll all thermometers for the current temperature status.
  * -----------------------------------------------------------------------------
  */

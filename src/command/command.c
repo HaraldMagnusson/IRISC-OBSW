@@ -89,7 +89,7 @@ static int handle_command(char command){
             send_telemetry_local(buffer, 1, 0, 0);
 
             break;
-        
+
         case CMD_STP_AZ:
             { /* scope to avoid redeinition of target */
                 read_elink(buffer, 2);

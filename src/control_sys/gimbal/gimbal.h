@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Gimbal
  * Parent Component: Control System
- * Author(s): William Eriksson
+ * Author(s): Harald Magnusson
  * Purpose: Provide an interface for the control of the gimbal motors.
  *
  * -----------------------------------------------------------------------------
