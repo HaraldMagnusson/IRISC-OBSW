@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "control_sys.h"
+
 /* initialise the gimbal component */
 int init_gimbal(void* args);
 

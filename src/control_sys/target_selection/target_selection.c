@@ -20,6 +20,7 @@
 #include "sensors.h"
 #include "camera.h"
 #include "mode.h"
+#include "gimbal.h"
 
 static void* sel_track_thread_func(void* arg);
 static int selection();
