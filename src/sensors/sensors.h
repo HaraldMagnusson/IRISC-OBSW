@@ -99,6 +99,3 @@ void set_gyro_temp(double temp);
 
 /* fetch the temperatures of the entire system except gyroscope */
 void get_temp(temp_t* temp);
-
-/* check if the field rotator is on a given edge */
-char fr_on_edge(char edge);

@@ -59,8 +59,3 @@ int get_st_exp_l(void){
 int enc_single_samp_l(encoder_t* enc){
     return enc_single_samp_ll(enc);
 }
-
-/* check if the field rotator is on a given edge */
-char fr_on_edge_l(char edge){
-    return fr_on_edge_ll(edge);
-}

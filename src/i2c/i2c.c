@@ -13,6 +13,7 @@
 #include <linux/i2c-dev.h>  // for I2C_SLAVE
 
 #include "global_utils.h"   // for logging, SUCCESS,  & FAILURE
+#include "i2c.h"            // for write_i2c
 
 static int fd_i2c_1 = -1;
 static int fd_i2c_5 = -1;
@@ -33,6 +34,13 @@ int init_i2c(void* args){
         logging(ERROR, "I2C", "Failed to open i2c-5 device: %m");
         return FAILURE;
     }
+
+    unsigned char setup_buf[3] = {0x02, 0x00, 0x58};
+    if(write_i2c(1, I2C_ADDR_HE, setup_buf, 3) != 3){
+        logging(ERROR, "I2C", "Failed to setup config reg on ADC: %m");
+        return errno;
+    }
+
 
     return SUCCESS;
 }
@@ -101,4 +109,24 @@ ssize_t write_i2c(int dev_num, unsigned char addr, const void* buf, size_t count
     pthread_mutex_unlock(&mutex_i2c);
 
     return ret;
+}
+
+/* check if the field rotator is on a given edge */
+char fr_on_edge(char edge){
+
+    unsigned char addr_clkw = 0x80;
+    unsigned char addr_ctclkw = 0xA0;
+    unsigned char buf[2];
+
+    if(edge){
+        write_i2c(1, I2C_ADDR_HE, &addr_clkw, 1);
+    }
+    else{
+        write_i2c(1, I2C_ADDR_HE, &addr_ctclkw, 1);
+    }
+
+    read_i2c(1, I2C_ADDR_HE, buf, 2);
+
+    unsigned short val = (0x0F & buf[0]) << 8 | buf[1];
+    return val < 0x0800;
 }
