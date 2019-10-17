@@ -24,21 +24,12 @@
 
 #include "gimbal.h"
 #include "sensors.h"
+#include "i2c.h"
 
-static int fd_i2c;
-int addr_az_alt = 8;
-int addr_roll = 0x0F;
-
-pthread_mutex_t mutex_i2c = PTHREAD_MUTEX_INITIALIZER;
+unsigned char addr_az_alt = 8;
+unsigned char addr_roll = 0x0F;
 
 int init_gimbal(void* args){
-
-    fd_i2c = open("/dev/i2c-5", O_RDWR);
-    if(fd_i2c == -1){
-        logging(ERROR, "Gimbal", "Failed to open i2c-5 device: %m");
-        return FAILURE;
-    }
-
     return SUCCESS;
 }
 
@@ -66,24 +57,11 @@ int step_az_alt_local(motor_step_t* steps){
     unsigned char msg_az  = az_dir  | (0x3F & az) | 0x40;
     unsigned char msg_alt = alt_dir | (0x3F & alt);
 
-    pthread_mutex_lock(&mutex_i2c);
+    unsigned buf[2] = {msg_az, msg_alt};
 
-    if(ioctl(fd_i2c, I2C_SLAVE, addr_az_alt) == -1){
-        logging(ERROR, "Motor Cont", "Failed to set i2c slave address: %m");
-        pthread_mutex_unlock(&mutex_i2c);
+    if(write_i2c(5, addr_az_alt, buf, 2) != 2){
         return errno;
     }
-    if(write(fd_i2c, &msg_az, 1) != 1){
-        pthread_mutex_unlock(&mutex_i2c);
-        return errno;
-    }
-
-    if(write(fd_i2c, &msg_alt, 1) != 1){
-        pthread_mutex_unlock(&mutex_i2c);
-        return errno;
-    }
-
-    pthread_mutex_unlock(&mutex_i2c);
 
     return SUCCESS;
 }
@@ -103,18 +81,9 @@ int step_roll_local(motor_step_t* steps){
 
     unsigned char msg = dir | (0x3F & roll);
 
-    pthread_mutex_lock(&mutex_i2c);
-
-    if(ioctl(fd_i2c, I2C_SLAVE, addr_roll) == -1){
-        logging(ERROR, "Motor Cont", "Failed to set i2c slave address: %m");
-        pthread_mutex_unlock(&mutex_i2c);
+    if(write_i2c(5, addr_roll, &msg, 1) != 1){
         return errno;
     }
-    if(write(fd_i2c, &msg, 1) != 1){
-        return errno;
-    }
-
-    pthread_mutex_unlock(&mutex_i2c);
 
     return SUCCESS;
 }
@@ -126,6 +95,9 @@ void center_telescope_l(void){
     move_az_to(0);
 }
 
+/* Rotate the telescope to a target in az relative to gondola,
+ * with an accuracy of 1 degree
+ */
 void move_az_to_l(double target){
 
     double err = 0;
@@ -161,6 +133,9 @@ void move_az_to_l(double target){
     step_az_alt(&steps);
 }
 
+/* Rotate the telescope to a target in alt relative to gondola,
+ * with an accuracy of 1 degree
+ */
 void move_alt_to_l(double target){
     double err = 0;
 
