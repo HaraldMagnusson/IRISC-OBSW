@@ -221,7 +221,7 @@ static void irisc_tetra(float st_return[]) {
         "-f",
         "23",
         strcat(get_top_dir(),"/astrometry/bin/solve-field"),
-        "-p",
+        "-pO",
         strcat(get_top_dir(),"output/guiding/star_tracker/st_img.FIT"),
         NULL
     };
