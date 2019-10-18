@@ -310,8 +310,10 @@ pid_t get_st_pid_local(void){
     return FAILURE;
 }
 /* set the exposure time (in microseconds) and gain for the star tracker */
-void set_st_exp_gain_ll(int st_exp, int st_gain){
+void set_st_exp_ll(int st_exp){
     exp_time = st_exp;
+}
+void set_st_gain_ll(int st_gain){
     gain = st_gain;
 }
 

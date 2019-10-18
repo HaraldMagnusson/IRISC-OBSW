@@ -84,7 +84,8 @@ void get_star_tracker(star_tracker_t* st);
 pid_t get_star_tracker_pid(void);
 
 /* set the exposure time (in microseconds) and gain for the star tracker */
-void set_st_exp_gain(int st_exp, int st_gain);
+void set_st_exp(int st_exp);
+void set_st_gain(int st_gain);
 
 int get_st_exp(void);
 
