@@ -46,6 +46,11 @@
 #define MICRO_STEP_FACTOR 1
 #define GEARBOX_RATIO 48*64
 
+/* field rotator gearbox ratio */
+#define STEPS_PER_REVOLUTION_FR (double)602212
+#define STELLAR_DAY_SECONDS (double)0.99726968*24*3600
+#define STEPS_PER_SECOND_FR STEPS_PER_REVOLUTION_FR/STELLAR_DAY_SECONDS
+
 /* i2c address for hall effect adc */
 #define I2C_ADDR_HE 0x21
 

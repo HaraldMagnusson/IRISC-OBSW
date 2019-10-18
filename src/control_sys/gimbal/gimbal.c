@@ -7,9 +7,7 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "global_utils.h"
 #include <pthread.h>
-#include "control_sys.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -22,6 +20,8 @@
 #include <pthread.h>
 #include <math.h>
 
+#include "global_utils.h"
+#include "control_sys.h"
 #include "gimbal.h"
 #include "sensors.h"
 #include "i2c.h"
