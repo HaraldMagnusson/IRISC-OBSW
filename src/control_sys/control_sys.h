@@ -47,8 +47,8 @@ void move_alt_to(double target);
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator(void);
 
-void set_error_thresholds_az_l(double az);
-void set_error_thresholds_alt_l(double alt_ang);
+void set_error_thresholds_az(double az);
+void set_error_thresholds_alt(double alt_ang);
 
 void set_nir_exp(int exp);
 void set_nir_gain(int gain);

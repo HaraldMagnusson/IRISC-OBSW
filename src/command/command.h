@@ -22,6 +22,8 @@
 #define CMD_STP_ALT 85
 #define CMD_ENCODER 90
 #define CMD_CENTER 95
+#define CMD_AZ_ERR 100
+#define CMD_ALT_ERR 105
 
 
 /* initialise the command component */

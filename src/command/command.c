@@ -134,12 +134,16 @@ static int handle_command(char command){
             read_elink(buffer, 4);
             value = *(int*)&buffer[0];
 
+            set_nir_exp(value);
+
             break;
 
         case CMD_NIR_GAI:
 
             read_elink(buffer, 4);
             value = *(int*)&buffer[0];
+
+            set_nir_gain(value);
 
             break;
 
@@ -158,6 +162,24 @@ static int handle_command(char command){
             value = *(int*)&buffer[0];
 
             set_st_gain(value);
+
+            break;
+
+        case CMD_AZ_ERR:
+
+            read_elink(buffer, 8);
+            double err = *(int*)&buffer[0];
+
+            set_st_gain(err);
+
+            break;
+
+        case CMD_ALT_ERR:
+
+            read_elink(buffer, 8);
+            double err = *(int*)&buffer[0];
+
+            set_st_gain(err);
 
             break;
 
