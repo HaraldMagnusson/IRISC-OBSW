@@ -6,7 +6,7 @@
  *          calculations to acquire the absolute attitude of the telescope.
  * -----------------------------------------------------------------------------
  */
-
+#include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +22,6 @@
 #include "mode.h"
 #include "img_processing.h"
 
-#define TETRAPATH "Tetra/tetra.py"
 #define ST_WAIT_TIME 10*1000*1000
 
 /* macros used in popen2 */
@@ -216,12 +215,14 @@ static int call_tetra(float st_return[]){
  */
 static void irisc_tetra(float st_return[]) {
 
-    char* cmd[6] = {
+    
+    char* cmd[7] = {
         "chrt",
         "-f",
         "23",
-        "python",
-        TETRAPATH,
+        strcat(get_top_dir(),"/astrometry/bin/solve-field"),
+        "-pO",
+        strcat(get_top_dir(),"output/guiding/star_tracker/st_img.FIT"),
         NULL
     };
 
@@ -232,7 +233,10 @@ static void irisc_tetra(float st_return[]) {
     waitpid(py_pid, NULL, 0);
     st_running = 0;
 
-    char buffer[100];
+    FILE* oFPtr = fdopen(int outfp, "r");
+
+    char buffer[200];
+    /*
     int cntr = 0, ii;
     for(ii = 0; cntr < 4 && ii < 100; ++ii){
         read(outfp, &buffer[ii], 1);
@@ -241,11 +245,19 @@ static void irisc_tetra(float st_return[]) {
         }
     }
     buffer[ii] = '\0';
+    */
 
+    while (1) {
+        fscanf(oFPtr, "%s", buffer);
+        if (!strcmp(buffer, "IRISC")) {
+            break;
+        }
+    }
     sscanf(buffer, "%*s %f\n" "%*s %f\n" "%*s %f\n" "%*s %f\n",
             &st_return[0], &st_return[1], &st_return[2], &st_return[3]);
 
-    close(outfp);
+    fclose(oFPtr);
+    //close(outfp);
     return;
 }
 
