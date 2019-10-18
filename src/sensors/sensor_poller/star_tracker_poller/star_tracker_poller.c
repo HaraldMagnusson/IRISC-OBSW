@@ -44,8 +44,8 @@ pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
 static pid_t py_pid = -1;
 static char st_running = 0;
 
-/* exposure time in microseconds */
-static int exp_time = 2*1000*1000, gain = 300;
+/* exposure time in seconds */
+static int exp_time = 2, gain = 300;
 
 /* filenames for images */
 static char st_fn[100], out_fp[100];
@@ -136,7 +136,7 @@ static int capture_image(char* fn){
 
     int ret;
 
-    ret = expose_guiding(exp_time, gain);
+    ret = expose_guiding(exp_time * 1000000, gain);
     if(ret != SUCCESS){
         return ret;
     }

@@ -76,3 +76,11 @@ void move_alt_to(double target){
 void reset_field_rotator(void){
     reset_field_rotator_l();
 }
+
+void set_nir_exp(int exp){
+    set_nir_exp_l(exp);
+}
+
+void set_nir_gain(int gain){
+    set_nir_gain_l(gain);
+}

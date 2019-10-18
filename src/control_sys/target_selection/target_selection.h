@@ -56,3 +56,7 @@ void set_error_thresholds_local(double az, double alt_ang);
 
 /* Convert ra & dec (ECI) to az & alt (ECEF) */
 void rd_to_aa(double ra, double dec, double* az, double* alt);
+
+void set_nir_exp_l(int exp);
+
+void set_nir_gain_l(int gain);

@@ -45,3 +45,7 @@ void move_alt_to(double target);
 
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator(void);
+
+void set_nir_exp(int exp);
+
+void set_nir_gain(int gain);

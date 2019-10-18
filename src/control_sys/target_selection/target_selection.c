@@ -207,7 +207,7 @@ static int tracking(int tar_index, char exposing_flag){
             target_err.az < az_threshold    &&
             target_err.alt < alt_threshold) {
 
-        expose_nir(exp_time, sensor_gain);
+        expose_nir(exp_time * 1000000, sensor_gain);
         exposing_flag = 1;
     }
 
@@ -274,4 +274,12 @@ static void fetch_time(double* ut_hours, double* j2000){
 void set_error_thresholds_local(double az, double alt_ang){
     az_threshold = az;
     alt_threshold = alt_ang;
+}
+
+void set_nir_exp_l(int exp){
+    exp_time = exp;
+}
+
+void set_nir_gain_l(int gain){
+    sensor_gain = gain;
 }
