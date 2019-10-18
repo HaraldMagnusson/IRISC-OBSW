@@ -48,8 +48,6 @@ static int handle_command(char command){
 
     char buffer[1400];
     int value;
-    short step;
-    motor_step_t stp_st = {0, 0, 0};
 
     switch(command){
 
@@ -92,47 +90,31 @@ static int handle_command(char command){
             send_telemetry_local(buffer, 1, 0, 0);
 
             break;
-        
+
         case CMD_STP_AZ:
+            { /* scope to avoid redeinition of target */
+                read_elink(buffer, 2);
+                double target = (double)*(short*)&buffer[0];
 
-            read_elink(buffer, 2);
-            step = *(short*)&buffer[0];
+                move_az_to(target);
 
-            stp_st.az = step;
+                snprintf(buffer, 1400, "Stepping AZ to: %lg", target);
 
-            step_az_alt(&stp_st);
-
-            usleep(10000);
-
-            stp_st.az = 0;
-
-            step_az_alt(&stp_st);
-
-            snprintf(buffer, 1400, "Stepping AZ: %d", step);
-
-            send_telemetry_local(buffer, 1, 0, 0);
-
+                send_telemetry_local(buffer, 1, 0, 0);
+            }
             break;
 
         case CMD_STP_ALT:
+            { /* scope to avoid redeinition of target */
+                read_elink(buffer, 2);
+                double target = (double)*(short*)&buffer[0];
 
-            read_elink(buffer, 2);
-            step = *(short*)&buffer[0];
+                move_alt_to(target);
 
-            stp_st.alt = step;
+                snprintf(buffer, 1400, "Stepping ALT to: %lg", target);
 
-            step_az_alt(&stp_st);
-
-            usleep(10000);
-
-            stp_st.alt = 0;
-
-            step_az_alt(&stp_st);
-
-            snprintf(buffer, 1400, "Stepping ALT: %d", step);
-
-            send_telemetry_local(buffer, 1, 0, 0);
-
+                send_telemetry_local(buffer, 1, 0, 0);
+            }
             break;
 
         case CMD_ENC_OFFSETS:

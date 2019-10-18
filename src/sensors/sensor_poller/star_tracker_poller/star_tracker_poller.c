@@ -6,7 +6,7 @@
  *          calculations to acquire the absolute attitude of the telescope.
  * -----------------------------------------------------------------------------
  */
-
+#include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +22,6 @@
 #include "mode.h"
 #include "img_processing.h"
 
-#define TETRAPATH "Tetra/tetra.py"
 #define ST_WAIT_TIME 10*1000*1000
 
 /* macros used in popen2 */
@@ -45,8 +44,8 @@ pthread_cond_t cond_st = PTHREAD_COND_INITIALIZER;
 static pid_t py_pid = -1;
 static char st_running = 0;
 
-/* exposure time in microseconds */
-static int exp_time = 2*1000*1000, gain = 300;
+/* exposure time in seconds */
+static int exp_time = 2, gain = 300;
 
 /* filenames for images */
 static char st_fn[100], out_fp[100];
@@ -137,7 +136,7 @@ static int capture_image(char* fn){
 
     int ret;
 
-    ret = expose_guiding(exp_time, gain);
+    ret = expose_guiding(exp_time * 1000000, gain);
     if(ret != SUCCESS){
         return ret;
     }
@@ -216,40 +215,53 @@ static int call_tetra(float st_return[]){
  */
 static void irisc_tetra(float st_return[]) {
 
-    char* cmd[6] = {
+    char st_img_path[100];
+
+    /*
+    char exe_path[100];
+    strcpy(exe_path, get_top_dir());
+    strcat(exe_path,"usr/local/astrometry/bin/solve-field");
+    */
+    strcpy(st_img_path, get_top_dir());
+    strcat(st_img_path,"output/guiding/star_tracker/st_img.fit");
+    
+    char* cmd[7] = {
         "chrt",
         "-f",
         "23",
-        "python",
-        TETRAPATH,
+        "/usr/local/astrometry/bin/solve-field",
+        "-pO",
+        st_img_path,
         NULL
     };
 
-    int outfp = -1;
+    int out_fd = -1;
 
     st_running = 1;
-    py_pid = popen2(cmd, NULL, &outfp);
+    py_pid = popen2(cmd, NULL, &out_fd);
     waitpid(py_pid, NULL, 0);
     st_running = 0;
 
-    char buffer[100];
-    int cntr = 0, ii;
-    for(ii = 0; cntr < 4 && ii < 100; ++ii){
-        read(outfp, &buffer[ii], 1);
-        if(buffer[ii] == '\n'){
-            cntr++;
+    FILE* oFPtr = fdopen(out_fd, "r");
+
+    char buffer[200];
+
+    while (1) {
+        fscanf(oFPtr, "%s", buffer);
+        if (!strcmp(buffer, "IRISC")) {
+            break;
         }
     }
-    buffer[ii] = '\0';
 
-    sscanf(buffer, "%*s %f\n" "%*s %f\n" "%*s %f\n" "%*s %f\n",
-            &st_return[0], &st_return[1], &st_return[2], &st_return[3]);
+    for (int i = 0; i < 4; i++) {
+        fscanf( oFPtr, "%*s %f", &st_return[i]);
+    }
 
-    close(outfp);
+    fclose(oFPtr);
     return;
 }
 
-static pid_t popen2(char* const * command, int *infp, int *outfp){
+static pid_t popen2(char* const * command, int* in_fd, int* out_fd){
     int p_stdin[2], p_stdout[2];
     pid_t pid;
 
@@ -273,18 +285,18 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         exit(1);
     }
 
-    if(infp == NULL){
+    if(in_fd == NULL){
         close(p_stdin[WRITE]);
     }
     else{
-        *infp = p_stdin[WRITE];
+        *in_fd = p_stdin[WRITE];
     }
 
-    if(outfp == NULL){
+    if(out_fd == NULL){
         close(p_stdout[READ]);
     }
     else{
-        *outfp = p_stdout[READ];
+        *out_fd = p_stdout[READ];
     }
 
     return pid;
@@ -298,8 +310,10 @@ pid_t get_st_pid_local(void){
     return FAILURE;
 }
 /* set the exposure time (in microseconds) and gain for the star tracker */
-void set_st_exp_gain_ll(int st_exp, int st_gain){
+void set_st_exp_ll(int st_exp){
     exp_time = st_exp;
+}
+void set_st_gain_ll(int st_gain){
     gain = st_gain;
 }
 

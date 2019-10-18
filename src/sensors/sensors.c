@@ -66,8 +66,12 @@ pid_t get_star_tracker_pid(void){
 }
 
 /* set the exposure time (in microseconds) and gain for the star tracker */
-void set_st_exp_gain(int st_exp, int st_gain){
-    set_st_exp_gain_l(st_exp, st_gain);
+void set_st_exp(int st_exp){
+    set_st_exp_l(st_exp);
+}
+
+void set_st_gain(int st_gain){
+    set_st_gain_l(st_gain);
 }
 
 int get_st_exp(void){
@@ -79,10 +83,17 @@ int enc_single_samp(encoder_t* enc){
     return enc_single_samp_l(enc);
 }
 
+/* fetch the temperature of the gyroscope */
 double get_gyro_temp(void){
     return get_gyro_temp_l();
 }
 
+/* update the protected object for the temperature of the gyroscope */
 void set_gyro_temp(double temp){
     set_gyro_temp_l(temp);
+}
+
+/* fetch the temperatures of the entire system except gyroscope */
+void get_temp(temp_t* temp){
+    get_temp_l(temp);
 }

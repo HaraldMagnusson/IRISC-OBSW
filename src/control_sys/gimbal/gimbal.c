@@ -1,15 +1,13 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Gimbal
  * Parent Component: Control System
- * Author(s): 
+ * Author(s): Harald Magnusson
  * Purpose: Provide an interface for the control of the gimbal motors.
  *
  * -----------------------------------------------------------------------------
  */
 
-#include "global_utils.h"
 #include <pthread.h>
-#include "control_sys.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -22,23 +20,16 @@
 #include <pthread.h>
 #include <math.h>
 
+#include "global_utils.h"
+#include "control_sys.h"
 #include "gimbal.h"
 #include "sensors.h"
+#include "i2c.h"
 
-static int fd_i2c;
-int addr_az_alt = 8;
-int addr_roll = 0x0F;
-
-pthread_mutex_t mutex_i2c = PTHREAD_MUTEX_INITIALIZER;
+unsigned char addr_az_alt = 8;
+unsigned char addr_roll = 0x0F;
 
 int init_gimbal(void* args){
-
-    fd_i2c = open("/dev/i2c-5", O_RDWR);
-    if(fd_i2c == -1){
-        logging(ERROR, "Gimbal", "Failed to open i2c-5 device: %m");
-        return FAILURE;
-    }
-
     return SUCCESS;
 }
 
@@ -66,24 +57,11 @@ int step_az_alt_local(motor_step_t* steps){
     unsigned char msg_az  = az_dir  | (0x3F & az) | 0x40;
     unsigned char msg_alt = alt_dir | (0x3F & alt);
 
-    pthread_mutex_lock(&mutex_i2c);
+    unsigned buf[2] = {msg_az, msg_alt};
 
-    if(ioctl(fd_i2c, I2C_SLAVE, addr_az_alt) == -1){
-        logging(ERROR, "Motor Cont", "Failed to set i2c slave address: %m");
-        pthread_mutex_unlock(&mutex_i2c);
+    if(write_i2c(5, addr_az_alt, buf, 2) != 2){
         return errno;
     }
-    if(write(fd_i2c, &msg_az, 1) != 1){
-        pthread_mutex_unlock(&mutex_i2c);
-        return errno;
-    }
-
-    if(write(fd_i2c, &msg_alt, 1) != 1){
-        pthread_mutex_unlock(&mutex_i2c);
-        return errno;
-    }
-
-    pthread_mutex_unlock(&mutex_i2c);
 
     return SUCCESS;
 }
@@ -103,67 +81,40 @@ int step_roll_local(motor_step_t* steps){
 
     unsigned char msg = dir | (0x3F & roll);
 
-    pthread_mutex_lock(&mutex_i2c);
-
-    if(ioctl(fd_i2c, I2C_SLAVE, addr_roll) == -1){
-        logging(ERROR, "Motor Cont", "Failed to set i2c slave address: %m");
-        pthread_mutex_unlock(&mutex_i2c);
+    if(write_i2c(5, addr_roll, &msg, 1) != 1){
         return errno;
     }
-    if(write(fd_i2c, &msg, 1) != 1){
-        return errno;
-    }
-
-    pthread_mutex_unlock(&mutex_i2c);
 
     return SUCCESS;
 }
 
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope_l(void){
+
+    move_alt_to(45);
+    move_az_to(0);
+}
+
+/* Rotate the telescope to a target in az relative to gondola,
+ * with an accuracy of 1 degree
+ */
+void move_az_to_l(double target){
+
+    double err = 0;
+
     encoder_t enc;
     motor_step_t steps;
 
     struct timespec wake;
     clock_gettime(CLOCK_MONOTONIC, &wake);
 
-    /* alt */
-    double alt_target = 45;
-
     do{
-        get_enc(&enc);
+        get_encoder(&enc);
         if(enc.out_of_date){
             continue;
         }
 
-        double err = alt_target - enc.alt;
-        int sign  = err >= 0 ? 1 : -1;
-
-        steps.alt = 15 * sign;
-        steps.az = 0;
-        step_az_alt(&steps);
-
-        wake.tv_nsec += 10000000;
-        if(wake.tv_nsec >= 1000000000){
-            wake.tv_nsec -= 1000000000;
-            wake.tv_sec++;
-        }
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-    } while(fabs(err) < 1);
-
-    steps.alt = 0;
-    step_az_alt(&steps);
-
-    /* az */
-    double az_target = 0;
-
-    do{
-        get_enc(&enc);
-        if(enc.out_of_date){
-            continue;
-        }
-
-        double err = az_target - enc.az;
+        err = target - enc.az;
         int sign  = err >= 0 ? 1 : -1;
 
         steps.az = 15 * sign;
@@ -180,4 +131,52 @@ void center_telescope_l(void){
 
     steps.az = 0;
     step_az_alt(&steps);
+}
+
+/* Rotate the telescope to a target in alt relative to gondola,
+ * with an accuracy of 1 degree
+ */
+void move_alt_to_l(double target){
+    double err = 0;
+
+    encoder_t enc;
+    motor_step_t steps;
+
+    struct timespec wake;
+    clock_gettime(CLOCK_MONOTONIC, &wake);
+
+    do{
+        get_encoder(&enc);
+        if(enc.out_of_date){
+            continue;
+        }
+
+        err = target - enc.alt_ang;
+        int sign  = err >= 0 ? 1 : -1;
+
+        steps.alt = 15 * sign;
+        steps.az = 0;
+        step_az_alt(&steps);
+
+        wake.tv_nsec += 10000000;
+        if(wake.tv_nsec >= 1000000000){
+            wake.tv_nsec -= 1000000000;
+            wake.tv_sec++;
+        }
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
+    } while(fabs(err) < 1);
+
+    steps.alt = 0;
+    step_az_alt(&steps);
+}
+
+/* resets the field rotator position to clockwise end */
+void reset_field_rotator_l(void){
+
+    // TODO: check signs
+    motor_step_t steps = {0, 0, 10};
+    while(!fr_on_edge(0)){
+        step_roll_local(&steps);
+        usleep(10000);
+    }
 }

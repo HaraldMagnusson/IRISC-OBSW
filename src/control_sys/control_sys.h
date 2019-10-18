@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Tracking
- * Author(s): 
+ * Author(s): Anja Möslinger, Adam Śmiałek, Harald Magnusson
  * Purpose: Stabilise the telescope. Keep track of the currently highest 
  *          priority target. Provide an interface to update target 
  *          priority list.
@@ -33,3 +33,22 @@ int step_roll(motor_step_t* steps);
 
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope(void);
+
+/* Rotate the telescope to a target in az relative to gondola,
+ * with an accuracy of 1 degree
+ */
+void move_az_to(double target);
+
+/* Rotate the telescope to a target in alt relative to gondola,
+ * with an accuracy of 1 degree
+ */
+void move_alt_to(double target);
+
+/* resets the field rotator position to clockwise end */
+void reset_field_rotator(void);
+
+void set_error_thresholds_az_l(double az);
+void set_error_thresholds_alt_l(double alt_ang);
+
+void set_nir_exp(int exp);
+void set_nir_gain(int gain);

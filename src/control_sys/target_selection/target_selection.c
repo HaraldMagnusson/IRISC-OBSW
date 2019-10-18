@@ -20,6 +20,7 @@
 #include "sensors.h"
 #include "camera.h"
 #include "mode.h"
+#include "gimbal.h"
 
 static void* sel_track_thread_func(void* arg);
 static int selection();
@@ -31,7 +32,7 @@ static void angle_calc(double dec, double ha,
 static void fetch_time(double* ut_hours, double* j2000);
 
 static int exp_time = 30, sensor_gain = 100;
-static double az_threshold = 0.01, alt_threshold = 0.01;
+static double az_threshold = 0.5, alt_threshold = 0.5;
 
 FILE* sel_trck_log;
 
@@ -55,6 +56,8 @@ static void* sel_track_thread_func(void* arg){
     pthread_mutex_lock(&mutex_cond_sel_track);
 
     struct timespec wake;
+    motor_step_t steps = {0, 0,
+            lround(-STEPS_PER_SECOND_FR * TRACKING_UPDATE_TIME / 1000000000)};
 
     while(1){
 
@@ -66,6 +69,12 @@ static void* sel_track_thread_func(void* arg){
             /* reset camera axis to center */
             int tar_index = selection();
 
+            /* move up telescope for sun avoidance */
+            move_alt_to(60);
+
+            /* reset field rotator to clockwise position */
+            reset_field_rotator();
+
             char exposing_flag = 0;
 
             clock_gettime(CLOCK_MONOTONIC, &wake);
@@ -74,6 +83,9 @@ static void* sel_track_thread_func(void* arg){
             while(1){
 
                 tracking(tar_index, exposing_flag);
+
+                // TODO: Check that timing is correct
+                step_roll(&steps);
 
                 /* wait for one sample time */
                 wake.tv_nsec += TRACKING_UPDATE_TIME;
@@ -195,7 +207,7 @@ static int tracking(int tar_index, char exposing_flag){
             target_err.az < az_threshold    &&
             target_err.alt < alt_threshold) {
 
-        expose_nir(exp_time, sensor_gain);
+        expose_nir(exp_time * 1000000, sensor_gain);
         exposing_flag = 1;
     }
 
@@ -259,7 +271,17 @@ static void fetch_time(double* ut_hours, double* j2000){
 }
 
 /* Set the error thresholds for when to start exposing camera */
-void set_error_thresholds_local(double az, double alt_ang){
+void set_error_thresholds_az_l(double az){
     az_threshold = az;
+}
+void set_error_thresholds_alt_l(double alt_ang){
     alt_threshold = alt_ang;
+}
+
+void set_nir_exp_l(int exp){
+    exp_time = exp;
+}
+
+void set_nir_gain_l(int gain){
+    sensor_gain = gain;
 }

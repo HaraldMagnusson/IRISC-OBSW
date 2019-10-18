@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Kalman Filter
  * Parent Component: Control System
- * Author(s): Anja Möslinger
+ * Author(s): Anja Möslinger, Harald Magnusson
  * Purpose: Provide the calculations required for the Kalman Filter.
  *
  * -----------------------------------------------------------------------------

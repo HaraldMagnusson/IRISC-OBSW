@@ -31,6 +31,7 @@
 
 #define GYRO_TRIG_PIN 25
 
+#define TEMP_SAMPLE_TIME             1  /* unit: seconds     */
 #define GPS_SAMPLE_TIME              4  /* unit: seconds     */
 #define GYRO_SAMPLE_TIME      10000000  /* unit: nanoseconds */
 #define ENCODER_SAMPLE_TIME   10000000  /* unit: nanoseconds */
@@ -44,6 +45,14 @@
 #define STEPS_PER_REVOLUTION 200
 #define MICRO_STEP_FACTOR 1
 #define GEARBOX_RATIO 48*64
+
+/* field rotator gearbox ratio */
+#define STEPS_PER_REVOLUTION_FR (double)602212
+#define STELLAR_DAY_SECONDS (double)0.99726968*24*3600
+#define STEPS_PER_SECOND_FR STEPS_PER_REVOLUTION_FR/STELLAR_DAY_SECONDS
+
+/* i2c address for hall effect adc */
+#define I2C_ADDR_HE 0x21
 
 /* struct used for initialisation of modules */
 typedef int (*init_function)(void* args);

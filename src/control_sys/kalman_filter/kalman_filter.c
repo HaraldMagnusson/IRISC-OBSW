@@ -126,7 +126,9 @@ static void transpose(double** mat, double** mat2, int rows, int cols);
 static void mdiv(double** matA, double scal, double** matB, int rows, int cols);
 static void mmult(double** matA, double** matB, double** matC, int rows1, int cols1, int rows2, int cols2);
 
+#if 0
 static void printarray2D(double** array, int rows, int cols);
+#endif
 
 static void prop_state_vec(axis_context_t axis);
 static void prop_p_next(axis_context_t axis);
@@ -317,10 +319,11 @@ static void init_kalman_vars(double x_init, double y_init, double z_init){
     RRW = (1./180*M_PI/3600/sqrt(3600))*(1./180*M_PI/3600/sqrt(3600));      // rate random walk of gyro
 
     // initialisation mode parameters
-    double init_time = 300;
+    #ifdef KF_TEST
+        double init_time = 300;
+        init_steps = init_time/dt;
+    #endif
     double s_init = 0.1/180*M_PI;
-    init_steps = init_time/dt;
-
 
     axis_context_t* arr[3] = {&x, &y, &z};
 
@@ -463,11 +466,13 @@ int kf_update(telescope_att_t* cur_att){
 
     set_telescope_att(cur_att);
 
-    l++;
+    #ifdef KF_TEST
+        l++;
 
-    if(l == 100000){
-        return FAILURE;
-    }
+        if(l == 100000){
+            return FAILURE;
+        }
+    #endif
     return SUCCESS;
 }
 
@@ -615,10 +620,18 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
         //          printf("x_prev for i = %d", l);
         //          printarray2D(x_prev, X_PREV_ROWS, X_PREV_COLS);
         // x_next = Phi * x_prev + Gamma * w_meas;
-        printf("x_next for i = %d", l);
-        printarray2D(axis.x_next, X_NEXT_ROWS, X_NEXT_COLS);
-        printf("P_next for i = %d", l);
-        printarray2D(axis.P_next, P_NEXT_ROWS, P_NEXT_COLS);
+        #ifdef KF_DEBUG
+            logging(DEBUG, "Kalman F", "step number: %d", l);
+            logging(DEBUG, "Kalman F", "x_prev:");
+            logging(DEBUG, "Kalman F", "%+.6e", axis.x_prev[0][0]);
+            logging(DEBUG, "Kalman F", "%+.6e", axis.x_prev[1][0]);
+
+            logging(DEBUG, "Kalman F", "P_prev:");
+            logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
+                    axis.P_prev[0][0], axis.P_prev[0][1]);
+            logging(DEBUG, "Kalman F", "%+.6e\t%+.6e",
+                    axis.P_prev[1][0], axis.P_prev[1][1]);
+        #endif
 
     }
 
@@ -1114,7 +1127,7 @@ static void update_covar(axis_context_t axis){
 ********************************************************************************
 *******************************************************************************/
 
-
+#if 0
 static void printarray2D(double** array, int rows, int cols) {
     printf("\nPrint 2D array\n");
     for (int i = 0; i < rows; i++) {
@@ -1124,6 +1137,7 @@ static void printarray2D(double** array, int rows, int cols) {
         printf("\n");
     }
 }
+#endif
 
 static void eye(int m, double** mat) {
     for(int ii=0; ii<m; ++ii){

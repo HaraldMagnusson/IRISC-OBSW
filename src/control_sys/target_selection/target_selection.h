@@ -51,8 +51,12 @@ const static int exp_prio_list[11] = {1, 2, 3, 4, 4, 4, 3, 2, 1, 1, 1};
 /* initialise the target selection component */
 int init_target_selection(void* args);
 
-/* Set the error thresholds for when to start exposing camera */
-void set_error_thresholds_local(double az, double alt_ang);
-
 /* Convert ra & dec (ECI) to az & alt (ECEF) */
 void rd_to_aa(double ra, double dec, double* az, double* alt);
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds_az_l(double az);
+void set_error_thresholds_alt_l(double alt_ang);
+
+void set_nir_exp_l(int exp);
+void set_nir_gain_l(int gain);

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
  * Component Name: Current Target
  * Parent Component: Control System
- * Author(s): 
+ * Author(s): Harald Magnusson
  * Purpose: Store the currently highest priority target.
  *
  * -----------------------------------------------------------------------------
