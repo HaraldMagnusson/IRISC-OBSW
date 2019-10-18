@@ -319,10 +319,11 @@ static void init_kalman_vars(double x_init, double y_init, double z_init){
     RRW = (1./180*M_PI/3600/sqrt(3600))*(1./180*M_PI/3600/sqrt(3600));      // rate random walk of gyro
 
     // initialisation mode parameters
-    double init_time = 300;
+    #ifdef KF_TEST
+        double init_time = 300;
+        init_steps = init_time/dt;
+    #endif
     double s_init = 0.1/180*M_PI;
-    init_steps = init_time/dt;
-
 
     axis_context_t* arr[3] = {&x, &y, &z};
 
@@ -465,11 +466,13 @@ int kf_update(telescope_att_t* cur_att){
 
     set_telescope_att(cur_att);
 
-    l++;
+    #ifdef KF_TEST
+        l++;
 
-    if(l == 100000){
-        return FAILURE;
-    }
+        if(l == 100000){
+            return FAILURE;
+        }
+    #endif
     return SUCCESS;
 }
 

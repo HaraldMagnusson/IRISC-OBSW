@@ -215,37 +215,36 @@ static int call_tetra(float st_return[]){
  */
 static void irisc_tetra(float st_return[]) {
 
+    char st_img_path[100];
+
+    /*
+    char exe_path[100];
+    strcpy(exe_path, get_top_dir());
+    strcat(exe_path,"usr/local/astrometry/bin/solve-field");
+    */
+    strcpy(st_img_path, get_top_dir());
+    strcat(st_img_path,"output/guiding/star_tracker/st_img.fit");
     
     char* cmd[7] = {
         "chrt",
         "-f",
         "23",
-        strcat(get_top_dir(),"/astrometry/bin/solve-field"),
+        "/usr/local/astrometry/bin/solve-field",
         "-pO",
-        strcat(get_top_dir(),"output/guiding/star_tracker/st_img.FIT"),
+        st_img_path,
         NULL
     };
 
-    int outfp = -1;
+    int out_fd = -1;
 
     st_running = 1;
-    py_pid = popen2(cmd, NULL, &outfp);
+    py_pid = popen2(cmd, NULL, &out_fd);
     waitpid(py_pid, NULL, 0);
     st_running = 0;
 
-    FILE* oFPtr = fdopen(int outfp, "r");
+    FILE* oFPtr = fdopen(out_fd, "r");
 
     char buffer[200];
-    /*
-    int cntr = 0, ii;
-    for(ii = 0; cntr < 4 && ii < 100; ++ii){
-        read(outfp, &buffer[ii], 1);
-        if(buffer[ii] == '\n'){
-            cntr++;
-        }
-    }
-    buffer[ii] = '\0';
-    */
 
     while (1) {
         fscanf(oFPtr, "%s", buffer);
@@ -253,15 +252,16 @@ static void irisc_tetra(float st_return[]) {
             break;
         }
     }
-    sscanf(buffer, "%*s %f\n" "%*s %f\n" "%*s %f\n" "%*s %f\n",
-            &st_return[0], &st_return[1], &st_return[2], &st_return[3]);
+
+    for (int i = 0; i < 4; i++) {
+        fscanf( oFPtr, "%*s %f", &st_return[i]);
+    }
 
     fclose(oFPtr);
-    //close(outfp);
     return;
 }
 
-static pid_t popen2(char* const * command, int *infp, int *outfp){
+static pid_t popen2(char* const * command, int* in_fd, int* out_fd){
     int p_stdin[2], p_stdout[2];
     pid_t pid;
 
@@ -285,18 +285,18 @@ static pid_t popen2(char* const * command, int *infp, int *outfp){
         exit(1);
     }
 
-    if(infp == NULL){
+    if(in_fd == NULL){
         close(p_stdin[WRITE]);
     }
     else{
-        *infp = p_stdin[WRITE];
+        *in_fd = p_stdin[WRITE];
     }
 
-    if(outfp == NULL){
+    if(out_fd == NULL){
         close(p_stdout[READ]);
     }
     else{
-        *outfp = p_stdout[READ];
+        *out_fd = p_stdout[READ];
     }
 
     return pid;
