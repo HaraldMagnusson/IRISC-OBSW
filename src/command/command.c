@@ -47,6 +47,7 @@ static void* thread_command(void* param){
 static int handle_command(char command){
 
     char buffer[1400];
+    int value;
     short step;
     motor_step_t stp_st = {0, 0, 0};
 
@@ -138,6 +139,44 @@ static int handle_command(char command){
             if(set_enc_offsets()){
                 send_telemetry_local("Setting encoder offsets failed.", 1, 0, 0);
             }
+            break;
+
+        case CMD_CENTER:
+
+            center_telescope();
+            send_telemetry_local("Centering telescope", 1, 0, 0);
+            break;
+
+        case CMD_NIR_EXP:
+
+            read_elink(buffer, 4);
+            value = *(int*)&buffer[0];
+
+            break;
+
+        case CMD_NIR_GAI:
+
+            read_elink(buffer, 4);
+            value = *(int*)&buffer[0];
+
+            break;
+
+        case CMD_ST_EXP:
+
+            read_elink(buffer, 4);
+            value = *(int*)&buffer[0];
+
+            set_st_exp(value);
+
+            break;
+
+        case CMD_ST_GAI:
+
+            read_elink(buffer, 4);
+            value = *(int*)&buffer[0];
+
+            set_st_gain(value);
+
             break;
 
         default : /*  Default  */
