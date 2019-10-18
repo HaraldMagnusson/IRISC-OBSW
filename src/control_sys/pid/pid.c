@@ -41,7 +41,7 @@ double motor_control_step(pid_values_t* current_pid_values,
 static pid_values_t current_az_pid_values;
 static pid_values_t current_alt_pid_values;
 
-static double motor_rate_threshold = 0.227;
+static double max_motor_ang = 0;
 
 //static struct timespec wake_time;
 
@@ -76,8 +76,6 @@ static pthread_mutex_t az_pid_values_mutex = PTHREAD_MUTEX_INITIALIZER,
 
 static control_variables_t az_prev_control_vars, az_current_control_vars,
                            alt_prev_control_vars, alt_current_control_vars;
-
-static double az_expected_rate, alt_expected_rate;
 
 static double stabilization_timestep = (double)CONTROL_SYS_WAIT/1000000000;
 static double sim_time = 0;
@@ -120,6 +118,7 @@ int init_pid(void* args){
 
     /* factor for converting from angle to amount of steps */
     step_per_deg = (double)STEPS_PER_REVOLUTION * MICRO_STEP_FACTOR * GEARBOX_RATIO / 360.0;
+    max_motor_ang = 35 / step_per_deg;
 
     change_stabilization_mode(0);
 //    pthread_t main_loop;
@@ -173,25 +172,62 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     motor_control_step(&current_alt_pid_values, &alt_pid_values_mutex,
                        &alt_prev_control_vars, &alt_current_control_vars);
 
+    // azimuth anti windup
+    if(az_current_control_vars.integral > max_motor_ang / current_az_pid_values.ki){
+        az_current_control_vars.integral = max_motor_ang / current_az_pid_values.ki;
+    }
+    else if(az_current_control_vars.integral < -max_motor_ang / current_az_pid_values.ki){
+        az_current_control_vars.integral = -max_motor_ang / current_az_pid_values.ki;
+    }
+
+    // altitude anti windup
+    if(alt_current_control_vars.integral > max_motor_ang / current_az_pid_values.ki){
+        alt_current_control_vars.integral = max_motor_ang / current_az_pid_values.ki;
+    }
+    else if(alt_current_control_vars.integral < -max_motor_ang / current_az_pid_values.ki){
+        alt_current_control_vars.integral = -max_motor_ang / current_az_pid_values.ki;
+    }
+
+    // azimuth pid output change rate limit
+    if(az_current_control_vars.pid_output >
+            az_prev_control_vars.pid_output + max_change_rate &&
+            az_current_control_vars.pid_output > 0){
+        az_current_control_vars.pid_output = az_prev_control_vars.pid_output + max_change_rate;
+    }
+    else if(az_current_control_vars.pid_output <
+            -az_prev_control_vars.pid_output + max_change_rate &&
+            az_current_control_vars.pid_output < 0){
+        az_current_control_vars.pid_output = -az_prev_control_vars.pid_output - max_change_rate;
+    }
+
+    // altitude pid output change rate limit
+    if(alt_current_control_vars.pid_output >
+            alt_prev_control_vars.pid_output + max_change_rate &&
+            alt_current_control_vars.pid_output > 0){
+        alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output + max_change_rate;
+    }
+    else if(alt_current_control_vars.pid_output <
+            -alt_prev_control_vars.pid_output + max_change_rate &&
+            alt_current_control_vars.pid_output < 0){
+        alt_current_control_vars.pid_output = -az_prev_control_vars.pid_output - max_change_rate;
+    }
+
     threshold = 0;
     // Azimuth output saturation
-    az_expected_rate = (az_current_control_vars.pid_output - az_current_control_vars.current_position);
-    //stabilization_timestep = az_current_control_vars.time_in_seconds - az_prev_control_vars.time_in_seconds;
-    if(az_expected_rate > motor_rate_threshold*stabilization_timestep){
+    if(az_current_control_vars.pid_output > max_motor_ang){
         threshold = 1;
-        az_current_control_vars.pid_output = az_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
-    } else if (az_expected_rate < -motor_rate_threshold*stabilization_timestep) {
+        az_current_control_vars.pid_output = max_motor_ang;
+    } else if (az_current_control_vars.pid_output < -max_motor_ang) {
         threshold = 2;
-        az_current_control_vars.pid_output = az_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
+        az_current_control_vars.pid_output = -max_motor_ang;
     }
 
     // Altitude output saturation
     //stabilization_timestep = alt_current_control_vars.time_in_seconds - alt_prev_control_vars.time_in_seconds;
-    alt_expected_rate = (alt_current_control_vars.pid_output - alt_current_control_vars.current_position);
-    if(alt_expected_rate > motor_rate_threshold*stabilization_timestep){
-        alt_current_control_vars.pid_output = alt_current_control_vars.current_position + motor_rate_threshold*stabilization_timestep;
-    } else if (alt_expected_rate < -motor_rate_threshold*stabilization_timestep) {
-        alt_current_control_vars.pid_output = alt_current_control_vars.current_position - motor_rate_threshold*stabilization_timestep;
+    if(alt_current_control_vars.pid_output > max_motor_ang){
+        alt_current_control_vars.pid_output = max_motor_ang;
+    } else if (alt_current_control_vars.pid_output < -max_motor_ang) {
+        alt_current_control_vars.pid_output = -max_motor_ang;
     }
 
     #ifdef PID_DEBUG
