@@ -39,11 +39,6 @@ int init_control_sys(void* args){
     return init_submodules(init_sequence, MODULE_COUNT);
 }
 
-/* Set the error thresholds for when to start exposing camera */
-void set_error_thresholds(double az, double alt_ang){
-    set_error_thresholds_local(az, alt_ang);
-}
-
 int step_az_alt(motor_step_t* steps){
 
     return step_az_alt_local(steps);
@@ -75,6 +70,14 @@ void move_alt_to(double target){
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator(void){
     reset_field_rotator_l();
+}
+
+/* Set the error thresholds for when to start exposing camera */
+void set_error_thresholds_az(double az){
+    set_error_thresholds_az_l(az);
+}
+void set_error_thresholds_alt(double alt_ang){
+    set_error_thresholds_alt_l(alt_ang);
 }
 
 void set_nir_exp(int exp){

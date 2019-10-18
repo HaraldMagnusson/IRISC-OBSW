@@ -32,7 +32,7 @@ static void angle_calc(double dec, double ha,
 static void fetch_time(double* ut_hours, double* j2000);
 
 static int exp_time = 30, sensor_gain = 100;
-static double az_threshold = 0.01, alt_threshold = 0.01;
+static double az_threshold = 0.5, alt_threshold = 0.5;
 
 FILE* sel_trck_log;
 
@@ -271,8 +271,10 @@ static void fetch_time(double* ut_hours, double* j2000){
 }
 
 /* Set the error thresholds for when to start exposing camera */
-void set_error_thresholds_local(double az, double alt_ang){
+void set_error_thresholds_az_l(double az){
     az_threshold = az;
+}
+void set_error_thresholds_alt_l(double alt_ang){
     alt_threshold = alt_ang;
 }
 
