@@ -30,3 +30,6 @@ void move_az_to_l(double target);
  * with an accuracy of 1 degree
  */
 void move_alt_to_l(double target);
+
+/* resets the field rotator position to clockwise end */
+void reset_field_rotator_l(void);

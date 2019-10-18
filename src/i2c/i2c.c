@@ -110,6 +110,59 @@ ssize_t write_i2c(int dev_num, unsigned char addr, const void* buf, size_t count
     return ret;
 }
 
+/* write_read_i2c first writes write_count bytes from write_buf to the address addr on the
+ * i2c bus with the device number dev_num. Then read_count bytes are read into read_buf.
+ *
+ * The entire exchange is mutex protected with a mutex unique to the device number
+ */
+int write_read_i2c(int dev_num, unsigned char addr, const void* write_buf,
+        size_t write_count, void* read_buf, size_t read_count,
+        ssize_t* write_ret, ssize_t* read_ret){
+
+    *write_ret = -2;
+    *read_ret = -2;
+
+    int fd;
+    pthread_mutex_t mutex_i2c;
+
+    switch(dev_num){
+        case 1:
+            fd = fd_i2c_1;
+            mutex_i2c = mutex_i2c_1;
+            break;
+        case 5:
+            fd = fd_i2c_5;
+            mutex_i2c = mutex_i2c_5;
+            break;
+        default:
+            errno = ENODEV;
+            return FAILURE;
+    }
+
+    pthread_mutex_lock(&mutex_i2c);
+
+    if(ioctl(fd, I2C_SLAVE, addr) == -1){
+        pthread_mutex_unlock(&mutex_i2c);
+        return FAILURE;
+    }
+
+    *write_ret = write(fd, write_buf, write_count);
+    if(*write_ret != write_count){
+        pthread_mutex_unlock(&mutex_i2c);
+        return FAILURE;
+    }
+
+    *read_ret = read(fd, read_buf, read_count);
+    if(*read_ret != read_count){
+        pthread_mutex_unlock(&mutex_i2c);
+        return FAILURE;
+    }
+
+    pthread_mutex_unlock(&mutex_i2c);
+
+    return SUCCESS;
+}
+
 /* check if the field rotator is on a given edge */
 char fr_on_edge(char edge){
 

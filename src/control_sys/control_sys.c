@@ -71,3 +71,8 @@ void move_az_to(double target){
 void move_alt_to(double target){
     move_alt_to_l(target);
 }
+
+/* resets the field rotator position to clockwise end */
+void reset_field_rotator(void){
+    reset_field_rotator_l();
+}

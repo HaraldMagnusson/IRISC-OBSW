@@ -169,3 +169,14 @@ void move_alt_to_l(double target){
     steps.alt = 0;
     step_az_alt(&steps);
 }
+
+/* resets the field rotator position to clockwise end */
+void reset_field_rotator_l(void){
+
+    // TODO: check signs
+    motor_step_t steps = {0, 0, 10};
+    while(!fr_on_edge(0)){
+        step_roll_local(&steps);
+        usleep(10000);
+    }
+}
