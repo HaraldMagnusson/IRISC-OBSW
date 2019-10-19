@@ -123,6 +123,7 @@ int main(int argc, char* const argv[]){
     }
 
     if(init_func(argv)){
+        stop_watchdog();
         return FAILURE;
     }
     /* initialization sequence done */

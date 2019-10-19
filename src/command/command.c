@@ -213,6 +213,35 @@ static int handle_command(char command){
             move_alt_to(80);
             break;
 
+        case CMD_UPD_PID:
+            {
+                read_elink(buffer, 1);
+                read_elink(buffer, buffer[0]);
+
+                /* 0.134,0.0124,0.354 */
+                /* first index is kp,ki,kd */
+                char pid[3][10];
+                int ii = 0;
+                for(int jj=0; buffer[ii] != ','; ++jj){
+                    pid[0][jj] = buffer[ii++];
+                }
+                ++ii;
+                for(int jj=0; buffer[ii] != ','; ++jj){
+                    pid[1][jj] = buffer[ii++];
+                }
+                ++ii;
+                for(int jj=0; buffer[ii] != '\0'; ++jj){
+                    pid[2][jj] = buffer[ii++];
+                }
+
+                double kp = strtod(pid[0], NULL);
+                double ki = strtod(pid[1], NULL);
+                double kd = strtod(pid[2], NULL);
+
+                change_mode_pid_values(1, 1, kp, ki, kd);
+            }
+            break;
+
         default : /*  Default  */
             logging(ERROR, "downlink", "Unknown command");
 
