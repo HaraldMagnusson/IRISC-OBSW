@@ -167,30 +167,31 @@ static int handle_command(char command){
             break;
 
         case CMD_AZ_ERR:
+            {
+                read_elink(buffer, 8);
+                double err = *(int*)&buffer[0];
 
-            read_elink(buffer, 8);
-            double err = *(int*)&buffer[0];
-
-            set_st_gain(err);
-
+                set_st_gain(err);
+            }
             break;
 
         case CMD_ALT_ERR:
+            {
+                read_elink(buffer, 8);
+                double err = *(int*)&buffer[0];
 
-            read_elink(buffer, 8);
-            double err = *(int*)&buffer[0];
-
-            set_st_gain(err);
-
+                set_st_gain(err);
+            }
             break;
 
         case CMD_STOP_MOTORS:
-
-            //stop motors
-            motor_step_t stop_step = {0, 0, 0};
-            step_az_alt(&stop_step);
-            step_roll(&stop_step);
-            gpio_write(4, LOW);
+            {
+                //stop motors
+                motor_step_t stop_step = {0, 0, 0};
+                step_az_alt(&stop_step);
+                step_roll(&stop_step);
+                gpio_write(4, LOW);
+            }
             break;
 
         case CMD_START_MOTORS:

@@ -42,6 +42,7 @@ static pid_values_t current_az_pid_values;
 static pid_values_t current_alt_pid_values;
 
 static double max_motor_ang = 0;
+static double max_change_rate = 0;
 
 //static struct timespec wake_time;
 
@@ -119,6 +120,7 @@ int init_pid(void* args){
     /* factor for converting from angle to amount of steps */
     step_per_deg = (double)STEPS_PER_REVOLUTION * MICRO_STEP_FACTOR * GEARBOX_RATIO / 360.0;
     max_motor_ang = 35 / step_per_deg;
+    max_change_rate = 5 / step_per_deg;
 
     change_stabilization_mode(0);
 //    pthread_t main_loop;
