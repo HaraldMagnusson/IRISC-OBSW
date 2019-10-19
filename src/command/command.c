@@ -211,34 +211,25 @@ static int handle_command(char command){
             move_az_to(60);
             sleep(1);
             move_alt_to(80);
+            send_telemetry_local("Rotation cycle finished");
             break;
 
         case CMD_UPD_PID:
             {
-                read_elink(buffer, 1);
-                read_elink(buffer, buffer[0]);
-
-                /* 0.134,0.0124,0.354 */
-                /* first index is kp,ki,kd */
-                char pid[3][10];
-                int ii = 0;
-                for(int jj=0; buffer[ii] != ','; ++jj){
-                    pid[0][jj] = buffer[ii++];
-                }
-                ++ii;
-                for(int jj=0; buffer[ii] != ','; ++jj){
-                    pid[1][jj] = buffer[ii++];
-                }
-                ++ii;
-                for(int jj=0; buffer[ii] != '\0'; ++jj){
-                    pid[2][jj] = buffer[ii++];
+                /* floats in order kp, ki, kd */
+                read_elink(buffer, 12);
+                float pids[3];
+                for(int ii=0; ii<3; ++ii){
+                    pids[ii] = *(float*)&buffer[4*ii];
                 }
 
-                double kp = strtod(pid[0], NULL);
-                double ki = strtod(pid[1], NULL);
-                double kd = strtod(pid[2], NULL);
+                for(int ii=0; ii<2; ++ii){
+                    for(int jj=0; ii<2; ++jj){
+                        change_mode_pid_values(ii, jj, pids[0], pids[1], pids[2]);
+                    }
+                }
 
-                change_mode_pid_values(1, 1, kp, ki, kd);
+                send_telemetry_local("PID values changed", 1, 0, 0);
             }
             break;
 
