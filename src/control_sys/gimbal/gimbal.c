@@ -25,11 +25,15 @@
 #include "gimbal.h"
 #include "sensors.h"
 #include "i2c.h"
+#include "gpio.h"
 
 unsigned char addr_az_alt = 8;
 unsigned char addr_roll = 0x0F;
 
 int init_gimbal(void* args){
+    gpio_export(4);
+    gpio_direction(4, OUT);
+    gpio_write(4, HIGH);
     return SUCCESS;
 }
 

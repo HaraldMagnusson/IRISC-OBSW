@@ -24,6 +24,8 @@
 #define CMD_CENTER 95
 #define CMD_AZ_ERR 100
 #define CMD_ALT_ERR 105
+#define CMD_STOP_MOTORS 110
+#define CMD_START_MOTORS 115
 
 
 /* initialise the command component */

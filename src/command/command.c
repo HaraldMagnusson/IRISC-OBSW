@@ -21,6 +21,7 @@
 #include "command.h"
 #include "mode.h"
 #include "sensors.h"
+#include "gpio.h"
 
 static void* thread_command(void* param);
 static int handle_command(char command);
@@ -181,6 +182,20 @@ static int handle_command(char command){
 
             set_st_gain(err);
 
+            break;
+
+        case CMD_STOP_MOTORS:
+
+            //stop motors
+            motor_step_t stop_step = {0, 0, 0};
+            step_az_alt(&stop_step);
+            step_roll(&stop_step);
+            gpio_write(4, LOW);
+            break;
+
+        case CMD_START_MOTORS:
+
+            gpio_write(4, HIGH);
             break;
 
         default : /*  Default  */

@@ -323,8 +323,8 @@ static void normal_m(void){
 #endif
 
 static void reset_m(void){
-    for(int ii=0; ii<20; ++ii){
-        logging(INFO, "MODE", "resetting: %d/%d", ii, 20);
+    for(int ii=0; ii<45; ++ii){
+        logging(INFO, "MODE", "resetting: %d/%d", ii, 45);
         sleep(1);
     }
     set_mode(WAKE);
