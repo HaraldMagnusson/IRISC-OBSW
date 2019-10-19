@@ -9,6 +9,7 @@
 #pragma once
 
 #define CMD_ENC_OFFSETS 0
+#define CMD_ROT_CYCLE 1
 #define CMD_REBOOT 10
 #define CMD_DATARATE 20
 #define CMD_MODE 30

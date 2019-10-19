@@ -199,6 +199,20 @@ static int handle_command(char command){
             gpio_write(4, HIGH);
             break;
 
+        case CMD_ROT_CYCLE:
+            move_az_to(60);
+            sleep(1);
+            move_alt_to(80);
+            sleep(1);
+            move_az_to(-60);
+            sleep(1);
+            move_alt_to(-20);
+            sleep(1);
+            move_az_to(60);
+            sleep(1);
+            move_alt_to(80);
+            break;
+
         default : /*  Default  */
             logging(ERROR, "downlink", "Unknown command");
 
