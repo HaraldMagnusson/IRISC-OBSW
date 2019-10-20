@@ -21,6 +21,7 @@
 #include "encoder.h"
 #include "encoder_poller.h"
 #include "mode.h"
+#include "telemetry.h"
 
 /* indicies for data arrays */
 #define AZ 0
@@ -67,7 +68,7 @@ int init_encoder_poller(void* args){
     char* spi00 = "/dev/spidev0.0";
     char* spi01 = "/dev/spidev0.1";
     __u32 spi_mode = SPI_MODE_1;
-    __u32 speed = 1000000;
+    __u32 speed = 50000;
 
     fd_spi00 = open(spi00, O_RDONLY);
     if(fd_spi00 == -1){
@@ -280,7 +281,7 @@ int set_offsets(void){
     strcat(fn, "output/enc_az_offset.log");
 
     encoder_offset_az = fopen(fn, "w");
-    if(encoder_log == NULL){
+    if(encoder_offset_az == NULL){
         logging(ERROR, "Encoder",
                 "Failed to open encoder az offset file: %m");
         return errno;
@@ -294,8 +295,8 @@ int set_offsets(void){
     strcpy(fn, get_top_dir());
     strcat(fn, "output/enc_alt_offset.log");
 
-    encoder_log = fopen(fn, "w");
-    if(encoder_log == NULL){
+    encoder_offset_alt = fopen(fn, "w");
+    if(encoder_offset_alt == NULL){
         logging(ERROR, "Encoder",
                 "Failed to open encoder alt offset file: %m");
         return errno;
@@ -303,6 +304,11 @@ int set_offsets(void){
 
     fwrite((void*)&alt_offset, sizeof(double), 1, encoder_offset_alt);
     fclose(encoder_offset_alt);
+
+    char buffer[100];
+    snprintf(buffer, 100, "Encoder offsets set to %lg az, %lg alt",
+            az_offset, alt_offset);
+    send_telemetry(buffer, 1, 0, 0);
 
     return SUCCESS;
 }
