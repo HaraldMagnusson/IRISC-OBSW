@@ -191,27 +191,23 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     }
 
     // azimuth pid output change rate limit
-    if(az_current_control_vars.pid_output >
-            az_prev_control_vars.pid_output + max_change_rate &&
-            az_current_control_vars.pid_output > 0){
-        az_current_control_vars.pid_output = az_prev_control_vars.pid_output + max_change_rate;
-    }
-    else if(az_current_control_vars.pid_output <
-            -az_prev_control_vars.pid_output + max_change_rate &&
-            az_current_control_vars.pid_output < 0){
-        az_current_control_vars.pid_output = -az_prev_control_vars.pid_output - max_change_rate;
+    if(fabs(az_current_control_vars.pid_output - az_prev_control_vars.pid_output) > max_change_rate){
+        if( az_current_control_vars.pid_output > az_prev_control_vars.pid_output){
+            az_current_control_vars.pid_output = az_prev_control_vars.pid_output + max_change_rate;
+        }
+        else{
+            az_current_control_vars.pid_output = az_prev_control_vars.pid_output - max_change_rate;
+        }
     }
 
     // altitude pid output change rate limit
-    if(alt_current_control_vars.pid_output >
-            alt_prev_control_vars.pid_output + max_change_rate &&
-            alt_current_control_vars.pid_output > 0){
-        alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output + max_change_rate;
-    }
-    else if(alt_current_control_vars.pid_output <
-            -alt_prev_control_vars.pid_output + max_change_rate &&
-            alt_current_control_vars.pid_output < 0){
-        alt_current_control_vars.pid_output = -az_prev_control_vars.pid_output - max_change_rate;
+    if(fabs(alt_current_control_vars.pid_output - alt_prev_control_vars.pid_output) > max_change_rate){
+        if( alt_current_control_vars.pid_output > alt_prev_control_vars.pid_output){
+            alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output + max_change_rate;
+        }
+        else{
+            alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output - max_change_rate;
+        }
     }
 
     threshold = 0;
@@ -239,6 +235,8 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     /* convert angle output to steps for output */
     motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
     motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
+
+    //TODO: add alt log
 
     logging_csv(pid_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d,%d",
             az_current_control_vars.current_position,
