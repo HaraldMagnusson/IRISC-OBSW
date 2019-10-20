@@ -22,6 +22,8 @@
 #include "mode.h"
 #include "sensors.h"
 #include "gpio.h"
+#include "current_target.h"
+#include "pid.h"
 
 static void* thread_command(void* param);
 static int handle_command(char command);
@@ -211,7 +213,7 @@ static int handle_command(char command){
             move_az_to(60);
             sleep(1);
             move_alt_to(80);
-            send_telemetry_local("Rotation cycle finished");
+            send_telemetry_local("Rotation cycle finished", 1, 0, 0);
             break;
 
         case CMD_UPD_PID:
@@ -224,7 +226,7 @@ static int handle_command(char command){
                 }
 
                 for(int ii=0; ii<2; ++ii){
-                    for(int jj=0; ii<2; ++jj){
+                    for(int jj=0; jj<2; ++jj){
                         change_mode_pid_values(ii, jj, pids[0], pids[1], pids[2]);
                     }
                 }
