@@ -121,7 +121,9 @@ void move_az_to_l(double target){
         err = target - enc.az;
         int sign  = err >= 0 ? 1 : -1;
 
-        logging(DEBUG, "stepper", "Error: %lg\t\tSign: %d", err, sign);
+        #if STEP_DEBUG
+            logging(DEBUG, "stepper", "Error: %lg\t\tSign: %d", err, sign);
+        #endif
 
         steps.az = 15 * sign;
         steps.alt = 0;
@@ -133,7 +135,7 @@ void move_az_to_l(double target){
             wake.tv_sec++;
         }
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-    } while(fabs(err) > 1);
+    } while(fabs(err) > .1);
 
     steps.az = 0;
     step_az_alt(&steps);
@@ -143,8 +145,6 @@ void move_az_to_l(double target){
  * with an accuracy of 1 degree
  */
 void move_alt_to_l(double target){
-
-    logging(DEBUG, "stepper", "stepping alt to target: %lf", target);
 
     double err = 0;
 
@@ -157,15 +157,15 @@ void move_alt_to_l(double target){
     do{
         get_encoder(&enc);
         if(enc.out_of_date){
-            logging(DEBUG, "stepper", "Encoder data out of date");
             continue;
         }
-        logging(DEBUG, "stepper", "encoder angle: %lg", enc.alt_ang);
 
         err = target - enc.alt_ang;
         int sign  = err >= 0 ? 1 : -1;
 
-        logging(DEBUG, "stepper", "Error: %lg\t\tSign: %d", err, sign);
+        #if STEP_DEBUG
+            logging(DEBUG, "stepper", "Error: %lg\t\tSign: %d", err, sign);
+        #endif
 
         steps.alt = 15 * sign;
         steps.az = 0;
@@ -179,7 +179,7 @@ void move_alt_to_l(double target){
             wake.tv_sec++;
         }
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-    } while(fabs(err) > 1);
+    } while(fabs(err) > .1);
 
     logging(DEBUG, "stepper", "Stepping finished");
     steps.alt = 0;
