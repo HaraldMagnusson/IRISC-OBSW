@@ -329,5 +329,5 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
     #endif
 
     enc->az = ang[AZ] - az_offset;
-    enc->alt_ang = ang[ALT_ANG] - alt_offset;
+    enc->alt_ang = 360 - ang[ALT_ANG] - alt_offset;
 }

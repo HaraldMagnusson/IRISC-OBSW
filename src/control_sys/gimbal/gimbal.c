@@ -43,11 +43,11 @@ int step_az_alt_local(motor_step_t* steps){
     unsigned char az_dir, alt_dir;
 
     if(az < 0){
-        az_dir = 0;
+        az_dir = 0x80;
         az *= -1;
     }
     else{
-        az_dir = 0x80;
+        az_dir = 0;
     }
 
     if(alt < 0){
@@ -61,7 +61,7 @@ int step_az_alt_local(motor_step_t* steps){
     unsigned char msg_az  = az_dir  | (0x3F & az) | 0x40;
     unsigned char msg_alt = alt_dir | (0x3F & alt);
 
-    unsigned buf[2] = {msg_az, msg_alt};
+    unsigned char buf[2] = {msg_az, msg_alt};
 
     if(write_i2c(5, addr_az_alt, buf, 2) != 2){
         return errno;
@@ -121,6 +121,8 @@ void move_az_to_l(double target){
         err = target - enc.az;
         int sign  = err >= 0 ? 1 : -1;
 
+        logging(DEBUG, "stepper", "Error: %lg\t\tSign: %d", err, sign);
+
         steps.az = 15 * sign;
         steps.alt = 0;
         step_az_alt(&steps);
@@ -131,7 +133,7 @@ void move_az_to_l(double target){
             wake.tv_sec++;
         }
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-    } while(fabs(err) < 1);
+    } while(fabs(err) > 1);
 
     steps.az = 0;
     step_az_alt(&steps);
@@ -141,6 +143,9 @@ void move_az_to_l(double target){
  * with an accuracy of 1 degree
  */
 void move_alt_to_l(double target){
+
+    logging(DEBUG, "stepper", "stepping alt to target: %lf", target);
+
     double err = 0;
 
     encoder_t enc;
@@ -152,24 +157,31 @@ void move_alt_to_l(double target){
     do{
         get_encoder(&enc);
         if(enc.out_of_date){
+            logging(DEBUG, "stepper", "Encoder data out of date");
             continue;
         }
+        logging(DEBUG, "stepper", "encoder angle: %lg", enc.alt_ang);
 
         err = target - enc.alt_ang;
         int sign  = err >= 0 ? 1 : -1;
 
+        logging(DEBUG, "stepper", "Error: %lg\t\tSign: %d", err, sign);
+
         steps.alt = 15 * sign;
         steps.az = 0;
-        step_az_alt(&steps);
-
+        if(step_az_alt(&steps)){
+            logging(ERROR, "stepper", "Failed to send steps to motor: %m");
+        }
+        logging(DEBUG, "stepper", "Steps sent to motor controller");
         wake.tv_nsec += 10000000;
         if(wake.tv_nsec >= 1000000000){
             wake.tv_nsec -= 1000000000;
             wake.tv_sec++;
         }
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
-    } while(fabs(err) < 1);
+    } while(fabs(err) > 1);
 
+    logging(DEBUG, "stepper", "Stepping finished");
     steps.alt = 0;
     step_az_alt(&steps);
 }
