@@ -120,7 +120,7 @@ typedef struct{
 } axis_context_t;
 
 static int open_logs(void);
-static void init_kalman_vars(double x_init, double y_init, double z_init);
+static void init_kalman_vars(double az_init, double alt_init);
 static int kf_axis(axis_context_t axis, double gyro_data, double* st_data);
 
 static void eye(int m, double** mat);
@@ -142,72 +142,49 @@ static void comp_k_gain(axis_context_t axis);
 static void update_state(axis_context_t axis);
 static void update_covar(axis_context_t axis);
 
-static axis_context_t x = {
+static axis_context_t az = {
     {
-        {&x.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
-        {&x.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
-        {&x.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
-        {&x.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
-        {&x.Phi,          PHI_ROWS,       PHI_COLS        },
-        {&x.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
-        {&x.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
-        {&x.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
-        {&x.H,            H_ROWS,         H_COLS          },
-        {&x.Q,            Q_ROWS,         Q_COLS          },
-        {&x.R,            R_ROWS,         R_COLS          },
-        {&x.Q2,           Q2_ROWS,        Q2_COLS         },
-        {&x.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
-        {&x.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
-        {&x.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
-        {&x.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
-        {&x.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
-        {&x.K,            K_ROWS,         K_COLS          }
+        {&az.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&az.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&az.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&az.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&az.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&az.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&az.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&az.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&az.H,            H_ROWS,         H_COLS          },
+        {&az.Q,            Q_ROWS,         Q_COLS          },
+        {&az.R,            R_ROWS,         R_COLS          },
+        {&az.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&az.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&az.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&az.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&az.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&az.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&az.K,            K_ROWS,         K_COLS          }
     }
 };
 
-static axis_context_t y = {
+static axis_context_t alt = {
     {
-        {&y.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
-        {&y.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
-        {&y.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
-        {&y.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
-        {&y.Phi,          PHI_ROWS,       PHI_COLS        },
-        {&y.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
-        {&y.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
-        {&y.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
-        {&y.H,            H_ROWS,         H_COLS          },
-        {&y.Q,            Q_ROWS,         Q_COLS          },
-        {&y.R,            R_ROWS,         R_COLS          },
-        {&y.Q2,           Q2_ROWS,        Q2_COLS         },
-        {&y.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
-        {&y.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
-        {&y.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
-        {&y.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
-        {&y.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
-        {&y.K,            K_ROWS,         K_COLS          }
-    }
-};
-
-static axis_context_t z = {
-    {
-        {&z.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
-        {&z.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
-        {&z.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
-        {&z.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
-        {&z.Phi,          PHI_ROWS,       PHI_COLS        },
-        {&z.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
-        {&z.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
-        {&z.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
-        {&z.H,            H_ROWS,         H_COLS          },
-        {&z.Q,            Q_ROWS,         Q_COLS          },
-        {&z.R,            R_ROWS,         R_COLS          },
-        {&z.Q2,           Q2_ROWS,        Q2_COLS         },
-        {&z.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
-        {&z.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
-        {&z.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
-        {&z.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
-        {&z.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
-        {&z.K,            K_ROWS,         K_COLS          }
+        {&alt.x_prev,       X_PREV_ROWS,    X_PREV_COLS     },
+        {&alt.x_upd,        X_UPD_ROWS,     X_UPD_COLS      },
+        {&alt.x_next,       X_NEXT_ROWS,    X_NEXT_COLS     },
+        {&alt.w_meas,       W_MEAS_ROWS,    W_MEAS_COLS     },
+        {&alt.Phi,          PHI_ROWS,       PHI_COLS        },
+        {&alt.Gamma,        GAMMA_ROWS,     GAMMA_COLS      },
+        {&alt.Upsilon,      UPSILON_ROWS,   UPSILON_COLS    },
+        {&alt.Upsilon2,     UPSILON2_ROWS,  UPSILON2_COLS   },
+        {&alt.H,            H_ROWS,         H_COLS          },
+        {&alt.Q,            Q_ROWS,         Q_COLS          },
+        {&alt.R,            R_ROWS,         R_COLS          },
+        {&alt.Q2,           Q2_ROWS,        Q2_COLS         },
+        {&alt.P_prev,       P_PREV_ROWS,    P_PREV_COLS     },
+        {&alt.P_upd,        P_UPD_ROWS,     P_UPD_COLS      },
+        {&alt.P_next,       P_NEXT_ROWS,    P_NEXT_COLS     },
+        {&alt.nu_next,      NU_NEXT_ROWS,   NU_NEXT_COLS    },
+        {&alt.S_next,       S_NEXT_ROWS,    S_NEXT_COLS     },
+        {&alt.K,            K_ROWS,         K_COLS          }
     }
 };
 
@@ -226,8 +203,8 @@ int init_kalman_filter(void* args){
     }
 
     // allocate memory
-    axis_context_t* arr[3] = {&x, &y, &z};
-    for(int ii=0; ii<3; ++ii){
+    axis_context_t* arr[2] = {&az, &alt};
+    for(int ii=0; ii<2; ++ii){
         for(int jj=0; jj<18; ++jj){
             int rows = arr[ii]->mem[jj].rows;
             int cols = arr[ii]->mem[jj].cols;
@@ -250,7 +227,7 @@ int init_kalman_filter(void* args){
         }
 
         /* gyro history */
-        int hist_elements = HIST_LENGTH_S * SENS_FREQ;
+        size_t hist_elements = (long)HIST_LENGTH_S * SENS_FREQ;
         arr[ii]->gyro_hist = malloc(hist_elements * sizeof(*arr[ii]->gyro_hist));
         if(arr[ii]->gyro_hist == NULL){
             logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
@@ -299,15 +276,15 @@ int init_kalman_filter(void* args){
 
     // initialise Kalman filter
     #ifdef KF_TEST
-        init_kalman_vars(0, 0, 0);
+        init_kalman_vars(0, 0);
     #else
-        init_kalman_vars(0, 0, 45);
+        init_kalman_vars(0, 45);
     #endif
 
     return SUCCESS;
 }
 
-static void init_kalman_vars(double x_init, double y_init, double z_init){
+static void init_kalman_vars(double az_init, double alt_init){
 
     // initialisation parameters
     double dt;
@@ -327,13 +304,12 @@ static void init_kalman_vars(double x_init, double y_init, double z_init){
     #endif
     double s_init = 0.1/180*M_PI;
 
-    axis_context_t* arr[3] = {&x, &y, &z};
+    axis_context_t* arr[2] = {&az, &alt};
 
-    x.x_prev[0][0] = x_init;  // starting position
-    y.x_prev[0][0] = y_init;
-    z.x_prev[0][0] = z_init;
+    az.x_prev[0][0] = az_init;  // starting position
+    alt.x_prev[0][0] = alt_init;
 
-    for(int ii=0; ii<3; ++ii){
+    for(int ii=0; ii<2; ++ii){
         arr[ii]->x_prev[1][0] = 0;
 
         arr[ii]->P_prev[0][0] = s_init*s_init;
@@ -368,22 +344,22 @@ static void init_kalman_vars(double x_init, double y_init, double z_init){
 
 static int open_logs(void){
 
-    char axes[3] = {'x', 'y', 'z'};
+    char* axes[2] = {"az", "alt"};
     char* vars[] = {"x", "p", "nu", "s", "x_prop", "p_prop"};
-    axis_context_t* arr[3] = {&x, &y, &z};
+    axis_context_t* arr[2] = {&az, &alt};
 
     char log_fn[100];
     strcpy(log_fn, get_top_dir());
     /* dirlen is the index in log_fn where local paths start */
     int dirlen = strlen(log_fn);
 
-    for(int ii=0; ii<3; ++ii){
+    for(int ii=0; ii<2; ++ii){
         FILE** logs[6] = {&arr[ii]->x_log, &arr[ii]->p_log, &arr[ii]->nu_log,
                 &arr[ii]->s_log, &arr[ii]->x_prop_log, &arr[ii]->p_prop_log};
 
         for(int jj=0; jj<6; ++jj){
 
-            snprintf(&log_fn[dirlen], 100-dirlen, "output/logs/kf/%c/%s.log", axes[ii], vars[jj]);
+            snprintf(&log_fn[dirlen], 100-dirlen, "output/logs/kf/%s/%s.log", axes[ii], vars[jj]);
             *logs[jj] = fopen(log_fn, "a");
             if(*logs[jj] == NULL){
                 logging(ERROR, "Kalman F", "Failed to open %s log for axis %c: %m",
@@ -422,21 +398,15 @@ int kf_update(telescope_att_t* cur_att){
 
     if(st.new_data){
 
-        double az = 0, alt = 0;
+        double az_ang = 0, alt_ang = 0;
         /* convert ra & dec to az & alt */
         #ifndef KF_TEST
-            rd_to_aa(st.ra, st.dec, &az, &alt);
+            rd_to_aa(st.ra, st.dec, &az_ang, &alt_ang);
         #endif
 
-        /* extract x from star tracker */
-        double sin_alt = sin(alt * M_PI / 180);
-        double cos_alt = cos(alt * M_PI / 180);
-
-        double st_x = (az + st.roll * sin_alt) / cos_alt;
-
         if(first_st_flag){
-            init_kalman_vars(st_x, st.roll, alt);
-            set_tracking_angles(az, alt);
+            init_kalman_vars(az_ang, alt_ang);
+            set_tracking_angles(az_ang, alt_ang);
 
             logging(INFO, "MODE", "Waking selection and tracking");
             pthread_mutex_lock(&mutex_cond_sel_track);
@@ -446,25 +416,33 @@ int kf_update(telescope_att_t* cur_att){
             first_st_flag = 0;
         }
 
-        kf_axis(x, gyro.x, &st_x);
-        kf_axis(y, gyro.y, &st.roll);
-        kf_axis(z, gyro.z, &alt);
+        kf_axis(alt, gyro.z, &alt_ang);
+
+        double sin_alt = sin(alt.x_prev[0][0] * M_PI / 180);
+        double cos_alt = cos(alt.x_prev[0][0] * M_PI / 180);
+
+        double gyro_az = gyro.x * cos_alt - gyro.y * sin_alt;
+
+        kf_axis(az, gyro_az, &az_ang);
 
         hist_index = 0;
     }
     else{
-        kf_axis(x, gyro.x, NULL);
-        kf_axis(y, gyro.y, NULL);
-        kf_axis(z, gyro.z, NULL);
+
+        kf_axis(alt, gyro.z, NULL);
+
+        double sin_alt = sin(alt.x_prev[0][0] * M_PI / 180);
+        double cos_alt = cos(alt.x_prev[0][0] * M_PI / 180);
+
+        double gyro_az = gyro.x * cos_alt - gyro.y * sin_alt;
+
+        kf_axis(az, gyro_az, NULL);
 
         hist_index++;
     }
 
-    double sin_z = sin(z.x_prev[0][0] * M_PI / 180);
-    double cos_z = cos(z.x_prev[0][0] * M_PI / 180);
-
-    cur_att->az = x.x_prev[0][0] * cos_z - y.x_prev[0][0] * sin_z;
-    cur_att->alt = z.x_prev[0][0];
+    cur_att->az = az.x_prev[0][0];
+    cur_att->alt = alt.x_prev[0][0];
 
     set_telescope_att(cur_att);
 
@@ -489,9 +467,9 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
 
     if (st_data != NULL){
 
-        if(hist_index == HIST_LENGTH_S * SENS_FREQ){
-            int hist_len = HIST_LENGTH_S * SENS_FREQ;
-            int save_len = 90 * SENS_FREQ;
+        if(hist_index == (long)HIST_LENGTH_S * SENS_FREQ){
+            int hist_len = (long)HIST_LENGTH_S * SENS_FREQ;
+            int save_len = 90L * SENS_FREQ;
             /* reset history and keep latest 90 seconds */
             for(int ii=0; ii<save_len; ++ii){
                 int prev_index = hist_len - save_len + ii;
