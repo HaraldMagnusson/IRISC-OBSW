@@ -17,7 +17,7 @@ int init_thermal(void* args){
     return create_thread("thermal", thermal_thread, 20);
 }
 
-static void* temp_poller_thread(void* args){
+static void* thermal_thread(void* args){
 
     struct timespec wake;
     clock_gettime(CLOCK_MONOTONIC, &wake);
