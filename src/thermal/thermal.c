@@ -6,8 +6,33 @@
  * -----------------------------------------------------------------------------
  */
 
+#include <pthread.h>
+
 #include "global_utils.h"
 
+static void* thermal_thread(void* args);
+static void active_m(void);
+
 int init_thermal(void* args){
-    return SUCCESS;
+    return create_thread("thermal", thermal_thread, 20);
+}
+
+static void* temp_poller_thread(void* args){
+
+    struct timespec wake;
+    clock_gettime(CLOCK_MONOTONIC, &wake);
+
+    while(1){
+        active_m();
+
+        wake.tv_sec += TEMP_SAMPLE_TIME;
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &wake, NULL);
+
+    }
+
+    return NULL;
+}
+
+static void active_m(void){
+
 }

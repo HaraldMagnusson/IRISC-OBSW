@@ -7,22 +7,13 @@
  */
 
 #include <pthread.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
 
 #include "global_utils.h"
-#include "temperature_poller.h"
 
 static void* temp_poller_thread(void* args);
 static void active_m(void);
 
 int init_temperature_poller(void* args){
-
     return create_thread("temp_poller", temp_poller_thread, 20);
 }
 
