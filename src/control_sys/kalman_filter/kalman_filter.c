@@ -72,6 +72,10 @@
 #define AZ_AXIS_FLAG 0
 #define ALT_AXIS_FLAG 1
 
+#define HIST_LENGTH_S 180 //unit: seconds
+#define SENS_FREQ 1000000000 / GYRO_SAMPLE_TIME
+
+
 typedef struct{
     double*** var;
     int rows;
@@ -246,9 +250,7 @@ int init_kalman_filter(void* args){
         }
 
         /* gyro history */
-        int sec = 60; /* seconds to save */
-        int frequency = 1000*1000*1000 / GYRO_SAMPLE_TIME;
-        int hist_elements = sec * frequency;
+        int hist_elements = HIST_LENGTH_S * SENS_FREQ;
         arr[ii]->gyro_hist = malloc(hist_elements * sizeof(*arr[ii]->gyro_hist));
         if(arr[ii]->gyro_hist == NULL){
             logging(ERROR, "Kalman F", "Cannot allocate memory: %m");
@@ -486,6 +488,29 @@ static int kf_axis(axis_context_t axis, double gyro_data, double* st_data){
     prop_p_next(axis);
 
     if (st_data != NULL){
+
+        if(hist_index == HIST_LENGTH_S * SENS_FREQ){
+            int hist_len = HIST_LENGTH_S * SENS_FREQ;
+            int save_len = 90 * SENS_FREQ;
+            /* reset history and keep latest 90 seconds */
+            for(int ii=0; ii<save_len; ++ii){
+                int prev_index = hist_len - save_len + ii;
+
+                /* save x_prev */
+                axis.gyro_hist[ii] = axis.gyro_hist[prev_index];
+
+                for(int jj=0; jj<X_PREV_ROWS; ++jj){
+                    axis.x_hist[ii][jj] = axis.x_hist[prev_index][jj];
+                }
+
+                for(int jj=0; jj<P_PREV_ROWS; ++jj){
+                    for(int kk=0; kk<P_PREV_COLS; ++kk){
+                        axis.p_hist[ii][jj][kk] = axis.p_hist[prev_index][jj][kk];
+                    }
+                }
+            }
+            hist_index = save_len;
+        }
 
         /* go back to middle of exposure and re-propagate */
         int prop_from_index = (get_st_exp() * 1000) / (2 * GYRO_SAMPLE_TIME);

@@ -322,12 +322,12 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
         ang[ii] = 360.0 * (double)data_s[ii] / (double)0x4000;
     }
 
-    logging_csv(encoder_log, "%010.6lf,%010.6lf", ang[AZ], ang[ALT_ANG]);
-
     #ifdef ENCODER_DEBUG
         logging(DEBUG, "Encoder", "ra: %lf \t dec: %lf", ang[AZ], ang[ALT_ANG]);
     #endif
 
     enc->az = ang[AZ] - az_offset;
     enc->alt_ang = 360 - ang[ALT_ANG] - alt_offset;
+
+    logging_csv(encoder_log, "%010.6lf,%010.6lf", enc->az, enc->alt);
 }
