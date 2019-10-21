@@ -329,5 +329,5 @@ static void proc(unsigned char data[2][2], encoder_t* enc){
     enc->az = ang[AZ] - az_offset;
     enc->alt_ang = 360 - ang[ALT_ANG] - alt_offset;
 
-    logging_csv(encoder_log, "%010.6lf,%010.6lf", enc->az, enc->alt);
+    logging_csv(encoder_log, "%010.6lf,%010.6lf", enc->az, enc->alt_ang);
 }

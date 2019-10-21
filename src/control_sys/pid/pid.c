@@ -48,14 +48,14 @@ static double max_change_rate = 0;
 
 /* Stabilization parameters */
 static pid_values_t stab_az_pid_values = {
-        .kp = 0.6
-       ,.ki = 10
-       ,.kd = 0.00015
+        .kp = 0.0673
+       ,.ki = 0.05
+       ,.kd = 0.0152
 };
 static pid_values_t stab_alt_pid_values = {
-        .kp = 1
-       ,.ki = 0.2
-       ,.kd = 0
+        .kp = 0.0673
+       ,.ki = 0.05
+       ,.kd = 0.0152
 };
 
 /* Tracking parameters */
@@ -235,6 +235,16 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     /* convert angle output to steps for output */
     motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
     motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
+
+    // Azimuth
+    if(fabs(az_current_control_vars.position_error) < 0.02){
+        az_current_control_vars.pid_output = 0;
+    }
+
+    // altitude
+    if(fabs(alt_current_control_vars.position_error) < 0.02){
+        alt_current_control_vars.pid_output = 0;
+    }
 
     //TODO: add alt log
 
