@@ -21,6 +21,7 @@
 #include "camera.h"
 #include "mode.h"
 #include "img_processing.h"
+#include "current_target.h"
 
 #define ST_WAIT_TIME 10*1000*1000
 
@@ -199,7 +200,7 @@ static int call_tetra(float st_return[]){
 }
 
 /*
- * Purpose: This is the interface to run the Tetra python program from the
+ * Purpose: This is the interface to run the Astrometry.net program from the
  *          main OBSW.
  * Usage: A float array of length 4 i passed, and values from the star tracker
  *          is returned in this array in order:
@@ -208,7 +209,7 @@ static int call_tetra(float st_return[]){
  *          2: Roll
  *          3: FoV
  *
- *          The name of the parameter is printed by tetra, but then ignored.
+ *          The name of the parameter is printed by the star tracker, but then ignored.
  *          If no attitude could be calculated all of these will be 0. This
  *          can obviously not happen if an attitude is calculated, as FoV will
  *          always have a positive non-zero value.
@@ -223,22 +224,52 @@ static void irisc_tetra(float st_return[]) {
     strcat(exe_path,"usr/local/astrometry/bin/solve-field");
     */
     strcpy(st_img_path, get_top_dir());
-    strcat(st_img_path,"output/guiding/star_tracker/st_img.fit");
+    strcat(st_img_path,"output/guiding/star_tracker/st_img.fit ");
+
+    /* lisFlag, 1 if we are completely lost in space. 0 for only slightly. */
+    static int lisFlag = 1;
+    static char* oldRa[2] = "0";
+    static char* oldDec[2]; = "0";
+    char* stRad = "15";
     
-    char* cmd[7] = {
+    
+    char* cmd[8] = {
         "chrt",
         "-f",
         "23",
         "/usr/local/astrometry/bin/solve-field",
-        "-pO",
+        "-pOo",
+        "none",
+        "--scale-low",
+        "1",
         st_img_path,
         NULL
     };
 
+    char* raDecFlags[7] = {
+        "--ra",
+        raCurr,
+        "--dec",
+        decCurr,
+        "--radius",
+        stRad,
+        NULL 
+    };
+
+    char* raDecCmd[16];
+
     int out_fd = -1;
 
     st_running = 1;
-    py_pid = popen2(cmd, NULL, &out_fd);
+
+    if (!lisFlag) {
+        strcpy(raDecCmd, cmd);
+        strcat(raDecCmd, raDecCmd);
+        py_pid = popen2(raDecCmd, NULL, &out_fd);
+    } else {
+        py_pid = popen2(cmd, NULL, &out_fd);
+        lisFlag = 0;
+    }
     waitpid(py_pid, NULL, 0);
     st_running = 0;
 
@@ -257,6 +288,12 @@ static void irisc_tetra(float st_return[]) {
         fscanf( oFPtr, "%*s %f", &st_return[i]);
     }
 
+    if(fabs(st_return[3]) < 0.001){
+        lisFlag = 1;
+    } else {
+        sprintf(oldRa, "%d", (int)st_return[1]);
+        sprintf(oldDec, "%d", (int)st_return[2]);
+    }
     fclose(oFPtr);
     return;
 }
