@@ -44,33 +44,38 @@ int step_az_alt(motor_step_t* steps){
     return step_az_alt_local(steps);
 }
 
+#if 0
 int step_roll(motor_step_t* steps){
 
     return step_roll_local(steps);
 }
+#endif
+
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope(void){
     center_telescope_l();
 }
 
 /* Rotate the telescope to a target in az relative to gondola,
- * with an accuracy of 1 degree
+ * with an accuracy of .1 degree
  */
 void move_az_to(double target){
     move_az_to_l(target);
 }
 
 /* Rotate the telescope to a target in alt relative to gondola,
- * with an accuracy of 1 degree
+ * with an accuracy of .1 degree
  */
 void move_alt_to(double target){
     move_alt_to_l(target);
 }
 
+#if 0
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator(void){
     reset_field_rotator_l();
 }
+#endif
 
 /* Set the error thresholds for when to start exposing camera */
 void set_error_thresholds_az(double az){

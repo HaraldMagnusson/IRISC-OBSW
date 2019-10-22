@@ -56,8 +56,10 @@ static void* sel_track_thread_func(void* arg){
     pthread_mutex_lock(&mutex_cond_sel_track);
 
     struct timespec wake;
+    #if 0
     motor_step_t steps = {0, 0,
             lround(-STEPS_PER_SECOND_FR * TRACKING_UPDATE_TIME / 1000000000)};
+    #endif
 
     while(1){
 
@@ -72,8 +74,10 @@ static void* sel_track_thread_func(void* arg){
             /* move up telescope for sun avoidance */
             move_alt_to(60);
 
+            #if 0
             /* reset field rotator to clockwise position */
             reset_field_rotator();
+            #endif
 
             char exposing_flag = 0;
 
@@ -84,8 +88,10 @@ static void* sel_track_thread_func(void* arg){
 
                 tracking(tar_index, exposing_flag);
 
+                #if 0
                 // TODO: Check that timing is correct
                 step_roll(&steps);
+                #endif
 
                 /* wait for one sample time */
                 wake.tv_nsec += TRACKING_UPDATE_TIME;

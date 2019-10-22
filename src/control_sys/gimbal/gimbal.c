@@ -70,6 +70,7 @@ int step_az_alt_local(motor_step_t* steps){
     return SUCCESS;
 }
 
+#if 0
 int step_roll_local(motor_step_t* steps){
 
     int roll = steps->roll;
@@ -91,6 +92,7 @@ int step_roll_local(motor_step_t* steps){
 
     return SUCCESS;
 }
+#endif
 
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope_l(void){
@@ -186,6 +188,7 @@ void move_alt_to_l(double target){
     step_az_alt(&steps);
 }
 
+#if 0
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator_l(void){
 
@@ -196,3 +199,4 @@ void reset_field_rotator_l(void){
         usleep(10000);
     }
 }
+#endif

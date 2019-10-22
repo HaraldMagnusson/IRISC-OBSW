@@ -191,7 +191,9 @@ static int handle_command(char command){
                 //stop motors
                 motor_step_t stop_step = {0, 0, 0};
                 step_az_alt(&stop_step);
+                #if 0
                 step_roll(&stop_step);
+                #endif
                 gpio_write(4, LOW);
             }
             break;

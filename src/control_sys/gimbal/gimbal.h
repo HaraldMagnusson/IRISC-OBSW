@@ -16,7 +16,9 @@ int init_gimbal(void* args);
 
 int step_az_alt_local(motor_step_t* steps);
 
+#if 0
 int step_roll_local(motor_step_t* steps);
+#endif
 
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope_l(void);
@@ -31,5 +33,7 @@ void move_az_to_l(double target);
  */
 void move_alt_to_l(double target);
 
+#if 0
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator_l(void);
+#endif

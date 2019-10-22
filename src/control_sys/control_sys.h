@@ -29,7 +29,9 @@ void set_error_thresholds(double az, double alt_ang);
 
 int step_az_alt(motor_step_t* steps);
 
+#if 0
 int step_roll(motor_step_t* steps);
+#endif
 
 /* Rotate the telescope to center of horizontal field of view, 45 deg up */
 void center_telescope(void);
@@ -44,8 +46,10 @@ void move_az_to(double target);
  */
 void move_alt_to(double target);
 
+#if 0
 /* resets the field rotator position to clockwise end */
 void reset_field_rotator(void);
+#endif
 
 void set_error_thresholds_az(double az);
 void set_error_thresholds_alt(double alt_ang);

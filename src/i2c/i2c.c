@@ -34,13 +34,13 @@ int init_i2c(void* args){
         logging(ERROR, "I2C", "Failed to open i2c-5 device: %m");
         return FAILURE;
     }
-
+    #if 0
     unsigned char setup_buf[3] = {0x02, 0x00, 0x58};
     if(write_i2c(1, I2C_ADDR_HE, setup_buf, 3) != 3){
         logging(ERROR, "I2C", "Failed to setup config reg on ADC: %m");
         return errno;
     }
-
+    #endif
     return SUCCESS;
 }
 
@@ -163,6 +163,7 @@ int write_read_i2c(int dev_num, unsigned char addr, const void* write_buf,
     return SUCCESS;
 }
 
+#if 0
 /* check if the field rotator is on a given edge */
 char fr_on_edge(char edge){
 
@@ -182,3 +183,4 @@ char fr_on_edge(char edge){
     unsigned short val = (0x0F & buf[0]) << 8 | buf[1];
     return val < 0x0800;
 }
+#endif
