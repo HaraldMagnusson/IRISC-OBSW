@@ -63,14 +63,14 @@ static pid_values_t stab_alt_pid_values = {
 
 /* Tracking parameters */
 static pid_values_t track_az_pid_values = {
-        .kp = 0.1
-       ,.ki = 0.01
-       ,.kd = 1
+        .kp = 0.0673
+       ,.ki = 0.05
+       ,.kd = 0.0152
 };
 static pid_values_t track_alt_pid_values = {
-        .kp = 1
-       ,.ki = 0.2
-       ,.kd = 0
+        .kp = 0.0673
+       ,.ki = 0.05
+       ,.kd = 0.0152
 };
 
 static pthread_mutex_t az_pid_values_mutex = PTHREAD_MUTEX_INITIALIZER,
@@ -86,21 +86,29 @@ static double sim_time = 0;
 static double sim_start = 0;
 
 //static int changer = 0; // Helper variable for simulation
-static int threshold = 0; // Helper variable for simulation
 
 /* factor for converting from angle to amount of steps */
 static double step_per_deg = 0;
 
-FILE *pid_log;
+FILE *pid_az_log;
+FILE *pid_alt_log;
 
 int init_pid(void* args){
     char pid_log_fn[100];
 
     strcpy(pid_log_fn, get_top_dir());
-    strcat(pid_log_fn, "output/logs/pid.log");
+    strcat(pid_log_fn, "output/logs/pid_az.log");
 
-    pid_log = fopen(pid_log_fn, "a");
-    if(pid_log == NULL){
+    pid_az_log = fopen(pid_log_fn, "a");
+    if(pid_az_log == NULL){
+        logging(ERROR, "PID", "Failed to open log file: %m");
+    }
+
+    strcpy(pid_log_fn, get_top_dir());
+    strcat(pid_log_fn, "output/logs/pid_alt.log");
+
+    pid_alt_log = fopen(pid_log_fn, "a");
+    if(pid_alt_log == NULL){
         logging(ERROR, "PID", "Failed to open log file: %m");
     }
 
@@ -216,13 +224,10 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
         }
     }
 
-    threshold = 0;
     // Azimuth output saturation
     if(az_current_control_vars.pid_output > max_motor_ang_az){
-        threshold = 1;
         az_current_control_vars.pid_output = max_motor_ang_az;
     } else if (az_current_control_vars.pid_output < -max_motor_ang_az) {
-        threshold = 2;
         az_current_control_vars.pid_output = -max_motor_ang_az;
     }
 
@@ -253,8 +258,7 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     }
 
     //TODO: add alt log
-
-    logging_csv(pid_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d,%d",
+    logging_csv(pid_az_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d",
             az_current_control_vars.current_position,
             az_current_control_vars.position_error,
             az_current_control_vars.target_position,
@@ -262,8 +266,16 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
             az_current_control_vars.integral*current_az_pid_values.ki,
             az_current_control_vars.derivative*current_az_pid_values.kd,
             az_current_control_vars.pid_output,
-            threshold,
-            motor_out->az,
+            motor_out->az);
+
+    logging_csv(pid_alt_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d",
+            az_current_control_vars.current_position,
+            az_current_control_vars.position_error,
+            az_current_control_vars.target_position,
+            az_current_control_vars.position_error*current_az_pid_values.kp,
+            az_current_control_vars.integral*current_az_pid_values.ki,
+            az_current_control_vars.derivative*current_az_pid_values.kd,
+            az_current_control_vars.pid_output,
             motor_out->alt);
 
     az_prev_control_vars = az_current_control_vars;
