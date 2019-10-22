@@ -41,8 +41,11 @@ double motor_control_step(pid_values_t* current_pid_values,
 static pid_values_t current_az_pid_values;
 static pid_values_t current_alt_pid_values;
 
-static double max_motor_ang = 0;
-static double max_change_rate = 0;
+static double max_motor_ang_az = 0;
+static double max_change_rate_az = 0;
+
+static double max_motor_ang_alt = 0;
+static double max_change_rate_alt = 0;
 
 //static struct timespec wake_time;
 
@@ -119,8 +122,11 @@ int init_pid(void* args){
 
     /* factor for converting from angle to amount of steps */
     step_per_deg = (double)STEPS_PER_REVOLUTION * MICRO_STEP_FACTOR * GEARBOX_RATIO / 360.0;
-    max_motor_ang = 35 / step_per_deg;
-    max_change_rate = 5 / step_per_deg;
+    max_motor_ang_az = 25 / step_per_deg;
+    max_change_rate_alt = 2 / step_per_deg;
+
+    max_motor_ang_az = 15 / step_per_deg;
+    max_change_rate_alt = 2 / step_per_deg;
 
     change_stabilization_mode(0);
 //    pthread_t main_loop;
@@ -175,57 +181,57 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
                        &alt_prev_control_vars, &alt_current_control_vars);
 
     // azimuth anti windup
-    if(az_current_control_vars.integral > max_motor_ang / current_az_pid_values.ki){
-        az_current_control_vars.integral = max_motor_ang / current_az_pid_values.ki;
+    if(az_current_control_vars.integral > max_motor_ang_az / current_az_pid_values.ki){
+        az_current_control_vars.integral = max_motor_ang_az / current_az_pid_values.ki;
     }
-    else if(az_current_control_vars.integral < -max_motor_ang / current_az_pid_values.ki){
-        az_current_control_vars.integral = -max_motor_ang / current_az_pid_values.ki;
+    else if(az_current_control_vars.integral < -max_motor_ang_az / current_az_pid_values.ki){
+        az_current_control_vars.integral = -max_motor_ang_az / current_az_pid_values.ki;
     }
 
     // altitude anti windup
-    if(alt_current_control_vars.integral > max_motor_ang / current_az_pid_values.ki){
-        alt_current_control_vars.integral = max_motor_ang / current_az_pid_values.ki;
+    if(alt_current_control_vars.integral > max_motor_ang_alt / current_az_pid_values.ki){
+        alt_current_control_vars.integral = max_motor_ang_alt / current_az_pid_values.ki;
     }
-    else if(alt_current_control_vars.integral < -max_motor_ang / current_az_pid_values.ki){
-        alt_current_control_vars.integral = -max_motor_ang / current_az_pid_values.ki;
+    else if(alt_current_control_vars.integral < -max_motor_ang_alt / current_az_pid_values.ki){
+        alt_current_control_vars.integral = -max_motor_ang_alt / current_az_pid_values.ki;
     }
 
     // azimuth pid output change rate limit
-    if(fabs(az_current_control_vars.pid_output - az_prev_control_vars.pid_output) > max_change_rate){
+    if(fabs(az_current_control_vars.pid_output - az_prev_control_vars.pid_output) > max_change_rate_az){
         if( az_current_control_vars.pid_output > az_prev_control_vars.pid_output){
-            az_current_control_vars.pid_output = az_prev_control_vars.pid_output + max_change_rate;
+            az_current_control_vars.pid_output = az_prev_control_vars.pid_output + max_change_rate_az;
         }
         else{
-            az_current_control_vars.pid_output = az_prev_control_vars.pid_output - max_change_rate;
+            az_current_control_vars.pid_output = az_prev_control_vars.pid_output - max_change_rate_az;
         }
     }
 
     // altitude pid output change rate limit
-    if(fabs(alt_current_control_vars.pid_output - alt_prev_control_vars.pid_output) > max_change_rate){
+    if(fabs(alt_current_control_vars.pid_output - alt_prev_control_vars.pid_output) > max_change_rate_alt){
         if( alt_current_control_vars.pid_output > alt_prev_control_vars.pid_output){
-            alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output + max_change_rate;
+            alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output + max_change_rate_alt;
         }
         else{
-            alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output - max_change_rate;
+            alt_current_control_vars.pid_output = alt_prev_control_vars.pid_output - max_change_rate_alt;
         }
     }
 
     threshold = 0;
     // Azimuth output saturation
-    if(az_current_control_vars.pid_output > max_motor_ang){
+    if(az_current_control_vars.pid_output > max_motor_ang_az){
         threshold = 1;
-        az_current_control_vars.pid_output = max_motor_ang;
-    } else if (az_current_control_vars.pid_output < -max_motor_ang) {
+        az_current_control_vars.pid_output = max_motor_ang_az;
+    } else if (az_current_control_vars.pid_output < -max_motor_ang_az) {
         threshold = 2;
-        az_current_control_vars.pid_output = -max_motor_ang;
+        az_current_control_vars.pid_output = -max_motor_ang_az;
     }
 
     // Altitude output saturation
     //stabilization_timestep = alt_current_control_vars.time_in_seconds - alt_prev_control_vars.time_in_seconds;
-    if(alt_current_control_vars.pid_output > max_motor_ang){
-        alt_current_control_vars.pid_output = max_motor_ang;
-    } else if (alt_current_control_vars.pid_output < -max_motor_ang) {
-        alt_current_control_vars.pid_output = -max_motor_ang;
+    if(alt_current_control_vars.pid_output > max_motor_ang_alt){
+        alt_current_control_vars.pid_output = max_motor_ang_alt;
+    } else if (alt_current_control_vars.pid_output < -max_motor_ang_alt) {
+        alt_current_control_vars.pid_output = -max_motor_ang_alt;
     }
 
     #ifdef PID_DEBUG

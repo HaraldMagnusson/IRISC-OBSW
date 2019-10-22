@@ -32,7 +32,7 @@ static void angle_calc(double dec, double ha,
 static void fetch_time(double* ut_hours, double* j2000);
 
 static int exp_time = 30, sensor_gain = 100;
-static double az_threshold = 0.5, alt_threshold = 0.5;
+static double az_threshold = 0.2, alt_threshold = 0.2;
 
 FILE* sel_trck_log;
 
