@@ -224,16 +224,15 @@ static void irisc_tetra(float st_return[]) {
     strcat(exe_path,"usr/local/astrometry/bin/solve-field");
     */
     strcpy(st_img_path, get_top_dir());
-    strcat(st_img_path,"output/guiding/star_tracker/st_img.fit ");
+    strcat(st_img_path,"output/guiding/star_tracker/st_img.fit");
 
     /* lisFlag, 1 if we are completely lost in space. 0 for only slightly. */
     static int lisFlag = 1;
-    static char* oldRa[2] = "0";
-    static char* oldDec[2]; = "0";
+    static char oldRa[4] = "0";
+    static char oldDec[4] = "0";
     char* stRad = "15";
     
-    
-    char* cmd[8] = {
+    char* cmd[10] = {
         "chrt",
         "-f",
         "23",
@@ -248,9 +247,9 @@ static void irisc_tetra(float st_return[]) {
 
     char* raDecFlags[7] = {
         "--ra",
-        raCurr,
+        oldRa,
         "--dec",
-        decCurr,
+        oldDec,
         "--radius",
         stRad,
         NULL 
@@ -263,12 +262,13 @@ static void irisc_tetra(float st_return[]) {
     st_running = 1;
 
     if (!lisFlag) {
-        strcpy(raDecCmd, cmd);
-        strcat(raDecCmd, raDecCmd);
+        strcpy((char*)raDecCmd, (char*)cmd);
+        strcat((char*)raDecCmd, (char*)raDecFlags);
+
         py_pid = popen2(raDecCmd, NULL, &out_fd);
     } else {
         py_pid = popen2(cmd, NULL, &out_fd);
-        lisFlag = 0;
+        //lisFlag = 1;
     }
     waitpid(py_pid, NULL, 0);
     st_running = 0;
@@ -289,7 +289,7 @@ static void irisc_tetra(float st_return[]) {
     }
 
     if(fabs(st_return[3]) < 0.001){
-        lisFlag = 1;
+        //lisFlag = 0;
     } else {
         sprintf(oldRa, "%d", (int)st_return[1]);
         sprintf(oldDec, "%d", (int)st_return[2]);
