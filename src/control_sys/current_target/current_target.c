@@ -13,6 +13,7 @@
 #include "control_sys.h"
 #include "current_target.h"
 #include "target_selection.h"
+#include "telemetry.h"
 
 static pthread_mutex_t mutex_telescope_att, mutex_track_ang;
 static telescope_att_t telescope_att_local;
@@ -43,6 +44,7 @@ int init_current_target(void* args){
     return SUCCESS;
 }
 
+static int freq_count = 0;
 
 void get_telescope_att(telescope_att_t* telescope_att){
 
@@ -62,6 +64,13 @@ void set_telescope_att(telescope_att_t* telescope_att){
     telescope_att_local.az = telescope_att->az;
     telescope_att_local.alt = telescope_att->alt;
     telescope_att_local.out_of_date = 0;
+
+    if(freq_count++ == 10){
+        char buffer[100];
+        snprintf(buffer, 100, "%+011.6lf,%+011.6lf", telescope_att->az, telescope_att->alt);
+        send_telemetry(buffer, 1, 0, 0);
+        freq_count = 0;
+    }
 
     pthread_mutex_unlock(&mutex_telescope_att);
 }

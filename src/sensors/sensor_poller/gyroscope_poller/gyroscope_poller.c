@@ -22,6 +22,7 @@
 #include "gyroscope.h"
 #include "gpio.h"
 #include "mode.h"
+#include "telemetry.h"
 
 #define SERIAL_NUM "FT2GZ6PG"
 #define DATAGRAM_IDENTIFIER 0x94
@@ -104,6 +105,8 @@ int init_gyroscope_poller(void* args){
     return create_thread("gyro_poller", thread_func, 40);
 }
 
+
+static int freq_count = 0;
 static void* thread_func(void* args){
 
     pthread_mutex_lock(&mutex_cond_gyro);
@@ -125,6 +128,8 @@ static void* thread_func(void* args){
 
         while(get_mode() != RESET){
             active_m();
+
+            freq_count++;
 
             wake_time.tv_nsec += GYRO_SAMPLE_TIME;
             if(wake_time.tv_nsec >= 1000000000){
@@ -205,6 +210,15 @@ static void active_m(void){
     gyro.z = rate[2];
 
     set_gyro(&gyro);
+
+    if(freq_count == 10){
+        char buffer[100];
+        snprintf(buffer, 100, "gyro data: %+011.6lf,%+011.6lf,%+011.6lf",
+            gyro.x, gyro.y, gyro.z);
+        send_telemetry(buffer, 1, 0, 0);
+        freq_count = 0;
+    }
+
 
     double temp = NAN;
     if(data[17] == 0){

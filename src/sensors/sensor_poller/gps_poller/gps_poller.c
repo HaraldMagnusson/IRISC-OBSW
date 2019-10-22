@@ -15,10 +15,12 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "global_utils.h"
 #include "sensors.h"
 #include "gps.h"
+#include "telemetry.h"
 
 #define BUFFER_S 100
 
@@ -163,6 +165,10 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     #endif
 
     set_gps(&gps);
+
+    char buffer[100];
+    snprintf(buffer, 100, "GPS altitude: %g", gps.alt);
+    send_telemetry(buffer, 1, 0, 0);
 
     logging_csv(gps_log, "%010.7f,%010.6f,%07.1f", gps.lat, gps.lon, gps.alt);
 
