@@ -73,7 +73,7 @@
 #define ALT_AXIS_FLAG 1
 
 #define HIST_LENGTH_S 180 //unit: seconds
-#define SENS_FREQ 1000000000 / GYRO_SAMPLE_TIME
+#define SENS_FREQ 100
 
 
 typedef struct{
