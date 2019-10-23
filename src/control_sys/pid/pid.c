@@ -31,6 +31,8 @@
 #include "gimbal.h"
 #include "current_target.h"
 #include "pid.h"
+#include "sensors.h"
+#include "telemetry.h"
 
 double get_current_time();
 double motor_control_step(pid_values_t* current_pid_values,
@@ -89,6 +91,9 @@ static double sim_start = 0;
 
 /* factor for converting from angle to amount of steps */
 static double step_per_deg = 0;
+static encoder_t enc_hist[100];
+static int stall_cntr_az = 100;
+static int stall_cntr_alt = 100;
 
 FILE *pid_az_log;
 FILE *pid_alt_log;
@@ -158,6 +163,15 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     az_current_control_vars.current_position = cur_att->az;
     alt_current_control_vars.current_position = cur_att->alt;
     get_tracking_angles(&az_current_control_vars.target_position, &alt_current_control_vars.target_position);
+    encoder_t enc;
+    get_encoder(&enc);
+    az_current_control_vars.enc = enc.az;
+    alt_current_control_vars.enc = enc.alt_ang;
+
+    enc_hist[0] = enc;
+
+    az_prev_control_vars.enc = enc_hist[4].az;
+    alt_prev_control_vars.enc = enc_hist[4].alt_ang;
 
     // TODO: This is for simulation only
 //    az_current_control_vars.current_position = az_prev_control_vars.pid_output;
@@ -189,19 +203,21 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
                        &alt_prev_control_vars, &alt_current_control_vars);
 
     // azimuth anti windup
-    if(az_current_control_vars.integral > max_motor_ang_az / current_az_pid_values.ki){
-        az_current_control_vars.integral = max_motor_ang_az / current_az_pid_values.ki;
+    double az_anti_windup = max_motor_ang_az / current_az_pid_values.ki;
+    if(az_current_control_vars.integral > az_anti_windup){
+        az_current_control_vars.integral = az_anti_windup;
     }
-    else if(az_current_control_vars.integral < -max_motor_ang_az / current_az_pid_values.ki){
-        az_current_control_vars.integral = -max_motor_ang_az / current_az_pid_values.ki;
+    else if(az_current_control_vars.integral < -az_anti_windup){
+        az_current_control_vars.integral = -az_anti_windup;
     }
 
     // altitude anti windup
-    if(alt_current_control_vars.integral > max_motor_ang_alt / current_az_pid_values.ki){
-        alt_current_control_vars.integral = max_motor_ang_alt / current_az_pid_values.ki;
+    double alt_anti_windup = max_motor_ang_alt / current_alt_pid_values.ki;
+    if(alt_current_control_vars.integral > alt_anti_windup){
+        alt_current_control_vars.integral = alt_anti_windup;
     }
-    else if(alt_current_control_vars.integral < -max_motor_ang_alt / current_az_pid_values.ki){
-        alt_current_control_vars.integral = -max_motor_ang_alt / current_az_pid_values.ki;
+    else if(alt_current_control_vars.integral < -alt_anti_windup){
+        alt_current_control_vars.integral = -alt_anti_windup;
     }
 
     // azimuth pid output change rate limit
@@ -243,9 +259,38 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
         logging(DEBUG, "PID", "Sim time\t %.10lf", az_current_control_vars.time_in_seconds);
     #endif
 
-    /* convert angle output to steps for output */
-    motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
-    motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
+    //stall detection
+    //az
+    if((fabs(az_current_control_vars.integral) > 0.9 * az_anti_windup) &&
+            (fabs(az_current_control_vars.enc - az_prev_control_vars.enc) < 0.05)){
+        if(stall_cntr_az == 0){
+            az_current_control_vars.pid_output = 0;
+            stall_cntr_az = 100;
+            send_telemetry("az motor has stalled", 1, 0, 0);
+        }
+        else{
+            stall_cntr_az--;
+        }
+    }
+    else{
+        stall_cntr_az = 100;
+    }
+
+    //alt
+    if((fabs(alt_current_control_vars.integral) > 0.9 * alt_anti_windup) &&
+            (fabs(alt_current_control_vars.enc - alt_prev_control_vars.enc) < 0.05)){
+        if(stall_cntr_alt == 0){
+            alt_current_control_vars.pid_output = 0;
+            stall_cntr_alt = 100;
+            send_telemetry("alt motor has stalled", 1, 0, 0);
+        }
+        else{
+            stall_cntr_alt--;
+        }
+    }
+    else{
+        stall_cntr_az = 100;
+    }
 
     // Azimuth
     if(fabs(az_current_control_vars.position_error) < 0.02){
@@ -256,6 +301,10 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     if(fabs(alt_current_control_vars.position_error) < 0.02){
         alt_current_control_vars.pid_output = 0;
     }
+
+    /* convert angle output to steps for output */
+    motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
+    motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
 
     //TODO: add alt log
     logging_csv(pid_az_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d",
@@ -280,6 +329,10 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
 
     az_prev_control_vars = az_current_control_vars;
     alt_prev_control_vars = alt_current_control_vars;
+
+    for(int ii=99; ii>0; --ii){
+        enc_hist[ii] = enc_hist[ii-1];
+    }
 
     pthread_mutex_unlock(&az_control_vars_mutex);
     pthread_mutex_unlock(&alt_control_vars_mutex);
