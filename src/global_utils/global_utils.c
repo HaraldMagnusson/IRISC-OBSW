@@ -18,6 +18,7 @@
 #include <errno.h>
 
 #include "global_utils.h"
+#include "telemetry.h"
 
 #define TOP_DIR_S 100
 
@@ -152,10 +153,16 @@ int logging(int level, char module_name[12],
     // perror (buffer);
     va_end (args);
 
-    fprintf(stderr, "%02d:%02d:%02d.%03ld | %5.5s | %10.10s | %s\033[0m\n",
+    char sn_buf[4096];
+
+    snprintf(sn_buf, 4096, "%02d:%02d:%02d.%03ld | %5.5s | %10.10s | %s\033[0m\n",
             hours, minutes, seconds, now.tv_nsec / 1000000,
             logging_levels[level], module_name, buffer);
+
+    fprintf(stderr, "%s", sn_buf);
     fflush(stderr);
+
+    send_telemetry(sn_buf, 1, 0, 0);
 
     return SUCCESS;
 }

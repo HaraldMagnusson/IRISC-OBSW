@@ -96,6 +96,10 @@ static void sigint_handler(int signum){
     _exit(EXIT_SUCCESS);
 }
 
+static void exit_func(void){
+    sigint_handler(SIGINT);
+}
+
 int main(int argc, char* const argv[]){
 
     struct sigaction sa;
@@ -106,6 +110,8 @@ int main(int argc, char* const argv[]){
 
     sa.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &sa, NULL);
+
+    atexit(&exit_func);
 
     /* add buffer to stderr */
     if(setvbuf(stderr, stderr_buf, _IOLBF, 4096)){
