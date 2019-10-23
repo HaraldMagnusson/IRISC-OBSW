@@ -306,7 +306,6 @@ void pid_update(telescope_att_t* cur_att, motor_step_t* motor_out) {
     motor_out->az = lround(step_per_deg * az_current_control_vars.pid_output);
     motor_out->alt = lround(step_per_deg * alt_current_control_vars.pid_output);
 
-    //TODO: add alt log
     logging_csv(pid_az_log, "%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%d,%d",
             az_current_control_vars.current_position,
             az_current_control_vars.position_error,

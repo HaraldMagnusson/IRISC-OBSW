@@ -10,13 +10,14 @@
 
 #include "global_utils.h"
 
-static void* thermal_thread(void* args);
-static void active_m(void);
+//static void* thermal_thread(void* args);
+//static void active_m(void);
 
 int init_thermal(void* args){
-    return create_thread("thermal", thermal_thread, 20);
+    //return create_thread("thermal", thermal_thread, 20);
+    return SUCCESS;
 }
-
+#if 0
 static void* thermal_thread(void* args){
 
     struct timespec wake;
@@ -36,3 +37,4 @@ static void* thermal_thread(void* args){
 static void active_m(void){
 
 }
+#endif

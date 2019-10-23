@@ -108,6 +108,8 @@ int main(int argc, char* const argv[]){
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
+    sigaction(SIGTERM, &sa, NULL);
+
     sa.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &sa, NULL);
 
