@@ -29,7 +29,7 @@ static char out_fn[100], out_fp[100], tmp_fn[100];
 int init_nir_camera(void* args){
 
     strcpy(out_fp, get_top_dir());
-    strcat(out_fp, "output/compression/");
+    strcat(out_fp, "output/nir/");
 
     strcpy(tmp_fn, get_top_dir());
     strcat(tmp_fn, "output/compression/nir_tmp.fit");
@@ -82,14 +82,13 @@ static int img_cntr = 0;
  */
 int save_img_nir_local(void){
 
-
     int ret = save_img(&cam_info, tmp_fn, "NIR", NULL);
     if(ret){
         return ret;
     }
 
     /* make temporary file name for nir images */
-    snprintf(out_fn, 100, "%snir%04d.fit", out_fp, img_cntr++);
+    snprintf(out_fn, 100, "%sdark_nir%04d.fit", out_fp, img_cntr++);
     rename(tmp_fn, out_fn);
 
     queue_image(out_fn, IMAGE_MAIN);

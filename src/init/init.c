@@ -33,7 +33,7 @@
 #include "watchdog.h"
 
 /* not including init */
-#define MODULE_COUNT 13
+#define MODULE_COUNT 2
 
 static int init_func(char* const argv[]);
 static void check_flags(void);
@@ -54,19 +54,19 @@ static char stderr_buf[4096];
 
 /* This list controls the order of initialisation */
 static const module_init_t init_sequence[MODULE_COUNT] = {
-    {"watchdog", &init_watchdog},
-    {"mode", &init_mode},
-    {"gpio", &init_gpio},
-    {"i2c", &init_i2c},
+    //{"watchdog", &init_watchdog},
+    //{"mode", &init_mode},
+    //{"gpio", &init_gpio},
+    //{"i2c", &init_i2c},
     {"camera", &init_camera},
-    {"e_link", &init_elink},
-    {"command", &init_command},
+    //{"e_link", &init_elink},
+    //{"command", &init_command},
     {"global_utils", &init_global_utils},
-    {"img_processing", &init_img_processing},
-    {"sensors", &init_sensors},
-    {"telemetry", &init_telemetry},
-    {"thermal", &init_thermal},
-    {"control_sys", &init_control_sys}
+    //{"img_processing", &init_img_processing},
+    //{"sensors", &init_sensors},
+    //{"telemetry", &init_telemetry},
+    //{"thermal", &init_thermal},
+    //{"control_sys", &init_control_sys}
 };
 
 static void sigint_handler(int signum){
@@ -127,6 +127,35 @@ int main(int argc, char* const argv[]){
         return FAILURE;
     }
     /* initialization sequence done */
+
+
+    printf("starting dark frames\n");
+
+    expose_nir(10000000, 200);
+
+    int ret;
+    do{
+        ret = save_img_nir();
+    }while(ret == EXP_NOT_READY);
+    printf("dark frame 1 done\n");
+
+    expose_nir(10000000, 200);
+
+    do{
+        ret = save_img_nir();
+    }while(ret == EXP_NOT_READY);
+    printf("dark frame 2 done\n");
+
+    expose_nir(10000000, 200);
+
+    do{
+        ret = save_img_nir();
+    }while(ret == EXP_NOT_READY);
+    printf("dark frames done\n");
+
+    while(1){
+        sleep(10);
+    }
 
     check_flags();
 
