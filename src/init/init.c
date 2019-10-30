@@ -209,6 +209,15 @@ static int state_machine(void){
     while(1){
         switch(get_mode()){
             case NORMAL:
+
+                expose_nir(1000000, 200);
+
+                int ret;
+                do{
+                    ret = save_img_nir();
+                    usleep(1000);
+                }while(ret == EXP_NOT_READY);
+
                 #ifdef SEQ_TEST
                     normal_m();
                 #else
@@ -253,9 +262,12 @@ static void sleep_m(void){
 
     if(!gps.out_of_date && gps.alt > 5000 && rotate_flag == '0'){
         /* rotate telescope */
-        logging(INFO, "MODE", "rotating out telescope");
+        logging(INFO, "MODE", "waking encoder");
+        pthread_mutex_lock(&mutex_cond_enc);
+        pthread_cond_signal(&cond_enc);
+        pthread_mutex_unlock(&mutex_cond_enc);
 
-        //TODO: rotate telescope
+        logging(INFO, "MODE", "rotating out telescope");
         center_telescope();
 
         /* set flag */
@@ -342,14 +354,14 @@ static void reset_m(void){
     pthread_mutex_lock(&mutex_cond_gyro);
     pthread_cond_signal(&cond_gyro);
     pthread_mutex_unlock(&mutex_cond_gyro);
-}
-
-static void wake_m(void){
 
     logging(INFO, "MODE", "waking encoder");
     pthread_mutex_lock(&mutex_cond_enc);
     pthread_cond_signal(&cond_enc);
     pthread_mutex_unlock(&mutex_cond_enc);
+}
+
+static void wake_m(void){
 
     logging(INFO, "MODE", "waking control system");
     pthread_mutex_lock(&mutex_cond_cont_sys);

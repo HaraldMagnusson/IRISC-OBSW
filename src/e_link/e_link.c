@@ -31,7 +31,7 @@ pthread_mutex_t e_link_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t e_link_mutex_read = PTHREAD_MUTEX_INITIALIZER;
 
 static void* thread_socket(void*);
-static unsigned int sleep_time = 30000;
+static unsigned int sleep_time = 90000;
 
 
 int init_elink(void* args){

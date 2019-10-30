@@ -144,11 +144,13 @@ static int process_gps(const unsigned char str[BUFFER_S]){
     unsigned char NMEA_str_arr[30][20];
     divide_NMEA_str(str, NMEA_str_arr);
 
+#if 0
     /* Check data quality */
     if( NMEA_str_arr[6][0] == '0' ){
         logging(WARN, "GPS", "Bad GPS data quality.");
         return FAILURE;
     }
+#endif
 
     gps_t gps;
 
@@ -163,6 +165,10 @@ static int process_gps(const unsigned char str[BUFFER_S]){
 
         gps.alt = altitude;
     #endif
+
+    gps.lat = 68.02;
+    gps.lon = 24.08;
+    gps.alt = 10000;
 
     set_gps(&gps);
 

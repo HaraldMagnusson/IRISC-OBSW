@@ -174,7 +174,7 @@ void move_alt_to_l(double target){
         if(step_az_alt(&steps)){
             logging(ERROR, "stepper", "Failed to send steps to motor: %m");
         }
-        logging(DEBUG, "stepper", "Steps sent to motor controller");
+        //logging(DEBUG, "stepper", "Steps sent to motor controller");
         wake.tv_nsec += 10000000;
         if(wake.tv_nsec >= 1000000000){
             wake.tv_nsec -= 1000000000;

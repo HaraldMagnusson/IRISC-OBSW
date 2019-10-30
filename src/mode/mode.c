@@ -23,7 +23,7 @@ static const char* modes[] = {
 
 int init_mode(void* args){
 
-    mode = SLEEP;
+    mode = RESET;
 
     int res = pthread_mutex_init(&mutex_mode, NULL);
     if( res ){
